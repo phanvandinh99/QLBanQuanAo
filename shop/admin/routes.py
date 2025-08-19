@@ -2,47 +2,49 @@ import os
 import urllib
 from itertools import product
 
-from flask import render_template, session, request, redirect, url_for, flash
+from flask import render_template, session, request, redirect, url_for, flash, current_app
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Addproduct
+from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate
+from .forms import LoginForm, RegistrationForm
+from shop.customers.forms import CustomerRegisterForm
 
 
-def synchronization():
-    try:
-        urllib.request.urlopen("https://console.firebase.google.com/")  # Python 3.x
-        ls = ['background.png', 'Assets.png', 'bg.jpg', 'AdminLTELogo.png']
-        for i in ls:
-            if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + i)):
-                storage.child("images/" + i).download(
-                    os.path.join(current_app.root_path, "static/images/" + i))
-        products = Addproduct.query.all();
-        for product in products:
-            if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_1)):
-                storage.child("images/" + product.image_1).download(
-                    os.path.join(current_app.root_path, "static/images/" + product.image_1))
-            if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_2)):
-                storage.child("images/" + product.image_2).download(
-                    os.path.join(current_app.root_path, "static/images/" + product.image_2))
-            if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_3)):
-                storage.child("images/" + product.image_3).download(
-                    os.path.join(current_app.root_path, "static/images/" + product.image_3))
-        return True
-    except:
-        return False
+# def synchronization():
+#     try:
+#         urllib.request.urlopen("https://console.firebase.google.com/")  # Python 3.x
+#         ls = ['background.png', 'Assets.png', 'bg.jpg', 'AdminLTELogo.png']
+#         for i in ls:
+#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + i)):
+#                 storage.child("images/" + i).download(
+#                     os.path.join(current_app.root_path, "static/images/" + i))
+#         products = Addproduct.query.all();
+#         for product in products:
+#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_1)):
+#                 storage.child("images/" + product.image_1).download(
+#                     os.path.join(current_app.root_path, "static/images/" + product.image_1))
+#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_2)):
+#                 storage.child("images/" + product.image_2).download(
+#                     os.path.join(current_app.root_path, "static/images/" + product.image_2))
+#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_3)):
+#                 storage.child("images/" + product.image_3).download(
+#                     os.path.join(current_app.root_path, "static/images/" + product.image_3))
+#         return True
+#     except:
+#         return False
 
 
-@app.route('/synchronization')
-def data_syn():
-    if 'email' not in session:
-        flash(f'please login first', 'danger')
-        return redirect(url_for('login'))
-    if synchronization():
-        flash(f'Synchronization Data Success', 'success')
-        return redirect(url_for('admin_manager'))
-    else:
-        flash(f'Synchronization Data Failure, Please Reconnect Internet', 'danger')
-        return redirect(url_for('admin_manager'))
+# @app.route('/synchronization')
+# def data_syn():
+#     if 'email' not in session:
+#         flash(f'please login first', 'danger')
+#         return redirect(url_for('login'))
+#     if synchronization():
+#         flash(f'Synchronization Data Success', 'success')
+#         return redirect(url_for('admin_manager'))
+#     else:
+#         flash(f'Synchronization Data Failure, Please Reconnect Internet', 'danger')
+#         return redirect(url_for('admin_manager'))
 
 
 @app.route('/admin/customer_register', methods=['GET', 'POST'])
