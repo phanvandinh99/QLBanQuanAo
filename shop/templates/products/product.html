@@ -63,15 +63,23 @@
                                 {{product.colors}}
                             </div>
                             <div class="rating">
-                                {{ products['average'][product.id][0] }}/5
-                                {% for i in range(products['average'][product.id][0]|int+1) %}
-                                <span class="glyphicon glyphicon-star"></span>
-                                {% endfor %}
-                                {% for i in range(products['average'][product.id][0]|int + 1, 5) %}
-                                <span class="glyphicon glyphicon-star-empty"></span>
-                                {% endfor %}
-                                {% if products['average'][product.id][1] != 0 %}
-                                ({{ products['average'][product.id][1] }})
+                                {% if product.id in products['average'] %}
+                                    {{ "%.1f"|format(products['average'][product.id][0]) }}/5
+                                    {% for i in range(products['average'][product.id][0]|int) %}
+                                    <span class="glyphicon glyphicon-star"></span>
+                                    {% endfor %}
+                                    {% for i in range(products['average'][product.id][0]|int, 5) %}
+                                    <span class="glyphicon glyphicon-star-empty"></span>
+                                    {% endfor %}
+                                    {% if products['average'][product.id][1] > 0 %}
+                                    ({{ products['average'][product.id][1] }})
+                                    {% endif %}
+                                {% else %}
+                                    0/5
+                                    {% for i in range(5) %}
+                                    <span class="glyphicon glyphicon-star-empty"></span>
+                                    {% endfor %}
+                                    (0)
                                 {% endif %}
                             </div>
                             <div>
@@ -246,15 +254,23 @@
                                         </div>
                                         <div>
                                             <div class="rating pt-3" style="color: #FFC107; margin-top: -20;">
-                                                {{ products['average'][product.id][0] }}/5
-                                                {% for i in range(products['average'][product.id][0]|int+1) %}
-                                                <span class="glyphicon glyphicon-star"></span>
-                                                {% endfor %}
-                                                {% for i in range(products['average'][product.id][0]|int + 1, 5) %}
-                                                <span class="glyphicon glyphicon-star-empty"></span>
-                                                {% endfor %}
-                                                {% if products['average'][product.id][1] != 0 %}
-                                                ({{ products['average'][product.id][1] }})
+                                                {% if product.id in products['average'] %}
+                                                    {{ "%.1f"|format(products['average'][product.id][0]) }}/5
+                                                    {% for i in range(products['average'][product.id][0]|int) %}
+                                                    <span class="glyphicon glyphicon-star"></span>
+                                                    {% endfor %}
+                                                    {% for i in range(products['average'][product.id][0]|int, 5) %}
+                                                    <span class="glyphicon glyphicon-star-empty"></span>
+                                                    {% endfor %}
+                                                    {% if products['average'][product.id][1] > 0 %}
+                                                    ({{ products['average'][product.id][1] }})
+                                                    {% endif %}
+                                                {% else %}
+                                                    0/5
+                                                    {% for i in range(5) %}
+                                                    <span class="glyphicon glyphicon-star-empty"></span>
+                                                    {% endfor %}
+                                                    (0)
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -326,16 +342,23 @@
                                 </div>
                                 <div>
                                     <div class="rating pt-3" style="color: #FFC107; margin-top: 20;">
-
-                                        {{ products['average'][product.id][0] }}/5
-                                        {% for i in range(products['average'][product.id][0]|int+1) %}
-                                        <span class="glyphicon glyphicon-star"></span>
-                                        {% endfor %}
-                                        {% for i in range(products['average'][product.id][0]|int + 1, 5) %}
-                                        <span class="glyphicon glyphicon-star-empty"></span>
-                                        {% endfor %}
-                                        {% if products['average'][product.id][1] != 0 %}
-                                        ({{ products['average'][product.id][1] }})
+                                        {% if product.id in products['average'] %}
+                                            {{ "%.1f"|format(products['average'][product.id][0]) }}/5
+                                            {% for i in range(products['average'][product.id][0]|int) %}
+                                            <span class="glyphicon glyphicon-star"></span>
+                                            {% endfor %}
+                                            {% for i in range(products['average'][product.id][0]|int, 5) %}
+                                            <span class="glyphicon glyphicon-star-empty"></span>
+                                            {% endfor %}
+                                            {% if products['average'][product.id][1] > 0 %}
+                                            ({{ products['average'][product.id][1] }})
+                                            {% endif %}
+                                        {% else %}
+                                            0/5
+                                            {% for i in range(5) %}
+                                            <span class="glyphicon glyphicon-star-empty"></span>
+                                            {% endfor %}
+                                            (0)
                                         {% endif %}
                                     </div>
                                 </div>

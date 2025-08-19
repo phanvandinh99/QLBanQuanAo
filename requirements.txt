@@ -28,7 +28,7 @@ jws==0.1.3
 Mako==1.1.3
 MarkupSafe==1.1.1
 mpmath==1.1.0
-mysqlclient==2.0.1
+PyMySQL==1.0.2
 oauth2client==3.0.0
 phonenumbers==8.12.11
 protobuf==3.14.0
@@ -53,3 +53,4 @@ toml==0.10.1
 urllib3==1.26.2
 Werkzeug==0.15.6
 WTForms==2.3.3
+Pillow==8.0.1

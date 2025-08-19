@@ -2,12 +2,10 @@ import os
 import urllib
 from itertools import product
 
-from flask import render_template, session, redirect, request, url_for, flash, session, current_app
-from shop import app, db, bcrypt, storage
-from .form import RegistrationForm, LoginForm, CustomerRegisterForm
-from .models import Admin
-from shop.customers.models import Register, CustomerOrder
-from shop.products.models import Addproduct, Brand, Category, Rate
+from flask import render_template, session, request, redirect, url_for, flash
+from shop import app, db, bcrypt
+import json
+from shop.models import Brand, Category, Addproduct
 
 
 def synchronization():
@@ -123,7 +121,7 @@ def orders_manager():
 
     orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
     return render_template('admin/manage_orders.html', title='Order manager page', user=user[0], orders=orders,
-                           customers=customers)
+                           customers=customers, get_order_data=get_order_data)
 
 
 @app.route('/accept_order/<int:id>', methods=['GET', 'POST'])
@@ -131,18 +129,23 @@ def accept_order(id):
     if 'email' not in session:
         flash(f'Please login first', 'danger')
         return redirect(url_for('login'))
-    customer_order = CustomerOrder.query.get_or_404(id)
-    for key, product in customer_order.orders.items():
-        if request.method == "POST":
-            product_order = Addproduct.query.get_or_404(key)
-            if (product_order.stock - int(product['quantity'])) >= 0:
-                product_order.stock -= int(product['quantity'])
-                db.session.commit()
-                customer_order.status = 'Accepted'
-                db.session.commit()
-            else:
-                flash('Quantity in stock has been exhausted', 'danger')
-            return redirect(url_for('orders_manager'))
+    
+    if request.method == "POST":
+        customer_order = CustomerOrder.query.get_or_404(id)
+        if customer_order.orders:
+            order_data = json.loads(customer_order.orders)
+            for key, product in order_data.items():
+                product_order = Addproduct.query.get_or_404(key)
+                if (product_order.stock - int(product['quantity'])) >= 0:
+                    product_order.stock -= int(product['quantity'])
+                    db.session.commit()
+                    customer_order.status = 'Accepted'
+                    db.session.commit()
+                else:
+                    flash('Quantity in stock has been exhausted', 'danger')
+                    return redirect(url_for('orders_manager'))
+        return redirect(url_for('orders_manager'))
+    
     return redirect(url_for('orders_manager'))
 
 
@@ -315,3 +318,13 @@ def logout():
     else:
         session.pop('email', None)
     return redirect(url_for('login'))
+
+
+def get_order_data(order):
+    """Helper function to parse order data from JSON"""
+    if order.orders:
+        try:
+            return json.loads(order.orders)
+        except:
+            return {}
+    return {}

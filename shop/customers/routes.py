@@ -1,20 +1,18 @@
-from flask import render_template, session, request, redirect, url_for, flash, current_app, make_response
+from flask import render_template, session, request, redirect, url_for, flash
 from flask_login import login_required, current_user, logout_user, login_user
-from shop import app, db, photos, bcrypt
+from shop import app, db, bcrypt
+from shop.models import Register, Admin, CustomerOrder
 from .forms import CustomerRegisterForm, CustomerLoginFrom
-from .models import Register, CustomerOrder
-from shop.products.models import Category, Brand, Addproduct
+from shop.models import Category, Brand, Addproduct
 from shop.carts.routes import clearcart, MagerDicts
 from flask import Markup
 import secrets
 import os
+from datetime import datetime
 import json
 
 # import pdfkit
 # import stripe
-from shop.admin.models import Admin
-
-
 def brands():
     # brands = Brand.query.join(Addproduct, (Brand.id == Addproduct.brand_id)).all()
     brands = Brand.query.all()
@@ -82,7 +80,15 @@ def customer_register():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = CustomerRegisterForm()
+    print(f"[REGISTER DEBUG] Form created, request method: {request.method}")
+    
+    if request.method == 'POST':
+        print(f"[REGISTER DEBUG] POST request received")
+        print(f"[REGISTER DEBUG] Form data: {request.form}")
+        print(f"[REGISTER DEBUG] Form errors: {form.errors}")
+    
     if form.validate_on_submit():
+        print(f"[REGISTER DEBUG] Form validation passed")
         if Admin.query.filter_by(email=form.email.data).first():
             flash(f'Email Used!', 'danger')
             return redirect(url_for('customer_register'))
@@ -93,20 +99,118 @@ def customer_register():
             flash(f'Phone Number Used!', 'danger')
             return redirect(url_for('customer_register'))
         try:
+            print(f"[REGISTER DEBUG] Starting registration process for email: {form.email.data}")
             hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
+            print(f"[REGISTER DEBUG] Password hashed successfully")
+            
             register = Register(username=form.username.data, email=form.email.data, first_name=form.first_name.data,
                                 last_name=form.last_name.data, phone_number=form.phone_number.data,
                                 gender=form.gender.data,
-                                password=hash_password)
+                                password=hash_password, date_created=datetime.utcnow(), lock=False)
+            print(f"[REGISTER DEBUG] Register object created successfully")
+            
             db.session.add(register)
-            flash(f'Welcome {form.first_name.data} {form.last_name.data} Thank you for registering', 'success')
+            print(f"[REGISTER DEBUG] Added to session successfully")
+            
             db.session.commit()
-        except:
-            flash(f'Error!', 'danger')
+            print(f"[REGISTER DEBUG] Committed to database successfully")
+            
+            flash(f'Welcome {form.first_name.data} {form.last_name.data} Thank you for registering', 'success')
+        except Exception as e:
+            print(f"[REGISTER ERROR] Registration failed: {str(e)}")
+            print(f"[REGISTER ERROR] Exception type: {type(e).__name__}")
+            import traceback
+            print(f"[REGISTER ERROR] Full traceback: {traceback.format_exc()}")
+            db.session.rollback()
+            flash(f'Registration Error: {str(e)}', 'danger')
             return redirect(url_for('customer_register'))
 
         return redirect(url_for('customer_login'))
+    else:
+        if request.method == 'POST':
+            print(f"[REGISTER DEBUG] Form validation failed")
+            print(f"[REGISTER DEBUG] Form errors: {form.errors}")
+    
     return render_template('customers/register.html', form=form, brands=brands(), categories=categories())
+
+@app.route('/debug_register')
+def debug_register():
+    """Debug route to check registration form"""
+    try:
+        print("=== DEBUG REGISTER ROUTE ===")
+        
+        # Test database connection
+        from shop.models import Register, Admin
+        register_count = Register.query.count()
+        admin_count = Admin.query.count()
+        print(f"Current users in database: {register_count}")
+        print(f"Current admins in database: {admin_count}")
+        
+        # Test form creation
+        from .forms import CustomerRegisterForm
+        form = CustomerRegisterForm()
+        print(f"Form created successfully: {type(form)}")
+        
+        # Test model creation (without saving)
+        from datetime import datetime
+        test_register = Register(
+            username='test_debug',
+            email='debug@test.com',
+            first_name='Debug',
+            last_name='Test',
+            phone_number='0987654321',
+            gender='Male',
+            password='hashed_password',
+            date_created=datetime.utcnow(),
+            lock=False
+        )
+        print(f"Test register object created: {test_register.username}")
+        
+        return f"""
+        <h2>Debug Registration</h2>
+        <p>Database connection: OK</p>
+        <p>Current users: {register_count}</p>
+        <p>Current admins: {admin_count}</p>
+        <p>Form creation: OK</p>
+        <p>Model creation: OK</p>
+        <p>Check terminal for detailed logs</p>
+        <a href="/register">Go to Registration</a>
+        """
+        
+    except Exception as e:
+        print(f"[DEBUG ERROR] {str(e)}")
+        import traceback
+        print(f"[DEBUG ERROR] Full traceback: {traceback.format_exc()}")
+        return f"Error: {str(e)}"
+
+@app.route('/test_form')
+def test_form():
+    """Test form creation and validation"""
+    try:
+        from .forms import CustomerRegisterForm
+        form = CustomerRegisterForm()
+        
+        html = f"""
+        <h2>Test Form Fields</h2>
+        <p>Form created: {type(form)}</p>
+        <ul>
+            <li>Username field: {hasattr(form, 'username')}</li>
+            <li>First name field: {hasattr(form, 'first_name')}</li>
+            <li>Last name field: {hasattr(form, 'last_name')}</li>
+            <li>Email field: {hasattr(form, 'email')}</li>
+            <li>Phone number field: {hasattr(form, 'phone_number')}</li>
+            <li>Gender field: {hasattr(form, 'gender')}</li>
+            <li>Password field: {hasattr(form, 'password')}</li>
+            <li>Confirm field: {hasattr(form, 'confirm')}</li>
+            <li>Submit field: {hasattr(form, 'submit')}</li>
+        </ul>
+        <a href="/register">Go to Registration</a>
+        """
+        
+        return html
+        
+    except Exception as e:
+        return f"Form test error: {str(e)}"
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -116,7 +220,7 @@ def customer_login():
     form = CustomerLoginFrom()
     if form.validate_on_submit():
         # Register.query.filter_by(lock=False).first()
-        user = Register.query.filter_by(username=form.username.data).first()
+        user = Register.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             if user.lock == True:
                 flash(Markup(
@@ -129,13 +233,22 @@ def customer_login():
             if 'Shoppingcart' in session:
                 orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
                     CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
-                product_id = [order.orders for order in orders]
+                # Get all product IDs from existing orders
+                existing_product_ids = []
+                for order in orders:
+                    if order.orders:
+                        try:
+                            order_data = json.loads(order.orders)
+                            existing_product_ids.extend(order_data.keys())
+                        except:
+                            pass
+                
                 for key, item in session['Shoppingcart'].items():
-                    if key not in product_id:
+                    if key not in existing_product_ids:
                         customer_id = current_user.id
                         invoice = secrets.token_hex(5)
                         order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                              orders={key: session['Shoppingcart'][key]},
+                                              orders=json.dumps({key: session['Shoppingcart'][key]}),
                                               status=None)
                         db.session.add(order)
                         db.session.commit()
@@ -144,12 +257,14 @@ def customer_login():
                 CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
             session.modified = True
             for order in orders:
-                for product_id, DictItems in order.orders.items():
-                    DictItems = {product_id: DictItems}
-                    if 'Shoppingcart' not in session:
-                        session['Shoppingcart'] = DictItems
-                    else:
-                        session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
+                if order.orders:
+                    order_data = json.loads(order.orders)
+                    for product_id, DictItems in order_data.items():
+                        DictItems = {product_id: DictItems}
+                        if 'Shoppingcart' not in session:
+                            session['Shoppingcart'] = DictItems
+                        else:
+                            session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
 
             next = request.args.get('next')
             return redirect(next or url_for('home'))
@@ -165,7 +280,7 @@ def customer_login_page(page, id):
             return redirect(url_for('detail', id))
     form = CustomerLoginFrom()
     if form.validate_on_submit():
-        user = Register.query.filter_by(username=form.username.data).first()
+        user = Register.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             login_user(user)
             return redirect(url_for('detail', id=id))
@@ -189,25 +304,34 @@ def customer_logout():
 def get_order():
     if not current_user.is_authenticated:
         return redirect(url_for('customer_login'))
+    
     customer_id = current_user.id
     customer = Register.query.filter_by(id=customer_id).first()
+    
+    # Get all pending orders for this customer
     orders = CustomerOrder.query.filter(
-        CustomerOrder.customer_id == current_user.id).filter(
-        CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
-    invoices = [order.invoice for order in orders]
-    orders = []
-    for invoice in invoices:
-        order = CustomerOrder.query.filter_by(customer_id=customer_id, invoice=invoice).order_by(
-            CustomerOrder.id.desc()).first()
-        orders.append(order)
+        CustomerOrder.customer_id == current_user.id
+    ).filter(
+        CustomerOrder.status == None
+    ).order_by(CustomerOrder.id.desc()).all()
+    
+    # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
-    for key, product in session['Shoppingcart'].items():
-        discounttotal += float(product['discount'] / 100) * float(product['price']) * int(product['quantity'])
-        subtotals += float(product['price']) * int(product['quantity'])
-    subtotals -= discounttotal
-    return render_template('customers/order.html', invoices=invoices, subtotals=subtotals, customer=customer,
-                           orders=orders, brands=brands(), categories=categories())
+    if 'Shoppingcart' in session:
+        for key, product in session['Shoppingcart'].items():
+            discounttotal += float(product['discount'] / 100) * float(product['price']) * int(product['quantity'])
+            subtotals += float(product['price']) * int(product['quantity'])
+        subtotals -= discounttotal
+    
+    return render_template('customers/order.html', 
+                         invoices=[order.invoice for order in orders], 
+                         subtotals=subtotals, 
+                         customer=customer,
+                         orders=orders, 
+                         brands=brands(), 
+                         categories=categories(), 
+                         get_order_data=get_order_data)
 
 
 @app.route('/submit_order', methods=['POST'])
@@ -231,4 +355,13 @@ def submit_order():
 def payment_history():
     orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
         CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
-    return render_template('customers/myaccount.html', orders=orders, brands=brands(), categories=categories())
+    return render_template('customers/myaccount.html', orders=orders, brands=brands(), categories=categories(), get_order_data=get_order_data)
+
+def get_order_data(order):
+    """Helper function to parse order data from JSON"""
+    if order.orders:
+        try:
+            return json.loads(order.orders)
+        except:
+            return {}
+    return {}

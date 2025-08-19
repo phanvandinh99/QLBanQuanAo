@@ -1,63 +1,16 @@
 import urllib
 
-from flask import render_template, session, request, redirect, url_for, flash, current_app
-from flask_login import login_required, current_user, logout_user, login_user
-from shop import app, db, photos, storage
-from .models import Category, Brand, Addproduct, Rate, Register
-from .forms import Addproducts, Rates
-from shop.admin.models import Admin
-import secrets
-import os
-
-
-def brands():
-    # brands = Brand.query.join(Addproduct, (Brand.id == Addproduct.brand_id)).all()
-    brands = Brand.query.all()
-    return brands
-
-
-def categories():
-    # categories = Category.query.join(Addproduct, (Category.id == Addproduct.category_id)).all()
-    categories = Category.query.order_by(Category.name.desc()).all()
-    return categories
-
-
-def registers():
-    registers = Register.query.join(Rate, (Register.id == Rate.register_id)).all()
-    return registers
-
-
-def medium():
-    products = Addproduct.query.filter(Addproduct.stock > 0).all()
-    dst = {}
-    for product in products:
-        rates = Rate.query.filter(Rate.product_id == product.id).all()
-        lenght = len(rates)
-        if lenght == 0:
-            average = 5
-        else:
-            sum_value = sum([rate.rate_number for rate in rates])
-            average = sum_value / lenght
-        dst[product.id] = [average, lenght]
-    return dst
-
+from flask import render_template, request, redirect, url_for, flash, session
+from flask_login import current_user
+from shop import app, db, photos
+from shop.models import Brand, Category, Addproduct, Rate, Register, Admin
+from .forms import Rates
 
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
-    category = Category.query.filter_by(name="Smartphone").first()
-    products_all = Addproduct.query.filter(Addproduct.stock > 0).filter(Addproduct.category_id == category.id).order_by(
-        Addproduct.id.desc()).paginate(page=page,
-                                       per_page=4)
-    products_hot = Addproduct.query.filter(Addproduct.stock > 0).filter(Addproduct.category_id == category.id).order_by(
-        Addproduct.price.desc()).limit(3).all()
-    products_new = Addproduct.query.filter(Addproduct.stock > 0).filter(Addproduct.category_id == category.id).order_by(
-        Addproduct.id.desc()).all()
-    products_sell = Addproduct.query.filter(Addproduct.stock > 0).filter(
-        Addproduct.category_id == category.id).order_by(Addproduct.discount.desc()).limit(10).all()
-    products = {'all': products_all, 'hot': products_hot, 'new': products_new, 'sell': products_sell,
-                'average': medium()}
-    return render_template('customers/index.html', products=products, brands=brands(), categories=categories())
+    products = Addproduct.query.filter(Addproduct.stock > 0).paginate(page=page, per_page=8)
+    return render_template('products/index.html', products=products, categories=categories(), brands=brands())
 
 
 @app.route('/category')
@@ -442,3 +395,50 @@ def search():
     products = {'all': product, 'average': medium()}
     return render_template('products/category.html', get_search=value, products=products, brands=brands(),
                            categories=categories())
+
+
+@app.route('/test_db')
+def test_db():
+    try:
+        # Test query to database
+        brands = Brand.query.all()
+        return f"Connected to database successfully! Found {len(brands)} brands."
+    except Exception as e:
+        return f"Database connection failed: {str(e)}"
+
+
+def brands():
+    # brands = Brand.query.join(Addproduct, (Brand.id == Addproduct.brand_id)).all()
+    brands = Brand.query.all()
+    return brands
+
+
+def categories():
+    # categories = Category.query.join(Addproduct, (Category.id == Addproduct.category_id)).all()
+    categories = Category.query.order_by(Category.name.desc()).all()
+    return categories
+
+
+def medium():
+    # Calculate average rating for each product
+    from shop.models import Rate
+    from sqlalchemy import func
+    
+    # Get all products with their average ratings and count
+    ratings = db.session.query(
+        Rate.product_id,
+        func.avg(Rate.rate_number).label('avg_rating'),
+        func.count(Rate.id).label('count')
+    ).group_by(Rate.product_id).all()
+    
+    # Create a dictionary with product_id as key and [avg_rating, count] as value
+    rating_dict = {}
+    for rating in ratings:
+        rating_dict[rating.product_id] = [float(rating.avg_rating), rating.count]
+    
+    return rating_dict
+
+
+def registers():
+    # Get all registered users
+    return Register.query.all()

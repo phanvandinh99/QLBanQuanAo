@@ -30,7 +30,8 @@
                             <tbody>
                             <tr>
                                 {% for i in range(invoices|length) %}
-                                {% for key, product in orders[i].orders.items() %}
+                                {% set order_data = get_order_data(orders[i]) %}
+                                {% for key, product in order_data.items() %}
                                 {% set discount =(product.discount/100) * product.price |float %}
                             <tr>
                                 <td>{{ i+1 }}</td>

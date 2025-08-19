@@ -25,6 +25,16 @@ Link website:
 
 3. Download database: [here](database/myshop.sql)
 
+3.1
+```shell
+python -m venv venv
+```
+
+```shell
+venv\Scripts\activate
+    => cmd "Set-ExecutionPolicy RemoteSigned"
+```
+
 4. Cài đặt môi trường thư viện tự động sử dụng tệp requirements.txt
 
 ```shell

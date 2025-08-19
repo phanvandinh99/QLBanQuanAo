@@ -87,7 +87,8 @@
                                                         {% endif %}
                                                         {%endfor%}
                                                         <td>{{order.invoice}}</td>
-                                                        {% for key, product in order.orders.items() %}
+                                                        {% set order_data = get_order_data(order) %}
+                                                        {% for key, product in order_data.items() %}
                                                         <td>{{product.name}}</td>
                                                         {% endfor %}
                                                         <td>{{order.status}}</td>
@@ -205,7 +206,8 @@
                                                                     </button>
                                                                 </div>
                                                                 <div class="modal-body">
-                                                                    {% for key, product in order.orders.items() %}
+                                                                    {% set order_data = get_order_data(order) %}
+                                                                    {% for key, product in order_data.items() %}
                                                                     <h5>{{"Name: " + product.name}}</h5>
                                                                     <h5>{{"Brand: " + product.brand}}</h5>
                                                                     <h5>Price: {{product.price}}</h5>
@@ -263,7 +265,8 @@
                                                         {% endif %}
                                                         {%endfor%}
                                                         <td>{{order.invoice}}</td>
-                                                        {% for key, product in order.orders.items() %}
+                                                        {% set order_data = get_order_data(order) %}
+                                                        {% for key, product in order_data.items() %}
                                                         <td>{{product.name}}</td>
                                                         {% endfor %}
                                                         <td>{{order.status}}</td>
@@ -316,7 +319,8 @@
                                                         <td>{{order.invoice}}</td>
                                                         <td>{{order.status}}</td>
                                                         <td>{{order.date_created}}</td>
-                                                        {% for key, product in order.orders.items() %}
+                                                        {% set order_data = get_order_data(order) %}
+                                                        {% for key, product in order_data.items() %}
                                                         <td>{{product.name}}</td>
                                                         <td>{{product.quantity}}</td>
                                                         <td>{{product.quantity|int * product.price|float - product.discount|int * product.price|float/100}}</td>

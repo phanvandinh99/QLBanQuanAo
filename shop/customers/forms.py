@@ -1,51 +1,36 @@
-from wtforms import Form, StringField, BooleanField, TextAreaField, PasswordField, SubmitField, validators, \
-    ValidationError, \
-    RadioField
-from flask_wtf.file import FileRequired, FileAllowed, FileField
+from wtforms import Form, StringField, TextAreaField, PasswordField, SubmitField, validators, ValidationError
 from flask_wtf import FlaskForm
-from flask import Markup
-from .models import Register
-import phonenumbers
+from shop.models import Register  # Changed from .models to shop.models
+from flask_wtf.file import FileRequired, FileAllowed, FileField
 
 
 class CustomerRegisterForm(FlaskForm):
-    username = StringField('Username: ', [validators.DataRequired(), validators.Length(min=4, max=20)])
-    first_name = StringField('Fist Name: ')
-    last_name = StringField('Last Name: ')
+    username = StringField('Username: ', [validators.DataRequired()])
+    first_name = StringField('First Name: ', [validators.DataRequired()])
+    last_name = StringField('Last Name: ', [validators.DataRequired()])
     email = StringField('Email: ', [validators.Email(), validators.DataRequired()])
-    phone_number = StringField('Phone: ', [validators.DataRequired()])
-    gender = RadioField('Gender:', default='M', choices=[('M', 'Male'), ('F', 'Female')])
+    phone_number = StringField('Phone Number: ', [validators.DataRequired()])
+    gender = StringField('Gender: ', [validators.DataRequired()])
     password = PasswordField('Password: ', [validators.DataRequired(),
                                             validators.EqualTo('confirm', message=' Both password must match! ')])
     confirm = PasswordField('Repeat Password: ', [validators.DataRequired()])
-
     submit = SubmitField('Register')
 
-    def validate_username(self, username):
-        if Register.query.filter_by(username=username.data).first():
-            raise ValidationError("This username is already in use!")
+    def validate_username(self, field):
+        if Register.query.filter_by(username=field.data).first():
+            raise ValidationError('Username already in use.')
 
-    def validate_email(self, email):
-        if Register.query.filter_by(email=email.data).first():
-            raise ValidationError("This email address is already in use!")
+    def validate_email(self, field):
+        if Register.query.filter_by(email=field.data).first():
+            raise ValidationError('Email already registered.')
 
-    def validate_phone_number(self, phone_number):
-        if Register.query.filter_by(phone_number=phone_number.data).first():
-            raise ValidationError("This phonenumber is already in use!")
-
-        try:
-            input_number = phonenumbers.parse(phone_number.data)
-            if not (phonenumbers.is_valid_number(input_number)):
-                raise ValidationError('Invalid phone number.')
-        except:
-            input_number = phonenumbers.parse("+84" + phone_number.data)
-            if not (phonenumbers.is_valid_number(input_number)):
-                raise ValidationError('Invalid phone number.')
+    def validate_phone_number(self, field):
+        if Register.query.filter_by(phone_number=field.data).first():
+            raise ValidationError('Phone Number already registered.')
 
 
 class CustomerLoginFrom(FlaskForm):
-    # email = StringField('Email: ', [validators.Email(), validators.DataRequired()])
-    username = StringField('Username: ', [validators.DataRequired()])
+    email = StringField('Email: ', [validators.Email(), validators.DataRequired()])
     password = PasswordField('Password: ', [validators.DataRequired()])
 
 
