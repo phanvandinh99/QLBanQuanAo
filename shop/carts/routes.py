@@ -3,7 +3,6 @@ from flask import render_template, session, request, redirect, url_for, flash
 from flask_login import current_user
 from shop import app, db
 from shop.models import CustomerOrder, Category, Brand, Addproduct
-import json
 
 
 def brands():
@@ -58,7 +57,7 @@ def AddCart():
                         customer_id = current_user.id
                         invoice = secrets.token_hex(5)
                         order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                              orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
+                                              orders={product_id: session['Shoppingcart'][product_id]},
                                               status=None)
                         db.session.add(order)
                         db.session.commit()
@@ -69,7 +68,7 @@ def AddCart():
                     customer_id = current_user.id
                     invoice = secrets.token_hex(5)
                     order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                          orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
+                                          orders={product_id: session['Shoppingcart'][product_id]},
                                           status=None)
                     db.session.add(order)
                     db.session.commit()
@@ -115,12 +114,10 @@ def updatecart(code):
                             CustomerOrder.customer_id == current_user.id).filter(
                             CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
                         for order in orders:
-                            if order.orders:
-                                order_data = json.loads(order.orders)
-                                if key in order_data:
-                                    customer_order = CustomerOrder.query.get_or_404(order.id)
-                                    customer_order.orders = json.dumps({key: session['Shoppingcart'][key]})
-                                    db.session.commit()
+                            if key in order.orders:
+                                customer_order = CustomerOrder.query.get_or_404(order.id)
+                                customer_order.orders = {key: session['Shoppingcart'][key]}
+                                db.session.commit()
                     return redirect(url_for('getCart'))
         except Exception as e:
             print(e)
@@ -136,14 +133,12 @@ def deleteitem(id):
             CustomerOrder.customer_id == current_user.id).filter(
             CustomerOrder.status == None).all()
         for order in orders:
-            if order.orders:
-                order_data = json.loads(order.orders)
-                for key, item in order_data.items():
-                    if int(key) == id:
-                        customer = CustomerOrder.query.get_or_404(order.id)
-                        db.session.delete(customer)
-                        db.session.commit()
-                        break
+            for key, item in order.orders.items():
+                if int(key) == id:
+                    customer = CustomerOrder.query.get_or_404(order.id)
+                    db.session.delete(customer)
+                    db.session.commit()
+                    break
         session.modified = True
         for key, item in session['Shoppingcart'].items():
             if int(key) == id:

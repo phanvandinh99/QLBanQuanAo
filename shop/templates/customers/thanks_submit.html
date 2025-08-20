@@ -14,8 +14,7 @@
     </thead>
     <tbody>
     {% for order in orders %}
-    {% set order_data = get_order_data(order) %}
-    {% for key, product in order_data.items() %}
+    {% for key, product in order.orders.items() %}
     {% set discount =(product.discount/100) * product.price |float %}
     {% set subtotal = product.quantity|int * product.price|float %}
     <tr>

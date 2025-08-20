@@ -1,97 +1,372 @@
 <!-- top-header-->
 <div class="top-header">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-md-7 col-sm-6 hidden-xs">
-                <p class="top-text">Website thực tập công nhân.</p>
-            </div>
-            <div class="col-lg-4 col-md-5 col-sm-6 col-xs-12">
-                <ul>
-                    <li> &nbsp; </li>
-                    <li>&nbsp;</li>
-                    <li>&nbsp;</li>
-                    <li>&nbsp;</li>
-                    <li>&nbsp;</li>
-                    <li>&nbsp;</li>
-                    <li><a href="mailto:viethoang123@gmail.com">Help</a></li>
-                </ul>
-            </div>
-        </div>
-        <!-- /.top-header-->
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-7 col-md-7 col-sm-6 hidden-xs">
+        <p class="top-text">Uy Tín - Chất Lượng</p>
+      </div>
+      <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12">
+        <ul>
+          <li><a href="tel:0332194677">033.219.4677</a></li>
+          <li><a href="mailto:hoang@gmail.com">hoang@gmail.com</a></li>
+          <li><a href="#">Trợ Giúp</a></li>
+        </ul>
+      </div>
     </div>
+    <!-- /.top-header-->
+  </div>
 </div>
 <!-- header-section-->
 <div class="header-wrapper">
+  <div class="container">
+    <div class="row">
+      <!-- logo -->
+      <div class="col-lg-3 col-md-3 col-sm-3 col-xs-8">
+        <div class="logo">
+          <a href="index.html"
+            ><img
+              src="{{ url_for('static', filename='images/logo.png') }}"
+              alt=""
+            />
+          </a>
+        </div>
+      </div>
+      <!-- /.logo -->
+      <!-- search -->
+      <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <div class="search-bg">
+          <form action="{{ url_for('search')}}" method="post">
+            <input
+              type="text"
+              class="form-control"
+              name="search"
+              placeholder="Tìm kiếm sản phẩm"
+              value="{{ request.form.get('search', '') }}"
+              required
+            />
+            <button type="Submit" style="margin-bottom: 6px">
+              <i class="fa fa-search"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      <!-- /.search -->
+      <!-- account -->
+      <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+        <div class="account-section">
+          <ul>
+            {% if current_user.is_authenticated %}
+            <li>
+              <a href="{{url_for('update_account')}}" class="title hidden-xs"
+                >Tài khoản</a
+              >
+            </li>
+            <li class="hidden-xs">|</li>
+            <li>
+              <a href="{{url_for('customer_logout')}}" class="title hidden-xs"
+                >Đăng Xuất</a
+              >
+            </li>
+            {% else %}
+            <li>
+              <a href="{{url_for('customer_login')}}" class="title hidden-xs"
+                >Đăng Nhập</a
+              >
+            </li>
+            <li class="hidden-xs">|</li>
+            <li>
+              <a href="{{url_for('customer_register')}}" class="title hidden-xs"
+                >Đăng Ký</a
+              >
+            </li>
+            {% endif %}
+            <li>
+              <a href="{{url_for('getCart')}}" class="title"
+                ><i class="fa fa-shopping-cart"></i>
+                <sup class="cart-quantity"
+                  >{{ session['Shoppingcart']|length }}</sup
+                ></a
+              >
+            </li>
+          </ul>
+        </div>
+        <!-- /.account -->
+      </div>
+      <!-- search -->
+    </div>
+  </div>
+  <!-- navigation -->
+  <div class="navigation">
     <div class="container">
-        <div class="row">
-            <!-- logo -->
-            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-8">
-                <div class="logo">
-<!--                    <a href="index.html"><img src="{{ url_for('static', filename='images/name.png') }}" alt=""> </a>-->
-                </div>
-            </div>
-            <!-- /.logo -->
-            <!-- search -->
-            <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                <div class="search-bg">
-                    <form action="{{ url_for('search')}}" method="post">
-                        <input type="text" class="form-control" name="search" placeholder="Search Here">
-                        <button type="Submit" style="margin-bottom: 6px;"><i class="fa fa-search"></i></button>
-                    </form>
-                </div>
-            </div>
-            <!-- /.search -->
-            <!-- account -->
-            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
-                <div class="account-section">
-                    <ul>
-                        {% if current_user.is_authenticated %}
-                        <li><a href="{{url_for('update_account')}}" class="title hidden-xs">My Account</a></li>
-                        <li class="hidden-xs">|</li>
-                        <li><a href="{{url_for('customer_logout')}}" class="title hidden-xs">Logout</a></li>
-                        {% else %}
-                        <li><a href="{{url_for('customer_login')}}" class="title hidden-xs">Sign In</a></li>
-                        <li class="hidden-xs">|</li>
-                        <li><a href="{{url_for('customer_register')}}" class="title hidden-xs">Sign Up</a></li>
-                        {% endif %}
-                        <li><a href="{{url_for('getCart')}}" class="title"><i class="fa fa-shopping-cart"></i> <sup
-                                class="cart-quantity">{{ session['Shoppingcart']|length }}</sup></a>
-                        </li>
-                    </ul>
-                </div>
-                <!-- /.account -->
-            </div>
-            <!-- search -->
+      <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+          <!-- navigations-->
+          <div id="navigation">
+            <ul>
+              <li class="active">
+                <a href="{{url_for('home')}}">Trang Chủ</a>
+              </li>
+              {% for category in categories%}
+              <li class="has-sub">
+                <a href="{{url_for('get_category', name=category.name)}}"
+                  >{{ category.name }}</a
+                >
+                <ul>
+                  {% for brand in brands %} {% if brand.category_id ==
+                  category.id%}
+                  <li>
+                    <a href="{{url_for('get_brand', name=brand.name)}}"
+                      >{{ brand.name }}</a
+                    >
+                  </li>
+                  {% endif %} {% endfor %}
+                </ul>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+        <!-- /.navigations-->
+      </div>
     </div>
-    <!-- navigation -->
-    <div class="navigation">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                    <!-- navigations-->
-                    <div id="navigation">
-                        <ul>
-                            <li class="active"><a href="{{url_for('home')}}">Home</a></li>
-                            {% for category in categories%}
-                            <li class="has-sub"><a href="{{url_for('get_category', name=category.name)}}">{{
-                                category.name }}</a>
-                                <ul>
-                                    {% for brand in brands %}
-                                    {% if brand.category_id == category.id%}
-                                    <li><a href="{{url_for('get_brand', name=brand.name)}}">{{ brand.name }}</a></li>
-                                    {% endif %}
-                                    {% endfor %}
-                                </ul>
-                            </li>
-                            {% endfor %}
-
-                        </ul>
-                    </div>
-                </div>
-                <!-- /.navigations-->
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 <!-- /. header-section-->
+<!-- slide -->
+<div class="slider">
+  <div class="owl-carousel owl-one owl-theme owl-loaded owl-drag">
+    <div class="owl-stage-outer">
+      <div
+        class="owl-stage"
+        style="
+          transform: translate3d(-4762px, 0px, 0px);
+          transition: 0.25s;
+          width: 16667px;
+        "
+      >
+        <div class="owl-item cloned" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/google_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">Google Pixel 2</h1>
+                    <p class="hidden-xs">
+                      The latest Qualcomm Snapdragon 835 processor |
+                      Water-resistant metal unibody | Up to 7 hours of battery.
+                    </p>
+                    <p class="slider-price">$ 938.10</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Download Free Template</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item cloned" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/apple_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">iphone 8 plus</h1>
+                    <p class="hidden-xs">
+                      5.5 inch Retina HD Display | 12MP wide-angle cameras
+                      <br />
+                      | 64 GB &amp; 256 GB ROM Memory
+                    </p>
+                    <p class="slider-price">$759.64</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Download Now</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item active" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/mi_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">Red Mi <span>Y1</span></h1>
+                    <p class="hidden-xs">
+                      LED Selfie-light | Fingerprint sensor | Dedicated microSD
+                      card slot Snapdragon 435 octa-core processor
+                    </p>
+                    <p class="slider-price">$138.99</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Buy Now</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/google_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">Google Pixel 2</h1>
+                    <p class="hidden-xs">
+                      The latest Qualcomm Snapdragon 835 processor |
+                      Water-resistant metal unibody | Up to 7 hours of battery.
+                    </p>
+                    <p class="slider-price">$ 938.10</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Download Free Template</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_3.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/apple_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">iphone 8 plus</h1>
+                    <p class="hidden-xs">
+                      5.5 inch Retina HD Display | 12MP wide-angle cameras
+                      <br />
+                      | 64 GB &amp; 256 GB ROM Memory
+                    </p>
+                    <p class="slider-price">$759.64</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Download Now</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item cloned" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/mi_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">Red Mi <span>Y1</span></h1>
+                    <p class="hidden-xs">
+                      LED Selfie-light | Fingerprint sensor | Dedicated microSD
+                      card slot Snapdragon 435 octa-core processor
+                    </p>
+                    <p class="slider-price">$138.99</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Buy Now</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="owl-item cloned" style="width: 2381px">
+          <div class="item">
+            <div class="slider-img">
+              <img
+                src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+                alt=""
+              />
+            </div>
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
+                  <div class="slider-captions">
+                    <div class="brand-img">
+                      <img src="./images/google_logo.png" alt="" />
+                    </div>
+                    <h1 class="slider-title">Google Pixel 2</h1>
+                    <p class="hidden-xs">
+                      The latest Qualcomm Snapdragon 835 processor |
+                      Water-resistant metal unibody | Up to 7 hours of battery.
+                    </p>
+                    <p class="slider-price">$ 938.10</p>
+                    <a href="#" class="btn btn-primary btn-lg hidden-xs"
+                      >Download Free Template</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="owl-nav">
+      <div class="owl-prev"><i class="fa fa-angle-left"></i></div>
+      <div class="owl-next"><i class="fa fa-angle-right"></i></div>
+    </div>
+    <div class="owl-dots">
+      <div class="owl-dot active"><span></span></div>
+      <div class="owl-dot"><span></span></div>
+      <div class="owl-dot"><span></span></div>
+    </div>
+  </div>
+</div>
+<!-- /. slide-->
