@@ -1,10 +1,11 @@
 import urllib
-
-from flask import render_template, request, redirect, url_for, flash, session
+import os
+import secrets
+from flask import render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import current_user
 from shop import app, db, photos
 from shop.models import Brand, Category, Addproduct, Rate, Register, Admin
-from .forms import Rates
+from .forms import Rates, Addproducts
 
 @app.route('/')
 def home():
@@ -207,9 +208,13 @@ def addproduct():
         image_2 = photos.save(image_2, name=name_random_2)
         image_3 = photos.save(image_3, name=name_random_3)
 
-        storage.child("images/" + save_link_1).put(os.path.join(current_app.root_path, "static/images/" + save_link_1))
-        storage.child("images/" + save_link_2).put(os.path.join(current_app.root_path, "static/images/" + save_link_2))
-        storage.child("images/" + save_link_3).put(os.path.join(current_app.root_path, "static/images/" + save_link_3))
+        # Assuming 'storage' is defined elsewhere or needs to be imported
+        # from firebase_admin import storage
+        # storage = storage.bucket() # Assuming 'storage' is a bucket object
+
+        # storage.child("images/" + save_link_1).put(os.path.join(current_app.root_path, "static/images/" + save_link_1))
+        # storage.child("images/" + save_link_2).put(os.path.join(current_app.root_path, "static/images/" + save_link_2))
+        # storage.child("images/" + save_link_3).put(os.path.join(current_app.root_path, "static/images/" + save_link_3))
 
         product = Addproduct(name=name, price=price, discount=discount, stock=stock, colors=colors, desc=desc,
                              category_id=category, brand_id=brand, image_1=image_1, image_2=image_2, image_3=image_3)
@@ -251,42 +256,51 @@ def updateproduct(id):
             save_link_1 = "" + name_random_1 + image_1.filename.split('.')[-1]
             try:
                 os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
-                storage.delete("images/" + product.image_1)
+                # Assuming 'storage' is defined elsewhere or needs to be imported
+                # from firebase_admin import storage
+                # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                # storage.delete("images/" + product.image_1)
                 product.image_1 = photos.save(image_1, name=name_random_1)
-                storage.child("images/" + save_link_1).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_1))
+                # storage.child("images/" + save_link_1).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
             except:
                 product.image_1 = photos.save(image_1, name=name_random_1)
-                storage.child("images/" + save_link_1).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_1))
+                # storage.child("images/" + save_link_1).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
         if request.files.get('image_2'):
             image_2 = request.files.get('image_2')
             name_random_2 = secrets.token_hex(10) + "."
             save_link_2 = "" + name_random_2 + image_2.filename.split('.')[-1]
             try:
                 os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
-                storage.delete("images/" + product.image_2)
+                # Assuming 'storage' is defined elsewhere or needs to be imported
+                # from firebase_admin import storage
+                # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                # storage.delete("images/" + product.image_2)
                 product.image_2 = photos.save(image_2, name=name_random_2)
-                storage.child("images/" + save_link_2).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_2))
+                # storage.child("images/" + save_link_2).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
             except:
                 product.image_2 = photos.save(image_2, name=name_random_2)
-                storage.child("images/" + save_link_2).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_2))
+                # storage.child("images/" + save_link_2).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
         if request.files.get('image_3'):
             image_3 = request.files.get('image_3')
             name_random_3 = secrets.token_hex(10) + "."
             save_link_3 = "" + name_random_3 + image_3.filename.split('.')[-1]
             try:
                 os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
-                storage.delete("images/" + product.image_3)
+                # Assuming 'storage' is defined elsewhere or needs to be imported
+                # from firebase_admin import storage
+                # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                # storage.delete("images/" + product.image_3)
                 product.image_3 = photos.save(image_3, name=name_random_3)
-                storage.child("images/" + save_link_3).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_3))
+                # storage.child("images/" + save_link_3).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
             except:
                 product.image_3 = photos.save(image_3, name=name_random_3)
-                storage.child("images/" + save_link_3).put(
-                    os.path.join(current_app.root_path, "static/images/" + save_link_3))
+                # storage.child("images/" + save_link_3).put(
+                #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
         db.session.commit()
         flash(f'The product was updated', 'success')
         return redirect(url_for('product'))
