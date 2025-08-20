@@ -55,10 +55,10 @@
                                 </select>
                             </div>
                             {% if product.discount %}
-                            <div class="price">${{"%.2f"|format(product.price- discount)}}<span>${{"%.2f"|format(product.price)}}</span>
+                            <div class="price">{{(product.price- discount) | vnd}}<span>{{product.price | vnd}}</span>
                             </div>
                             {% else %}
-                            <div class="price">${{"%.2f"|format(product.price)}}
+                            <div class="price">{{product.price | vnd}}
                             </div>
                             {% endif %}
                             <label>Số lượng: </label>
@@ -83,18 +83,18 @@
             <div class="pricedetails">
                 <div class="col-md-4 col-md-offset-8" style="margin-left: 74.666667%">
                     <table style="margin-top: 20px;margin-bottom: 12px; ">
-                        <h6 style="font-size: 25px;">Price Details</h6>
+                        <h6 style="font-size: 25px;">Chi Tiết Giá</h6>
                         <tr>
                             <td>Giá gốc</td>
-                            <td style="text-align:right">{{"%.2f"|format(subtotals)}}</td>
+                            <td style="text-align:right">{{subtotals | vnd}}</td>
                         </tr>
                         <tr>
                             <td>Discount</td>
-                            <td style="text-align:right">{{"%.2f"|format(discounttotal)}}</td>
+                            <td style="text-align:right">{{discounttotal | vnd}}</td>
                         </tr>
                         <tr style="border-top: 1px solid #333">
                             <td>TOTAL</td>
-                            <td style="text-align:right">{{"%.2f"|format(subtotals-discounttotal)}}</td>
+                            <td style="text-align:right">{{(subtotals-discounttotal) | vnd}}</td>
                         </tr>
                     </table>
                     <center><a href="{{ url_for('get_order') }}" class="btn btn-2" style="padding: 3px 26px; margin-bottom: 20px;">Checkout</a>

@@ -56,10 +56,9 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">${{ product.price -
-                                                        product.price*product.discount/100 }}</a>
+                                                    <a href="#" class="product-price">{{ (product.price - product.price*product.discount/100) | vnd }}</a>
                                                     {% if product.discount>0 %}
-                                                    <a href="#" class="discounted-price">${{ product.price }}</a>
+                                                    <a href="#" class="discounted-price">{{ product.price | vnd }}</a>
                                                     {% endif %}
                                                     {% if product.discount >0 %}
                                                     <span class="offer-price">{{product.discount}}%off</span>
@@ -311,10 +310,9 @@
                                     <a href="{{url_for('detail', id = product.id)}}"
                                        class="product-title">{{ product.name }}</a></h5>
                                 <div class="product-meta">
-                                    <a href="#" class="product-price">${{ product.price -
-                                        product.price*product.discount/100 }}</a>
+                                    <a href="#" class="product-price">{{ (product.price - product.price*product.discount/100) | vnd }}</a>
                                     {% if product.discount>0 %}
-                                    <a href="#" class="discounted-price">${{ product.price }}</a>
+                                    <a href="#" class="discounted-price">{{ product.price | vnd }}</a>
                                     {% endif %}
                                 </div>
                                 <div class="shopping-btn">

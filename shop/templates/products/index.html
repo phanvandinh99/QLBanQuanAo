@@ -8,8 +8,8 @@
                 <img src="{{url_for('static', filename='images/' + product.image_1)}}" class="card-img-top" alt="{{product.name}}">
                 <div class="card-body">
                     <h5 class="card-title">{{product.name}}</h5>
-                    <p class="card-text">Price: ${{product.price}}</p>
-                    <a href="#" class="btn btn-primary">View Details</a>
+                    <p class="card-text">Giá: {{product.price | vnd}}</p>
+                    <a href="#" class="btn btn-primary">Chi Tiết</a>
                 </div>
             </div>
         </div>

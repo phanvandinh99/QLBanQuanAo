@@ -35,10 +35,9 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">${{ product.price -
-                                                        product.price*product.discount/100 }}</a>
+                                                    <a href="#" class="product-price">{{ (product.price - product.price*product.discount/100) | vnd }}</a>
                                                     {% if product.discount>0 %}
-                                                    <a href="#" class="discounted-price">${{ product.price }}</a>
+                                                    <a href="#" class="discounted-price">{{ product.price | vnd }}</a>
                                                     {% endif %}
                                                     {% if product.discount >0 %}
                                                     <span class="offer-price" style="scolor: green;
@@ -135,10 +134,9 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">${{ product.price -
-                                                        product.price*product.discount/100 }}</a>
+                                                    <a href="#" class="product-price">{{ (product.price - product.price*product.discount/100) | vnd }}</a>
                                                     {% if product.discount>0 %}
-                                                    <a href="#" class="discounted-price">${{ product.price }}</a>
+                                                    <a href="#" class="discounted-price">{{ product.price | vnd }}</a>
                                                     {% endif %}
                                                     {% if product.discount >0 %}
                                                     <span class="offer-price" style="scolor: green;font-weight: 500;">{{product.discount}}%off</span>
@@ -228,10 +226,9 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">${{ product.price -
-                                                        product.price*product.discount/100 }}</a>
+                                                    <a href="#" class="product-price">{{ (product.price - product.price*product.discount/100) | vnd }}</a>
                                                     {% if product.discount>0 %}
-                                                    <a href="#" class="discounted-price">${{ product.price }}</a>
+                                                    <a href="#" class="discounted-price">{{ product.price | vnd }}</a>
                                                     {% endif %}
                                                     {% if product.discount >0 %}
                                                     <span class="offer-price" style="scolor: green;font-weight: 500;">{{product.discount}}%off</span>

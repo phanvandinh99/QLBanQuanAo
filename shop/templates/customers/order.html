@@ -20,12 +20,12 @@
                         <table class="table table-sm" style="margin-bottom: 0px;">
                             <thead>
                             <th>No</th>
-                            <th>Product Name</th>
-                            <th>Color</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Discount</th>
-                            <th>Subtotal</th>
+                            <th>Sản Phẩm</th>
+                            <th>Màu Sắc</th>
+                            <th>Giá</th>
+                            <th>Số Lượng</th>
+                            <th>Giảm Giá</th>
+                            <th>Tổng Tiền</th>
                             </thead>
                             <tbody>
                             <tr>
@@ -40,7 +40,7 @@
                                     <td>
                                         {{product.color|capitalize}}
                                     </td>
-                                    <td>${{"%.2f"|format(product.price)}}</td>
+                                    <td>{{product.price | vnd}}</td>
                                     <td> {{product.quantity}}</td>
                                     {% if product.discount %}
                                     <td>{{product.discount}} %</td>
@@ -48,7 +48,7 @@
                                     <td></td>
                                     {% endif %}
                                     {% set subtotal = product.quantity|int * product.price|float %}
-                                    <td>${{"%.2f"|format(subtotal - discount|round(1,'floor')) }}</td>
+                                    <td>{{(subtotal - discount|round(1,'floor')) | vnd}}</td>
                                 </form>
                             </tr>
                             {% endfor %}
@@ -56,7 +56,7 @@
                             <tr>
                                 <td colspan="5"></td>
                                 <td>Total:</td>
-                                <td>${{subtotals}}</td>
+                                <td>{{subtotals | vnd}}</td>
                             </tr>
                             </tbody>
                         </table>

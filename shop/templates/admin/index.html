@@ -43,13 +43,13 @@
                                 <thead>
                                 <tr>
                                     <th>Sr</th>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Discount</th>
-                                    <th>Quantity</th>
-                                    <th>Category</th>
-                                    <th>Brand</th>
-                                    <th>Image</th>
+                                    <th>Sản Phẩm</th>
+                                    <th>Giá</th>
+                                    <th>Giảm Giá</th>
+                                    <th>Số Lượng</th>
+                                    <th>Loại</th>
+                                    <th>Thương Hiệu</th>
+                                    <th>Ảnh</th>
                                     <th></th>
                                     <th></th>
                                 </tr>
@@ -59,7 +59,7 @@
                                 <tr>
                                     <td>{{ loop.index }}</td>
                                     <td>{{product.name}}</td>
-                                    <td>{{product.price}}</td>
+                                    <td>{{product.price | vnd}}</td>
                                     <td>{{product.discount}} %</td>
                                     <td>{{product.stock}}</td>
                                     <td>{{product.category_id}}</td>

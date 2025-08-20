@@ -27,6 +27,15 @@ login_manager.login_view = 'customer_login'
 photos = UploadSet('photos', IMAGES)
 configure_uploads(app, photos)
 
+# Custom filter for VND currency format
+@app.template_filter('vnd')
+def vnd_format(value):
+    """Format number as VND currency"""
+    try:
+        return f"{int(value):,} ₫"
+    except (ValueError, TypeError):
+        return f"{value} ₫"
+
 # Import models and setup login manager
 from shop.models import Register
 
