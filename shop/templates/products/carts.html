@@ -22,10 +22,7 @@
         <div class="card shadow-sm border-0">
           <div class="card-body text-center py-5">
             <div class="mb-4">
-              <i
-                class="fa fa-shopping-cart"
-                style="font-size: 4rem; color: #6c757d"
-              ></i>
+              <i class="fa fa-shopping-cart" style="font-size: 4rem; color: #6c757d"></i>
             </div>
             <h3 class="text-muted mb-3">Giỏ hàng trống</h3>
             <p class="text-muted mb-4">
@@ -43,9 +40,9 @@
     <div class="row">
       <div class="col-lg-8">
         <div class="card shadow border-0 mb-4">
-          <div class="card-header bg-primary text-white border-0 py-3">
+          <div class="card-header text-white border-0 py-3" style="background-color: #0cafe5;">
             <h4 class="mb-0">
-              <i class="fa fa-shopping-cart me-2"></i>Giỏ hàng của bạn
+              <i class="fa fa-shopping-cart me-2"></i> Giỏ hàng của bạn
             </h4>
           </div>
           <div class="card-body p-0">
@@ -56,59 +53,34 @@
                 <!-- Product Image -->
                 <div class="col-md-2 col-sm-3">
                   <div class="product-image-wrapper">
-                    <img
-                      src="{{url_for('static',filename='images/'+ product.image)}}"
-                      alt="{{product.name}}"
-                      class="img-fluid rounded shadow-sm"
-                      style="max-height: 100px; object-fit: cover; width: 100%"
-                    />
+                    <img src="{{url_for('static',filename='images/'+ product.image)}}" alt="{{product.name}}"
+                      class="img-fluid rounded shadow-sm" style="max-height: 100px; object-fit: cover; width: 100%" />
                   </div>
                 </div>
 
                 <!-- Product Details -->
                 <div class="col-md-7 col-sm-9">
                   <div class="product-details">
-                    <h5 class="product-title mb-2">
-                      <a
-                        href="{{url_for('detail', id = key)}}"
-                        class="text-decoration-none text-dark"
-                      >
+                    <h3 class="product-title mb-2">
+                      <a href="{{url_for('detail', id = key)}}" class="text-decoration-none text-dark">
                         {{product.name}}
                       </a>
-                    </h5>
-                    <p class="text-muted mb-2">
-                      <i class="fa fa-tag me-1"></i>{{ product.brand }}
+                    </h3>
+                    <p class="text-muted mb-3">
+                      <i class="fa fa-tag me-1"></i> {{ product.brand }}
                     </p>
 
                     <!-- Color Selection -->
-                    <form
-                      action="{{url_for('updatecart', code=key)}}"
-                      method="post"
-                      class="mb-3"
-                    >
-                      <div
-                        style="display: flex; align-items: center; width: 100%"
-                      >
-                        <div
-                          style="
-                            display: flex;
-                            align-items: center;
-                            flex: 1;
-                            margin-right: 20px;
-                          "
-                        >
-                          <span
-                            class="small text-muted"
-                            style="margin-right: 12px; white-space: nowrap"
-                            >Màu sắc:</span
-                          >
+                    <form action="{{url_for('updatecart', code=key)}}" method="post" class="mb-3">
+                      <div style="display: flex; align-items: center; width: 100%">
+                        <div style="
+                              display: flex;
+                              align-items: center;
+                              margin-right: 25px;
+                            ">
+                          <span class="small text-muted" style="margin-right: 8px; white-space: nowrap">Màu sắc:</span>
                           {% set colors = product.colors.split(',') %}
-                          <select
-                            name="color"
-                            id="color"
-                            class="form-select form-select-sm"
-                            style="flex: 1; min-width: 150px"
-                          >
+                          <select name="color" id="color" class="form-select form-select-sm" style="width: 100px">
                             <option value="{{product.color}}">
                               {{product.color|capitalize}}
                             </option>
@@ -120,54 +92,36 @@
                             {% endfor %}
                           </select>
                         </div>
-                        <div
-                          style="
-                            display: flex;
-                            align-items: center;
-                            flex: 1;
-                            margin-right: 20px;
-                          "
-                        >
-                          <span
-                            class="small text-muted"
-                            style="margin-right: 12px; white-space: nowrap"
-                            >Số lượng:</span
-                          >
-                          <input
-                            type="number"
-                            name="quantity"
-                            min="1"
-                            max="10"
-                            value="{{product.quantity}}"
+                        <div style="
+                              display: flex;
+                              align-items: center;
+                              margin-right: 25px;
+                            ">
+                          <span class="small text-muted" style="margin-right: 8px; white-space: nowrap">Số lượng:</span>
+                          <input type="number" name="quantity" min="1" max="10" value="{{product.quantity}}"
                             class="form-control form-select-sm"
-                            style="flex: 1; min-width: 120px"
-                          />
+                            style="width: 60px; height: 32px; font-size: 0.875rem;" />
                         </div>
-                        <div
-                          style="
-                            display: flex;
-                            align-items: center;
-                            margin-right: 10px;
-                          "
-                        >
-                          <button
-                            class="btn btn-outline-primary btn-sm"
-                            type="submit"
-                            style="height: 38px; width: 38px"
-                          >
-                            <i class="fa fa-refresh"></i>
-                          </button>
-                        </div>
-                        <div style="margin-left: auto">
-                          <a
-                            href="{{url_for('deleteitem', id=key)}}"
-                            class="btn btn-outline-danger btn-sm"
-                            style="height: 38px; width: 38px"
-                            onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')"
-                          >
-                            <i class="fa fa-trash"></i>
-                          </a>
-                        </div>
+                                                 <div style="
+                               display: flex;
+                               align-items: center;
+                               margin-right: 15px;
+                             ">
+                           <button
+                             class="btn btn-outline-primary btn-sm"
+                             type="submit" 
+                             style="height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                             <i class="fa fa-refresh" style="margin: 0;"></i>
+                           </button>
+                         </div>
+                         <div style="margin-left: auto;">
+                           <a href="{{url_for('deleteitem', id=key)}}"
+                             class="btn btn-outline-danger btn-sm"
+                             style="height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0;"
+                             onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
+                             <i class="fa fa-trash" style="margin: 0;"></i>
+                           </a>
+                         </div>
                       </div>
                     </form>
                   </div>
@@ -179,22 +133,19 @@
                     <div class="price-section">
                       {% if product.discount %}
                       <div class="current-price fw-bold text-primary fs-4">
-                        {{(product.price - discount) | vnd}}
+                        Giá bán: {{(product.price - discount) | vnd}}
                       </div>
-                      <div
-                        class="original-price text-muted text-decoration-line-through small"
-                      >
-                        {{product.price | vnd}}
+                      <div class="original-price text-muted text-decoration-line-through small">
+                        Giá gốc: {{product.price | vnd}}
                       </div>
-                      <span class="badge bg-danger ms-2"
-                        >-{{product.discount}}%</span
-                      >
+                      <span class="badge bg-danger ms-2">-{{product.discount}}%</span>
                       {% else %}
                       <div class="current-price fw-bold text-primary fs-4">
                         {{product.price | vnd}}
                       </div>
                       {% endif %}
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -205,12 +156,9 @@
 
         <!-- Clear Cart Button -->
         <div class="text-end mb-4">
-          <a
-            href="{{url_for('clearcart')}}"
-            class="btn btn-outline-danger"
-            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')"
-          >
-            <i class="fa fa-trash me-2"></i>Xóa tất cả
+          <a href="{{url_for('clearcart')}}" class="btn btn-outline-danger"
+            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')">
+            <i class="fa fa-trash me-2"></i>  Xóa tất cả
           </a>
         </div>
       </div>
@@ -218,38 +166,27 @@
       <!-- Order Summary -->
       <div class="col-lg-4">
         <div class="card shadow border-0 sticky-top" style="top: 20px">
-          <div class="card-header bg-success text-white py-3">
-            <h5 class="mb-0">
-              <i class="fa fa-list-alt me-2"></i>Tổng đơn hàng
-            </h5>
+          <div class="card-header text-white py-3" style="background-color: #0cafe5;">
+            <h4 class="mb-0">
+              <i class="fa fa-list-alt me-2"></i> Tổng đơn hàng
+            </h4>
           </div>
           <div class="card-body p-4">
-            <div
-              class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded"
-            >
+            <div class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded">
               <span class="text-muted">Tạm tính:</span>
               <span class="fw-bold">{{subtotals | vnd}}</span>
             </div>
-            <div
-              class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded"
-            >
+            <div class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded">
               <span class="text-muted">Giảm giá:</span>
               <span class="text-success fw-bold">-{{discounttotal | vnd}}</span>
             </div>
             <hr class="my-4" />
-            <div
-              class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded"
-            >
+            <div class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded">
               <span class="fw-bold fs-6">Tổng cộng:</span>
-              <span class="fw-bold fs-6"
-                >{{(subtotals-discounttotal) | vnd}}</span
-              >
+              <span class="fw-bold fs-6">{{(subtotals-discounttotal) | vnd}}</span>
             </div>
 
-            <a
-              href="{{ url_for('get_order') }}"
-              class="btn btn-success w-100 mb-3"
-            >
+            <a href="{{ url_for('get_order') }}" class="btn btn-success w-100 mb-3">
               <i class="fa fa-credit-card me-2"></i>Tiến hành thanh toán
             </a>
 
@@ -297,7 +234,7 @@
   }
 
   .product-title {
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     font-weight: 600;
   }
 
