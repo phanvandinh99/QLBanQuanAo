@@ -245,7 +245,7 @@
               <i class="fa fa-credit-card me-2"></i> Thanh toán
             </h4>
           </div>
-          <div class="card-body p-4">
+          <div class="card-body p-4" style="padding-left: 25px !important; padding-right: 25px !important;">
             <!-- Order Summary -->
             <div class="mb-4">
               <div
@@ -271,59 +271,60 @@
 
             <!-- Customer Information -->
             <div class="mb-4">
-              <h5 class="mb-3">Thông tin đặt hàng</h5>
               
-              <div class="mb-3">
-                <label class="form-label fw-bold">Họ tên:</label>
-                <input type="text" class="form-control" id="customer_name" 
-                       value="{{current_user.username if current_user.is_authenticated else ''}}" readonly>
-              </div>
+                             <div class="mb-2 d-flex align-items-center">
+                 <label class="form-label fw-bold me-2" style="font-size: 13px; margin-bottom: 0; min-width: 80px;">Họ tên:</label>
+                 <input type="text" class="form-control" id="customer_name" 
+                        value="{{current_user.username if current_user.is_authenticated else ''}}" readonly>
+               </div>
+               
+               <div class="mb-2 d-flex align-items-center">
+                 <label class="form-label fw-bold me-2" style="font-size: 13px; margin-bottom: 0; min-width: 80px;">Email:</label>
+                 <input type="email" class="form-control" id="customer_email" 
+                        value="{{current_user.email if current_user.is_authenticated else ''}}" readonly>
+               </div>
+               
+               <div class="mb-2 d-flex align-items-center">
+                 <label class="form-label fw-bold me-2" style="font-size: 13px; margin-bottom: 0; min-width: 80px;">Số điện thoại:</label>
+                 <input type="text" class="form-control" id="customer_phone" 
+                        value="{{current_user.phone_number if current_user.is_authenticated else ''}}" readonly>
+               </div>
               
-              <div class="mb-3">
-                <label class="form-label fw-bold">Email:</label>
-                <input type="email" class="form-control" id="customer_email" 
-                       value="{{current_user.email if current_user.is_authenticated else ''}}" readonly>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label fw-bold">Số điện thoại:</label>
-                <input type="text" class="form-control" id="customer_phone" 
-                       value="{{current_user.phone_number if current_user.is_authenticated else ''}}" readonly>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label fw-bold">Địa chỉ giao hàng: <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="customer_address" 
-                       placeholder="Nhập địa chỉ giao hàng" required>
-              </div>
+                             <div class="mb-3">
+                 <label class="form-label fw-bold" style="font-size: 14px; margin-bottom: 4px;">Địa chỉ giao hàng: <span class="text-danger">*</span></label>
+                 <textarea class="form-control" id="customer_address" 
+                           placeholder="Nhập địa chỉ giao hàng" required
+                           style="min-height: 50px; resize: vertical;"></textarea>
+               </div>
             </div>
 
-            <!-- Payment Methods -->
-            <div class="mb-4">
-              <h5 class="mb-3">Phương thức thanh toán</h5>
-              
-              <div class="mb-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
-                  <label class="form-check-label" for="cod">
-                    <i class="fa fa-money me-2"></i>Thanh toán khi nhận hàng
-                  </label>
-                </div>
-              </div>
+                         <!-- Payment Methods -->
+             <div class="mb-4">
+               <h5 class="mb-3">Phương thức thanh toán</h5>
+               
+               <div class="mb-2">
+                 <div class="form-check">
+                   <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
+                   <label class="form-check-label" for="cod" style="font-size: 14px;">
+                     <i class="fa fa-money me-2"></i>Thanh toán khi nhận hàng
+                   </label>
+                 </div>
+               </div>
 
-              <div class="mb-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="payment_method" id="vnpay" value="vnpay">
-                  <label class="form-check-label" for="vnpay">
-                    <i class="fa fa-credit-card me-2"></i>Thanh toán VNPAY
-                  </label>
-                </div>
-              </div>
-            </div>
+               <div class="mb-2">
+                 <div class="form-check">
+                   <input class="form-check-input" type="radio" name="payment_method" id="vnpay" value="vnpay">
+                   <label class="form-check-label" for="vnpay" style="font-size: 14px;">
+                     <i class="fa fa-credit-card me-2"></i>Thanh toán VNPAY
+                   </label>
+                 </div>
+               </div>
+             </div>
 
             <!-- Place Order Button -->
-            <div class="mb-4">
-              <button class="btn btn-success w-100" onclick="placeOrder()">
+            <div class="mb-4 text-center">
+              <button class="btn btn-success" onclick="placeOrder()" 
+                      style="width: auto; min-width: 200px; padding: 10px 30px;">
                 <i class="fa fa-credit-card me-2"></i>Đặt hàng
               </button>
             </div>
@@ -442,6 +443,15 @@
   .form-control {
     border-radius: 6px;
     border: 1px solid #dee2e6;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  /* Smaller input fields for customer info */
+  #customer_name, #customer_email, #customer_phone {
+    padding: 4px 8px;
+    font-size: 13px;
+    height: 32px;
   }
 
   .form-select:focus,
