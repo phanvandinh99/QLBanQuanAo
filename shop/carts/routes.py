@@ -1,8 +1,9 @@
 import secrets
+import json
 from flask import render_template, session, request, redirect, url_for, flash
 from flask_login import current_user
 from shop import app, db
-from shop.models import CustomerOrder, Category, Brand, Addproduct
+from shop.models import CustomerOrder, Category, Brand, Addproduct, Register
 
 
 def brands():
@@ -47,17 +48,19 @@ def AddCart():
                                     CustomerOrder.customer_id == current_user.id).filter(
                                     CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
                                 for order in orders:
-                                    if product_id in order.orders:
-                                        customer_order = CustomerOrder.query.get_or_404(order.id)
-                                        customer_order.orders = {product_id: session['Shoppingcart'][product_id]}
-                                        db.session.commit()
+                                    if order.orders:
+                                        order_data = json.loads(order.orders)
+                                        if product_id in order_data:
+                                            customer_order = CustomerOrder.query.get_or_404(order.id)
+                                            customer_order.orders = json.dumps({product_id: session['Shoppingcart'][product_id]})
+                                            db.session.commit()
                 else:
                     session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
                     if current_user.is_authenticated:
                         customer_id = current_user.id
                         invoice = secrets.token_hex(5)
                         order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                              orders={product_id: session['Shoppingcart'][product_id]},
+                                              orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
                                               status=None)
                         db.session.add(order)
                         db.session.commit()
@@ -68,7 +71,7 @@ def AddCart():
                     customer_id = current_user.id
                     invoice = secrets.token_hex(5)
                     order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                          orders={product_id: session['Shoppingcart'][product_id]},
+                                          orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
                                           status=None)
                     db.session.add(order)
                     db.session.commit()
@@ -86,14 +89,34 @@ def getCart():
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return render_template('products/carts.html', empty=True, brands=brands(),
                                categories=categories())
+    
+    # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
         discounttotal += (product['discount'] / 100) * float(product['price']) * int(product['quantity'])
         subtotals += float(product['price']) * int(product['quantity'])
-    return render_template('products/carts.html', discounttotal=discounttotal, subtotals=subtotals, brands=brands(),
-                           categories=categories())
-    # return render_template('products/carts.html', brands=brands(), categories=categories())
+    
+    # Get customer info if authenticated
+    customer = None
+    invoices = []
+    if current_user.is_authenticated:
+        customer = current_user
+        # Get pending orders for this customer
+        orders = CustomerOrder.query.filter(
+            CustomerOrder.customer_id == current_user.id
+        ).filter(
+            CustomerOrder.status == None
+        ).order_by(CustomerOrder.id.desc()).all()
+        invoices = [order.invoice for order in orders]
+    
+    return render_template('products/carts.html', 
+                         discounttotal=discounttotal, 
+                         subtotals=subtotals, 
+                         customer=customer,
+                         invoices=invoices,
+                         brands=brands(),
+                         categories=categories())
 
 
 @app.route('/updatecart/<int:code>', methods=['POST'])
@@ -114,10 +137,12 @@ def updatecart(code):
                             CustomerOrder.customer_id == current_user.id).filter(
                             CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
                         for order in orders:
-                            if key in order.orders:
-                                customer_order = CustomerOrder.query.get_or_404(order.id)
-                                customer_order.orders = {key: session['Shoppingcart'][key]}
-                                db.session.commit()
+                            if order.orders:
+                                order_data = json.loads(order.orders)
+                                if key in order_data:
+                                    customer_order = CustomerOrder.query.get_or_404(order.id)
+                                    customer_order.orders = json.dumps({key: session['Shoppingcart'][key]})
+                                    db.session.commit()
                     return redirect(url_for('getCart'))
         except Exception as e:
             print(e)
@@ -133,12 +158,14 @@ def deleteitem(id):
             CustomerOrder.customer_id == current_user.id).filter(
             CustomerOrder.status == None).all()
         for order in orders:
-            for key, item in order.orders.items():
-                if int(key) == id:
-                    customer = CustomerOrder.query.get_or_404(order.id)
-                    db.session.delete(customer)
-                    db.session.commit()
-                    break
+            if order.orders:
+                order_data = json.loads(order.orders)
+                for key, item in order_data.items():
+                    if int(key) == id:
+                        customer = CustomerOrder.query.get_or_404(order.id)
+                        db.session.delete(customer)
+                        db.session.commit()
+                        break
         session.modified = True
         for key, item in session['Shoppingcart'].items():
             if int(key) == id:
@@ -169,3 +196,40 @@ def cart():
     if 'Shoppingcart' not in session:
         return redirect(request.referrer)
     return render_template('cart.html')
+
+
+@app.route('/vnpay_payment', methods=['POST'])
+def vnpay_payment():
+    if not current_user.is_authenticated:
+        flash('Vui lòng đăng nhập để thanh toán', 'danger')
+        return redirect(url_for('customer_login'))
+    
+    try:
+        amount = request.form.get('amount')
+        customer_name = request.form.get('CustomerName')
+        customer_email = request.form.get('CustomerEmail')
+        customer_phone = request.form.get('CustomerPhone')
+        customer_address = request.form.get('CustomerAddress')
+        
+        # Here you would integrate with VNPAY API
+        # For now, we'll just create the order and redirect to a success page
+        
+        # Create order
+        customer_id = current_user.id
+        invoice = secrets.token_hex(5)
+        order = CustomerOrder(invoice=invoice, customer_id=customer_id,
+                              orders=json.dumps(session['Shoppingcart']),
+                              status="Pending", address=customer_address)
+        db.session.add(order)
+        db.session.commit()
+        
+        # Clear cart
+        session.pop('Shoppingcart', None)
+        
+        flash('Đơn hàng đã được tạo thành công! Vui lòng thanh toán qua VNPAY.', 'success')
+        return redirect(url_for('payment_history'))
+        
+    except Exception as e:
+        print("VNPAY Payment Error:", e)
+        flash('Có lỗi xảy ra khi xử lý thanh toán VNPAY', 'danger')
+        return redirect(url_for('getCart'))

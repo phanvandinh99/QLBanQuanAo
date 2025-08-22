@@ -9,7 +9,7 @@
             <li class="breadcrumb-item">
               <a href="{{url_for('home')}}">Trang chủ</a>
             </li>
-            <li class="breadcrumb-item active" aria-current="page">Giỏ hàng</li>
+            <li class="breadcrumb-item active" aria-current="page">Giỏ hàng & Thanh toán</li>
           </ol>
         </nav>
       </div>
@@ -234,7 +234,7 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
+      <!-- Order Summary & Payment -->
       <div class="col-lg-4">
         <div class="card shadow border-0 sticky-top" style="top: 20px">
           <div
@@ -242,41 +242,94 @@
             style="background-color: #0cafe5"
           >
             <h4 class="mb-0">
-              <i class="fa fa-list-alt me-2"></i> Tổng đơn hàng
+              <i class="fa fa-credit-card me-2"></i> Thanh toán
             </h4>
           </div>
           <div class="card-body p-4">
-            <div
-              class="summary-item d-flex justify-content-between mb-2 p-3 bg-light rounded"
-            >
-              <span class="text-muted">Tạm tính:</span>
-              <span class="fw-bold">{{subtotals | vnd}}</span>
-            </div>
-            <div
-              class="summary-item d-flex justify-content-between mb-3 p-3 bg-light rounded"
-            >
-              <span class="text-muted">Giảm giá:</span>
-              <span class="text-success fw-bold">-{{discounttotal | vnd}}</span>
-            </div>
-
-            <div
-              class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded"
-            >
-              <span class="fw-bold">Tổng cộng:</span>
-              <span class="fw-bold">{{(subtotals-discounttotal) | vnd}}</span>
-            </div>
-
-            <div class="text-center mb-4" style="margin-top: 1rem">
-              <a
-                href="{{ url_for('get_order') }}"
-                class="btn btn-success w-100"
-                style="font-size: 0.9rem; padding: 12px 16px"
+            <!-- Order Summary -->
+            <div class="mb-4">
+              <div
+                class="summary-item d-flex justify-content-between mb-2 p-3 bg-light rounded"
               >
-                <i class="fa fa-credit-card me-2"></i>Tiến hành thanh toán
-              </a>
+                <span class="text-muted">Tạm tính:</span>
+                <span class="fw-bold">{{subtotals | vnd}}</span>
+              </div>
+              <div
+                class="summary-item d-flex justify-content-between mb-3 p-3 bg-light rounded"
+              >
+                <span class="text-muted">Giảm giá:</span>
+                <span class="text-success fw-bold">-{{discounttotal | vnd}}</span>
+              </div>
+
+              <div
+                class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded"
+              >
+                <span class="fw-bold">Tổng cộng:</span>
+                <span class="fw-bold">{{(subtotals-discounttotal) | vnd}}</span>
+              </div>
             </div>
 
-            <div class="text-center" style="margin-top: 1rem">
+            <!-- Customer Information -->
+            <div class="mb-4">
+              <h5 class="mb-3">Thông tin đặt hàng</h5>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Họ tên:</label>
+                <input type="text" class="form-control" id="customer_name" 
+                       value="{{current_user.username if current_user.is_authenticated else ''}}" readonly>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Email:</label>
+                <input type="email" class="form-control" id="customer_email" 
+                       value="{{current_user.email if current_user.is_authenticated else ''}}" readonly>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Số điện thoại:</label>
+                <input type="text" class="form-control" id="customer_phone" 
+                       value="{{current_user.phone_number if current_user.is_authenticated else ''}}" readonly>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold">Địa chỉ giao hàng: <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="customer_address" 
+                       placeholder="Nhập địa chỉ giao hàng" required>
+              </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="mb-4">
+              <h5 class="mb-3">Phương thức thanh toán</h5>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
+                  <label class="form-check-label" for="cod">
+                    <i class="fa fa-money me-2"></i>Thanh toán khi nhận hàng
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="payment_method" id="vnpay" value="vnpay">
+                  <label class="form-check-label" for="vnpay">
+                    <i class="fa fa-credit-card me-2"></i>Thanh toán VNPAY
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Place Order Button -->
+            <div class="mb-4">
+              <button class="btn btn-success w-100" onclick="placeOrder()">
+                <i class="fa fa-credit-card me-2"></i>Đặt hàng
+              </button>
+            </div>
+
+            <!-- Continue Shopping -->
+            <div class="text-center">
               <a
                 href="{{url_for('home')}}"
                 class="text-decoration-none text-muted"
@@ -288,6 +341,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden form for order submission -->
+    <form id="orderForm" action="{{ url_for('submit_order') }}" method="POST" style="display: none;">
+      <input type="hidden" name="CustomerName" id="form_customer_name">
+      <input type="hidden" name="CustomerEmail" id="form_customer_email">
+      <input type="hidden" name="CustomerPhone" id="form_customer_phone">
+      <input type="hidden" name="CustomerAddress" id="form_customer_address">
+      <input type="hidden" name="payment_method" id="form_payment_method">
+      <input type="hidden" name="invoice_customer" value="{{','.join(invoices) if invoices else ''}}">
+    </form>
+
+    <!-- Hidden form for VNPAY payment -->
+    <form id="vnpayForm" action="{{ url_for('vnpay_payment') }}" method="POST" style="display: none;">
+      <input type="hidden" name="CustomerName" id="vnpay_customer_name">
+      <input type="hidden" name="CustomerEmail" id="vnpay_customer_email">
+      <input type="hidden" name="CustomerPhone" id="vnpay_customer_phone">
+      <input type="hidden" name="CustomerAddress" id="vnpay_customer_address">
+      <input type="hidden" name="amount" value="{{(subtotals-discounttotal)}}">
+    </form>
     {% endif %}
   </div>
 </div>
@@ -447,24 +519,82 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    border: none;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    transition: all 0.3s ease;
+  .form-check-input:checked {
+    background-color: #0cafe5;
+    border-color: #0cafe5;
   }
 
-  .btn-success:hover {
-    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+  .form-check-label {
+    cursor: pointer;
+    font-weight: 500;
   }
 
-  .card-body {
-    padding: 1.5rem !important;
+  .form-check-label:hover {
+    color: #0cafe5;
   }
 </style>
+
+<script>
+  function placeOrder() {
+    // Get customer information
+    var customerName = document.getElementById('customer_name').value;
+    var customerEmail = document.getElementById('customer_email').value;
+    var customerPhone = document.getElementById('customer_phone').value;
+    var customerAddress = document.getElementById('customer_address').value;
+    
+    // Get payment method
+    var paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+    
+    // Validate required fields
+    if (!customerAddress.trim()) {
+      alert('Vui lòng nhập địa chỉ giao hàng!');
+      document.getElementById('customer_address').focus();
+      return;
+    }
+    
+    // Confirm order
+    var confirmMessage = "Bạn có chắc chắn muốn đặt hàng?\n\n";
+    confirmMessage += "Thông tin đặt hàng:\n";
+    confirmMessage += "- Họ tên: " + customerName + "\n";
+    confirmMessage += "- Email: " + customerEmail + "\n";
+    confirmMessage += "- Số điện thoại: " + customerPhone + "\n";
+    confirmMessage += "- Địa chỉ: " + customerAddress + "\n";
+    confirmMessage += "- Phương thức thanh toán: " + (paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'Thanh toán VNPAY');
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    // Fill hidden forms
+    document.getElementById('form_customer_name').value = customerName;
+    document.getElementById('form_customer_email').value = customerEmail;
+    document.getElementById('form_customer_phone').value = customerPhone;
+    document.getElementById('form_customer_address').value = customerAddress;
+    document.getElementById('form_payment_method').value = paymentMethod;
+    
+    document.getElementById('vnpay_customer_name').value = customerName;
+    document.getElementById('vnpay_customer_email').value = customerEmail;
+    document.getElementById('vnpay_customer_phone').value = customerPhone;
+    document.getElementById('vnpay_customer_address').value = customerAddress;
+    
+    // Submit based on payment method
+    if (paymentMethod === 'cod') {
+      document.getElementById('orderForm').submit();
+    } else if (paymentMethod === 'vnpay') {
+      document.getElementById('vnpayForm').submit();
+    }
+  }
+  
+  // Add click handlers for radio buttons
+  document.addEventListener('DOMContentLoaded', function() {
+    var radioButtons = document.querySelectorAll('input[name="payment_method"]');
+    radioButtons.forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        // You can add any additional logic here when payment method changes
+        console.log('Payment method changed to:', this.value);
+      });
+    });
+  });
+</script>
 
 {% include 'footer.html' %} {% endblock content%}
