@@ -79,7 +79,7 @@
                                 </div>
                             </div><!-- /.card -->
                             <div class="card-footer">
-                                <button type="submit" class="btn btn-primary">Add a product</button>
+                                <button type="submit" class="btn btn-primary" onclick="return validateForm()">Add a product</button>
                             </div>
                         </form>
                         <!-- /.form-box -->
@@ -102,6 +102,35 @@ function myFunction() {
      }
      {% endfor %}
      $("#brand").html(newoptions);
+}
+
+function validateForm() {
+    var price = parseFloat(document.getElementById('price').value);
+    var discount = parseInt(document.getElementById('discount').value) || 0;
+    var stock = parseInt(document.getElementById('stock').value);
+    
+    // Validate price
+    if (price <= 0) {
+        alert('Giá không hợp lệ');
+        document.getElementById('price').focus();
+        return false;
+    }
+    
+    // Validate discount
+    if (discount < 0 || discount > 100) {
+        alert('Giản giá từ 0 đến 100%');
+        document.getElementById('discount').focus();
+        return false;
+    }
+    
+    // Validate stock
+    if (stock < 0) {
+        alert('Số lượng không hợp lệ');
+        document.getElementById('stock').focus();
+        return false;
+    }
+    
+    return true;
 }
 </script>
 {% endblock content %}

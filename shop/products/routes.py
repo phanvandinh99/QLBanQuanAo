@@ -181,14 +181,40 @@ def addproduct():
     brands = Brand.query.all()
     categories = Category.query.all()
     if request.method == "POST":
+        # Validate form data
+        if not form.validate():
+            flash('Please check the form and try again', 'danger')
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                   categories=categories, user=user[0])
+        
         name = form.name.data
         price = form.price.data
-        discount = form.discount.data
+        discount = form.discount.data or 0
         stock = form.stock.data
         colors = form.colors.data
         desc = form.description.data
         brand = request.form.get('brand')
         category = request.form.get('category')
+        
+        # Additional server-side validation
+        if price <= 0:
+            flash('Price must be greater than 0', 'danger')
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                   categories=categories, user=user[0])
+        
+        if discount < 0 or discount > 100:
+            flash('Discount must be between 0 and 100', 'danger')
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                   categories=categories, user=user[0])
+        
+        if stock < 0:
+            flash('Stock must be greater than or equal to 0', 'danger')
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                   categories=categories, user=user[0])
 
         image_1 = request.files.get('image_1')
         image_2 = request.files.get('image_2')
