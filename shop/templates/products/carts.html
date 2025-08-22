@@ -1,154 +1,400 @@
 {% extends "base.html" %} {%block content%} {% include 'header.html' %}
 <div class="single-page">
   <div class="container">
+    <!-- Breadcrumb -->
     <div class="row">
       <div class="col-lg-12">
-        <ul class="breadcrumb">
-          <li><a href="{{url_for('home')}}">Home</a></li>
-          <li><a href="{{url_for('getCart')}}">Cart</a></li>
-        </ul>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="{{url_for('home')}}">Trang chủ</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Giỏ hàng</li>
+          </ol>
+        </nav>
       </div>
     </div>
+
     {% if empty %}
-    <div class="row">
-      <div class="product well">
-        <div class="row">
-          <h3 style="text-align: center; color: #7d8f8f">Empty</h3>
-          <div class="col text-center">
-            <a
-              href="{{url_for('home')}}"
-              class="btn btn-2"
-              style="padding: 3px 26px"
-              >Go to market</a
-            >
+    <!-- Empty Cart -->
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+          <div class="card-body text-center py-5">
+            <div class="mb-4">
+              <i
+                class="fa fa-shopping-cart"
+                style="font-size: 4rem; color: #6c757d"
+              ></i>
+            </div>
+            <h3 class="text-muted mb-3">Giỏ hàng trống</h3>
+            <p class="text-muted mb-4">
+              Bạn chưa có sản phẩm nào trong giỏ hàng
+            </p>
+            <a href="{{url_for('home')}}" class="btn btn-primary btn-lg">
+              <i class="fa fa-shopping-bag me-2"></i>Tiếp tục mua sắm
+            </a>
           </div>
         </div>
       </div>
     </div>
     {% else %}
+    <!-- Cart Items -->
     <div class="row">
-      {% for key, product in session['Shoppingcart'].items() %} {% set discount
-      =(product.discount/100) * product.price|float %}
-      <div class="product well">
-        <div class="col-md-3">
-          <div class="image">
-            <img
-              src="{{url_for('static',filename='images/'+ product.image)}}"
-              alt="{{product.name}}"
-            />
+      <div class="col-lg-8">
+        <div class="card shadow border-0 mb-4">
+          <div class="card-header bg-primary text-white border-0 py-3">
+            <h4 class="mb-0">
+              <i class="fa fa-shopping-cart me-2"></i>Giỏ hàng của bạn
+            </h4>
+          </div>
+          <div class="card-body p-0">
+            {% for key, product in session['Shoppingcart'].items() %} {% set
+            discount =(product.discount/100) * product.price|float %}
+            <div class="cart-item border-bottom p-4">
+              <div class="row align-items-center">
+                <!-- Product Image -->
+                <div class="col-md-2 col-sm-3">
+                  <div class="product-image-wrapper">
+                    <img
+                      src="{{url_for('static',filename='images/'+ product.image)}}"
+                      alt="{{product.name}}"
+                      class="img-fluid rounded shadow-sm"
+                      style="max-height: 100px; object-fit: cover; width: 100%"
+                    />
+                  </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="col-md-7 col-sm-9">
+                  <div class="product-details">
+                    <h5 class="product-title mb-2">
+                      <a
+                        href="{{url_for('detail', id = key)}}"
+                        class="text-decoration-none text-dark"
+                      >
+                        {{product.name}}
+                      </a>
+                    </h5>
+                    <p class="text-muted mb-2">
+                      <i class="fa fa-tag me-1"></i>{{ product.brand }}
+                    </p>
+
+                    <!-- Color Selection -->
+                    <form
+                      action="{{url_for('updatecart', code=key)}}"
+                      method="post"
+                      class="mb-3"
+                    >
+                      <div
+                        style="display: flex; align-items: center; width: 100%"
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            flex: 1;
+                            margin-right: 20px;
+                          "
+                        >
+                          <span
+                            class="small text-muted"
+                            style="margin-right: 12px; white-space: nowrap"
+                            >Màu sắc:</span
+                          >
+                          {% set colors = product.colors.split(',') %}
+                          <select
+                            name="color"
+                            id="color"
+                            class="form-select form-select-sm"
+                            style="flex: 1; min-width: 150px"
+                          >
+                            <option value="{{product.color}}">
+                              {{product.color|capitalize}}
+                            </option>
+                            {% for color in colors %} {% set col =
+                            color.split(':') %}
+                            <option value="{{col[0]}}">
+                              {{col[0] | capitalize }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            flex: 1;
+                            margin-right: 20px;
+                          "
+                        >
+                          <span
+                            class="small text-muted"
+                            style="margin-right: 12px; white-space: nowrap"
+                            >Số lượng:</span
+                          >
+                          <input
+                            type="number"
+                            name="quantity"
+                            min="1"
+                            max="10"
+                            value="{{product.quantity}}"
+                            class="form-control form-select-sm"
+                            style="flex: 1; min-width: 120px"
+                          />
+                        </div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            margin-right: 10px;
+                          "
+                        >
+                          <button
+                            class="btn btn-outline-primary btn-sm"
+                            type="submit"
+                            style="height: 38px; width: 38px"
+                          >
+                            <i class="fa fa-refresh"></i>
+                          </button>
+                        </div>
+                        <div style="margin-left: auto">
+                          <a
+                            href="{{url_for('deleteitem', id=key)}}"
+                            class="btn btn-outline-danger btn-sm"
+                            style="height: 38px; width: 38px"
+                            onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')"
+                          >
+                            <i class="fa fa-trash"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Price Display -->
+                <div class="col-md-3 col-sm-12">
+                  <div class="text-end">
+                    <div class="price-section">
+                      {% if product.discount %}
+                      <div class="current-price fw-bold text-primary fs-4">
+                        {{(product.price - discount) | vnd}}
+                      </div>
+                      <div
+                        class="original-price text-muted text-decoration-line-through small"
+                      >
+                        {{product.price | vnd}}
+                      </div>
+                      <span class="badge bg-danger ms-2"
+                        >-{{product.discount}}%</span
+                      >
+                      {% else %}
+                      <div class="current-price fw-bold text-primary fs-4">
+                        {{product.price | vnd}}
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
           </div>
         </div>
-        <div class="col-md-9">
-          <div class="caption">
-            <div class="name">
-              <h3>
-                <a href="{{url_for('detail', id = key)}}">{{product.name}}</a>
-              </h3>
-            </div>
-            <div class="info">
-              <ul>
-                <li>Thương hiệu: {{ product.brand }}</li>
-              </ul>
-            </div>
-            <form action="{{url_for('updatecart', code=key)}}" method="post">
-              <div>
-                {% set colors = product.colors.split(',') %}
-                <label for="color">Màu sắc: </label>
-                <select name="color" id="color">
-                  <option value="{{product.color}}" style="display: none">
-                    {{product.color|capitalize}}
-                  </option>
-                  {% for color in colors %} {% set col = color.split(':') %}
-                  <option value="{{col[0]}}">{{col[0] | capitalize }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              {% if product.discount %}
-              <div class="price">
-                Giá bán: {{(product.price - discount) | vnd}}
-                <span><a class="discounted-price">{{product.price | vnd}}</a></span>
-              </div>
-              {% else %}
-              <div class="price">{{product.price | vnd}}</div>
-              {% endif %}
-              <label>Số lượng: </label>
-              <input
-                type="number"
-                name="quantity"
-                min="1"
-                max="10"
-                value="{{product.quantity}}"
-                size="3"
-              />
-              <button class="btn btn-2" style="padding: 3px 26px">
-                Cập nhật
-              </button>
-            </form>
-            <hr
-              style="
-                border-top: 1px solid #8f6d6d;
-                margin-bottom: 8px;
-                margin-top: 28px;
-              "
-            />
-            <a
-              href="{{url_for('deleteitem', id=key)}}"
-              class="btn btn-default pull-right"
-              style="padding: 4px 26px"
-              >Xóa</a
-            >
-          </div>
+
+        <!-- Clear Cart Button -->
+        <div class="text-end mb-4">
+          <a
+            href="{{url_for('clearcart')}}"
+            class="btn btn-outline-danger"
+            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')"
+          >
+            <i class="fa fa-trash me-2"></i>Xóa tất cả
+          </a>
         </div>
       </div>
-      {% endfor %}
-    </div>
-    <div class="row">
-      <a
-        href="{{url_for('clearcart')}}"
-        class="btn btn-default pull-right"
-        style="margin-right: 40px; padding: 4px 7px; background: #d9534f"
-        >Xóa hết</a
-      >
-    </div>
-    <hr
-      style="
-        border-top: 1px solid #8f6d6d;
-        margin-bottom: 8px;
-        margin-top: 28px;
-      "
-    />
-    <div class="row">
-      <div class="pricedetails">
-        <div class="col-md-4 col-md-offset-8" style="margin-left: 74.666667%">
-          <table style="margin-top: 20px; margin-bottom: 12px">
-            <h6 style="font-size: 25px">Chi Tiết Giá</h6>
-            <tr>
-              <td>Giá gốc</td>
-              <td style="text-align: right">{{subtotals | vnd}}</td>
-            </tr>
-            <tr>
-              <td>Giảm giá</td>
-              <td style="text-align: right">{{discounttotal | vnd}}</td>
-            </tr>
-            <tr style="border-top: 1px solid #333">
-              <td>Tổng tiền</td>
-              <td style="text-align: right">
-                {{(subtotals-discounttotal) | vnd}}
-              </td>
-            </tr>
-          </table>
-          <center>
+
+      <!-- Order Summary -->
+      <div class="col-lg-4">
+        <div class="card shadow border-0 sticky-top" style="top: 20px">
+          <div class="card-header bg-success text-white py-3">
+            <h5 class="mb-0">
+              <i class="fa fa-list-alt me-2"></i>Tổng đơn hàng
+            </h5>
+          </div>
+          <div class="card-body p-4">
+            <div
+              class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded"
+            >
+              <span class="text-muted">Tạm tính:</span>
+              <span class="fw-bold">{{subtotals | vnd}}</span>
+            </div>
+            <div
+              class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded"
+            >
+              <span class="text-muted">Giảm giá:</span>
+              <span class="text-success fw-bold">-{{discounttotal | vnd}}</span>
+            </div>
+            <hr class="my-4" />
+            <div
+              class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded"
+            >
+              <span class="fw-bold fs-6">Tổng cộng:</span>
+              <span class="fw-bold fs-6"
+                >{{(subtotals-discounttotal) | vnd}}</span
+              >
+            </div>
+
             <a
               href="{{ url_for('get_order') }}"
-              class="btn btn-2"
-              style="padding: 3px 26px; margin-bottom: 20px"
-              >Thanh Toán</a
+              class="btn btn-success w-100 mb-3"
             >
-          </center>
+              <i class="fa fa-credit-card me-2"></i>Tiến hành thanh toán
+            </a>
+
+            <div class="text-center mt-3">
+              <a href="{{url_for('home')}}" class="text-decoration-none">
+                <i class="fa fa-arrow-left me-1"></i>Tiếp tục mua sắm
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
     {% endif %}
   </div>
 </div>
+
+<style>
+  .cart-item:hover {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    margin: 2px 0;
+  }
+
+  .product-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .product-image-wrapper img {
+    transition: transform 0.3s ease;
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+  }
+
+  .product-image-wrapper:hover img {
+    transform: scale(1.05);
+  }
+
+  .product-title a:hover {
+    color: #007bff !important;
+  }
+
+  .product-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .summary-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .summary-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-header {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+  }
+
+  .card-header h4,
+  .card-header h5 {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  .form-select,
+  .form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+  }
+
+  .form-select:focus,
+  .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb-item a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .breadcrumb-item.active {
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  .price-section {
+    text-align: right;
+  }
+
+  .current-price {
+    font-size: 1.25rem;
+    color: #28a745 !important;
+  }
+
+  .original-price {
+    font-size: 0.875rem;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .cart-item {
+    border-bottom: 1px solid #e9ecef;
+    padding: 20px;
+  }
+
+  .cart-item:last-child {
+    border-bottom: none;
+  }
+</style>
+
 {% include 'footer.html' %} {% endblock content%}
