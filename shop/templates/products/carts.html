@@ -22,7 +22,10 @@
         <div class="card shadow-sm border-0">
           <div class="card-body text-center py-5">
             <div class="mb-4">
-              <i class="fa fa-shopping-cart" style="font-size: 4rem; color: #6c757d"></i>
+              <i
+                class="fa fa-shopping-cart"
+                style="font-size: 4rem; color: #6c757d"
+              ></i>
             </div>
             <h3 class="text-muted mb-3">Giỏ hàng trống</h3>
             <p class="text-muted mb-4">
@@ -40,7 +43,10 @@
     <div class="row">
       <div class="col-lg-8">
         <div class="card shadow border-0 mb-4">
-          <div class="card-header text-white border-0 py-3" style="background-color: #0cafe5;">
+          <div
+            class="card-header text-white border-0 py-3"
+            style="background-color: #0cafe5"
+          >
             <h4 class="mb-0">
               <i class="fa fa-shopping-cart me-2"></i> Giỏ hàng của bạn
             </h4>
@@ -53,8 +59,12 @@
                 <!-- Product Image -->
                 <div class="col-md-2 col-sm-3">
                   <div class="product-image-wrapper">
-                    <img src="{{url_for('static',filename='images/'+ product.image)}}" alt="{{product.name}}"
-                      class="img-fluid rounded shadow-sm" style="max-height: 100px; object-fit: cover; width: 100%" />
+                    <img
+                      src="{{url_for('static',filename='images/'+ product.image)}}"
+                      alt="{{product.name}}"
+                      class="img-fluid rounded shadow-sm"
+                      style="max-height: 100px; object-fit: cover; width: 100%"
+                    />
                   </div>
                 </div>
 
@@ -62,7 +72,10 @@
                 <div class="col-md-7 col-sm-9">
                   <div class="product-details">
                     <h3 class="product-title mb-2">
-                      <a href="{{url_for('detail', id = key)}}" class="text-decoration-none text-dark">
+                      <a
+                        href="{{url_for('detail', id = key)}}"
+                        class="text-decoration-none text-dark"
+                      >
                         {{product.name}}
                       </a>
                     </h3>
@@ -71,16 +84,33 @@
                     </p>
 
                     <!-- Color Selection -->
-                    <form action="{{url_for('updatecart', code=key)}}" method="post" class="mb-3">
-                      <div style="display: flex; align-items: center; width: 100%">
-                        <div style="
-                              display: flex;
-                              align-items: center;
-                              margin-right: 25px;
-                            ">
-                          <span class="small text-muted" style="margin-right: 8px; white-space: nowrap">Màu sắc:</span>
+                    <form
+                      action="{{url_for('updatecart', code=key)}}"
+                      method="post"
+                      class="mb-3"
+                    >
+                      <div
+                        style="display: flex; align-items: center; width: 100%"
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            margin-right: 25px;
+                          "
+                        >
+                          <span
+                            class="small text-muted"
+                            style="margin-right: 8px; white-space: nowrap"
+                            >Màu sắc:</span
+                          >
                           {% set colors = product.colors.split(',') %}
-                          <select name="color" id="color" class="form-select form-select-sm" style="width: 100px">
+                          <select
+                            name="color"
+                            id="color"
+                            class="form-select form-select-sm"
+                            style="width: 100px"
+                          >
                             <option value="{{product.color}}">
                               {{product.color|capitalize}}
                             </option>
@@ -92,36 +122,71 @@
                             {% endfor %}
                           </select>
                         </div>
-                        <div style="
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            margin-right: 25px;
+                          "
+                        >
+                          <span
+                            class="small text-muted"
+                            style="margin-right: 8px; white-space: nowrap"
+                            >Số lượng:</span
+                          >
+                          <input
+                            type="number"
+                            name="quantity"
+                            min="1"
+                            max="10"
+                            value="{{product.quantity}}"
+                            class="form-control form-select-sm"
+                            style="
+                              width: 60px;
+                              height: 32px;
+                              font-size: 0.875rem;
+                            "
+                          />
+                        </div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            margin-right: 15px;
+                          "
+                        >
+                          <button
+                            class="btn btn-outline-primary btn-sm"
+                            type="submit"
+                            style="
+                              height: 32px;
+                              width: 32px;
                               display: flex;
                               align-items: center;
-                              margin-right: 25px;
-                            ">
-                          <span class="small text-muted" style="margin-right: 8px; white-space: nowrap">Số lượng:</span>
-                          <input type="number" name="quantity" min="1" max="10" value="{{product.quantity}}"
-                            class="form-control form-select-sm"
-                            style="width: 60px; height: 32px; font-size: 0.875rem;" />
+                              justify-content: center;
+                              padding: 0;
+                            "
+                          >
+                            <i class="fa fa-refresh" style="margin: 0"></i>
+                          </button>
                         </div>
-                                                 <div style="
-                               display: flex;
-                               align-items: center;
-                               margin-right: 15px;
-                             ">
-                           <button
-                             class="btn btn-outline-primary btn-sm"
-                             type="submit" 
-                             style="height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0;">
-                             <i class="fa fa-refresh" style="margin: 0;"></i>
-                           </button>
-                         </div>
-                         <div style="margin-left: auto;">
-                           <a href="{{url_for('deleteitem', id=key)}}"
-                             class="btn btn-outline-danger btn-sm"
-                             style="height: 32px; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0;"
-                             onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
-                             <i class="fa fa-trash" style="margin: 0;"></i>
-                           </a>
-                         </div>
+                        <div style="margin-left: auto">
+                          <a
+                            href="{{url_for('deleteitem', id=key)}}"
+                            class="btn btn-outline-danger btn-sm"
+                            style="
+                              height: 32px;
+                              width: 32px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              padding: 0;
+                            "
+                            onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')"
+                          >
+                            <i class="fa fa-trash" style="margin: 0"></i>
+                          </a>
+                        </div>
                       </div>
                     </form>
                   </div>
@@ -135,17 +200,20 @@
                       <div class="current-price fw-bold text-primary fs-4">
                         Giá bán: {{(product.price - discount) | vnd}}
                       </div>
-                      <div class="original-price text-muted text-decoration-line-through small">
+                      <div
+                        class="original-price text-muted text-decoration-line-through small"
+                      >
                         Giá gốc: {{product.price | vnd}}
                       </div>
-                      <span class="badge bg-danger ms-2">-{{product.discount}}%</span>
+                      <span class="badge bg-danger ms-2"
+                        >-{{product.discount}}%</span
+                      >
                       {% else %}
                       <div class="current-price fw-bold text-primary fs-4">
                         {{product.price | vnd}}
                       </div>
                       {% endif %}
                     </div>
-
                   </div>
                 </div>
               </div>
@@ -156,9 +224,12 @@
 
         <!-- Clear Cart Button -->
         <div class="text-end mb-4">
-          <a href="{{url_for('clearcart')}}" class="btn btn-outline-danger"
-            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')">
-            <i class="fa fa-trash me-2"></i>  Xóa tất cả
+          <a
+            href="{{url_for('clearcart')}}"
+            class="btn btn-outline-danger"
+            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')"
+          >
+            <i class="fa fa-trash me-2"></i> Xóa tất cả
           </a>
         </div>
       </div>
@@ -166,32 +237,50 @@
       <!-- Order Summary -->
       <div class="col-lg-4">
         <div class="card shadow border-0 sticky-top" style="top: 20px">
-          <div class="card-header text-white py-3" style="background-color: #0cafe5;">
+          <div
+            class="card-header text-white py-3"
+            style="background-color: #0cafe5"
+          >
             <h4 class="mb-0">
               <i class="fa fa-list-alt me-2"></i> Tổng đơn hàng
             </h4>
           </div>
           <div class="card-body p-4">
-            <div class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded">
+            <div
+              class="summary-item d-flex justify-content-between mb-2 p-3 bg-light rounded"
+            >
               <span class="text-muted">Tạm tính:</span>
               <span class="fw-bold">{{subtotals | vnd}}</span>
             </div>
-            <div class="summary-item d-flex justify-content-between mb-3 p-2 bg-light rounded">
+            <div
+              class="summary-item d-flex justify-content-between mb-3 p-3 bg-light rounded"
+            >
               <span class="text-muted">Giảm giá:</span>
               <span class="text-success fw-bold">-{{discounttotal | vnd}}</span>
             </div>
-            <hr class="my-4" />
-            <div class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded">
-              <span class="fw-bold fs-6">Tổng cộng:</span>
-              <span class="fw-bold fs-6">{{(subtotals-discounttotal) | vnd}}</span>
+
+            <div
+              class="summary-item d-flex justify-content-between mb-4 p-3 bg-primary text-white rounded"
+            >
+              <span class="fw-bold">Tổng cộng:</span>
+              <span class="fw-bold">{{(subtotals-discounttotal) | vnd}}</span>
             </div>
 
-            <a href="{{ url_for('get_order') }}" class="btn btn-success w-100 mb-3">
-              <i class="fa fa-credit-card me-2"></i>Tiến hành thanh toán
-            </a>
+            <div class="text-center mb-4" style="margin-top: 1rem">
+              <a
+                href="{{ url_for('get_order') }}"
+                class="btn btn-success w-100"
+                style="font-size: 0.9rem; padding: 12px 16px"
+              >
+                <i class="fa fa-credit-card me-2"></i>Tiến hành thanh toán
+              </a>
+            </div>
 
-            <div class="text-center mt-3">
-              <a href="{{url_for('home')}}" class="text-decoration-none">
+            <div class="text-center" style="margin-top: 1rem">
+              <a
+                href="{{url_for('home')}}"
+                class="text-decoration-none text-muted"
+              >
                 <i class="fa fa-arrow-left me-1"></i>Tiếp tục mua sắm
               </a>
             </div>
@@ -331,6 +420,50 @@
 
   .cart-item:last-child {
     border-bottom: none;
+  }
+
+  /* Order Summary Styling */
+  .summary-item {
+    padding: 16px 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .summary-item.bg-primary {
+    background: linear-gradient(135deg, #0cafe5 0%, #0ba5d4 100%) !important;
+    border: none;
+    box-shadow: 0 4px 12px rgba(12, 175, 229, 0.3);
+  }
+
+  .summary-item.bg-light {
+    background-color: #ffffff !important;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .summary-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+  }
+
+  .card-body {
+    padding: 1.5rem !important;
   }
 </style>
 
