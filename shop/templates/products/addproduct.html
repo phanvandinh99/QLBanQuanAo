@@ -54,6 +54,9 @@
                                         <label for="brand">Add a brand</label>
                                         <select name="brand" id="brand" class="form-control" required>
                                             <option value="">Select a brand</option>
+                                            {% for brand in brands %}
+                                            <option value="{{brand.id}}">{{brand.name}}</option>
+                                            {% endfor %}
                                         </select>
 
                                         {{ render_field(form.colors, class="form-control") }}
@@ -92,17 +95,13 @@
 <script>
 function myFunction() {
      $("#brand option").remove();
-     var newoptions = "";
+     var newoptions = "<option value=''>Select a brand</option>";
      {% for brand in brands %}
      if(document.getElementById("category").value == {{brand.category_id}}){
         newoptions+="<option value='{{brand.id}}'>{{brand.name}}</option>";
      }
      {% endfor %}
-     $("#brand").append(newoptions);
-     }
-
-
-
-
+     $("#brand").html(newoptions);
+}
 </script>
 {% endblock content %}
