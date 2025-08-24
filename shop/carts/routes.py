@@ -61,7 +61,7 @@ def AddCart():
                         invoice = secrets.token_hex(5)
                         order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                                               orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
-                                              status=None)
+                                              status="Đang xác nhận")
                         db.session.add(order)
                         db.session.commit()
                     return redirect(request.referrer)
@@ -72,7 +72,7 @@ def AddCart():
                     invoice = secrets.token_hex(5)
                     order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                                           orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
-                                          status=None)
+                                          status="Đang xác nhận")
                     db.session.add(order)
                     db.session.commit()
 

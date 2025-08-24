@@ -234,7 +234,7 @@ def submit_order():
                     if invoice.strip():  # Check if invoice is not empty
                         customer_order = CustomerOrder.query.filter_by(invoice=invoice).first()
                         if customer_order:
-                            customer_order.status = "Pending"
+                            customer_order.status = "Đang xác nhận"
                             customer_order.address = address
                             db.session.commit()
             else:
@@ -244,7 +244,7 @@ def submit_order():
                     invoice = secrets.token_hex(5)
                     order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                                           orders=json.dumps(session['Shoppingcart']),
-                                          status="Pending", address=address)
+                                          status="Đang xác nhận", address=address)
                     db.session.add(order)
                     db.session.commit()
             
@@ -262,6 +262,16 @@ def submit_order():
 @app.route('/payment_history')
 @login_required
 def payment_history():
+    # Get orders and update old statuses to new ones
     orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
         CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
+    
+    # Update old statuses to new ones in memory (for display)
+    for order in orders:
+        if order.status == 'Pending':
+            order.status = 'Đang xác nhận'
+        elif order.status == 'Accepted':
+            order.status = 'Đã giao'
+        elif order.status == 'Cancelled':
+            order.status = 'Hủy đơn'
     return render_template('customers/myaccount.html', orders=orders, brands=brands(), categories=categories(), get_order_data=get_order_data)

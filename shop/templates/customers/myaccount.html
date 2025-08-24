@@ -123,12 +123,16 @@
                                     {{product.quantity}}
                                 </td>
                                 <td>{{(subtotal - discount|round(1,'floor')) | vnd}}</td>
-                                {% if order.status == "Pending" %}
-                                <td><p style="color:red;">{{order.status}}</p></td>
-                                {% elif order.status == "Cancelled" %}
-                                <td><p style="color:#847713;">{{order.status}}</p></td>
+                                {% if order.status == "Đang xác nhận" %}
+                                <td><p style="color:#6c757d;">{{order.status}}</p></td>
+                                {% elif order.status == "Đang giao" %}
+                                <td><p style="color:#17a2b8;">{{order.status}}</p></td>
+                                {% elif order.status == "Đã giao" %}
+                                <td><p style="color:#007bff;">{{order.status}}</p></td>
+                                {% elif order.status == "Hủy đơn" %}
+                                <td><p style="color:#dc3545;">{{order.status}}</p></td>
                                 {% else %}
-                                <td><p style="color:#32c67b;">{{order.status}}</p></td>
+                                <td><p style="color:#6c757d;">{{order.status}}</p></td>
                                 {% endif %}
 
                             </tr>

@@ -121,7 +121,17 @@ def orders_manager():
     # orders = CustomerOrder.query.filter(CustomerOrder.status != None).filter(
     #     CustomerOrder.status != "Cancelled").order_by(CustomerOrder.id.desc()).paginate(page=page, per_page=10)\
 
+    # Get all orders and update old statuses to new ones
     orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
+    
+    # Update old statuses to new ones in memory (for display)
+    for order in orders:
+        if order.status == 'Pending':
+            order.status = 'Đang xác nhận'
+        elif order.status == 'Accepted':
+            order.status = 'Đã giao'
+        elif order.status == 'Cancelled':
+            order.status = 'Hủy đơn'
     return render_template('admin/manage_orders.html', title='Order manager page', user=user[0], orders=orders,
                            customers=customers, get_order_data=get_order_data)
 
@@ -141,11 +151,27 @@ def accept_order(id):
                 if (product_order.stock - int(product['quantity'])) >= 0:
                     product_order.stock -= int(product['quantity'])
                     db.session.commit()
-                    customer_order.status = 'Accepted'
+                    customer_order.status = 'Đang giao'
                     db.session.commit()
                 else:
                     flash('Quantity in stock has been exhausted', 'danger')
                     return redirect(url_for('orders_manager'))
+        return redirect(url_for('orders_manager'))
+    
+    return redirect(url_for('orders_manager'))
+
+
+@app.route('/delivered_order/<int:id>', methods=['GET', 'POST'])
+def delivered_order(id):
+    if 'email' not in session:
+        flash(f'Please login first', 'danger')
+        return redirect(url_for('login'))
+    
+    if request.method == "POST":
+        customer_order = CustomerOrder.query.get_or_404(id)
+        customer_order.status = 'Đã giao'
+        db.session.commit()
+        flash('Đơn hàng đã được cập nhật thành "Đã giao"', 'success')
         return redirect(url_for('orders_manager'))
     
     return redirect(url_for('orders_manager'))
@@ -158,8 +184,9 @@ def delete_order(id):
         return redirect(url_for('login'))
     customer = CustomerOrder.query.get_or_404(id)
     if request.method == "POST":
-        customer.status = "Cancelled"
+        customer.status = "Hủy đơn"
         db.session.commit()
+        flash('Đơn hàng đã được hủy thành công', 'success')
         return redirect(url_for('orders_manager'))
     return redirect(url_for('orders_manager'))
 
