@@ -1,6 +1,6 @@
 import secrets
 import json
-from flask import render_template, session, request, redirect, url_for, flash
+from flask import render_template, session, request, redirect, url_for, flash, jsonify
 from flask_login import current_user
 from shop import app, db
 from shop.models import CustomerOrder, Category, Brand, Addproduct, Register
@@ -30,6 +30,13 @@ def AddCart():
         quantity = int(request.form.get('quantity'))
         color = request.form.get('colors')
         product = Addproduct.query.filter_by(id=product_id).first()
+        
+        if not product:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': 'Sản phẩm không tồn tại'})
+            flash('Sản phẩm không tồn tại', 'danger')
+            return redirect(request.referrer)
+        
         brand = Brand.query.filter_by(id=product.brand_id).first().name
         if request.method == "POST":
             # if product_id in orders
@@ -45,14 +52,27 @@ def AddCart():
                             item['quantity'] += quantity;
                 else:
                     session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
-                return redirect(request.referrer)
             else:
                 session['Shoppingcart'] = DictItems
-                return redirect(request.referrer)
+            
+            # Calculate cart count
+            cart_count = sum(item['quantity'] for item in session['Shoppingcart'].values())
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'success': True, 
+                    'message': f'Sản phẩm {product.name} đã được thêm vào giỏ hàng!',
+                    'cart_count': cart_count
+                })
+            
+            flash(f'Sản phẩm {product.name} đã được thêm vào giỏ hàng!', 'success')
+            return redirect(request.referrer)
 
     except Exception as e:
         print("Loi", e)
-    finally:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Có lỗi xảy ra khi thêm sản phẩm'})
+        flash('Có lỗi xảy ra khi thêm sản phẩm', 'danger')
         return redirect(request.referrer)
 
 

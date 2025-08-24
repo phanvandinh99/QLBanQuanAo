@@ -1,19 +1,327 @@
-{% extends 'layout.html' %}
-{% block content %}
-<div class="container">
-    <div class="row">
-        {% for product in products.items %}
-        <div class="col-md-3">
-            <div class="card">
-                <img src="{{url_for('static', filename='images/' + product.image_1)}}" class="card-img-top" alt="{{product.name}}">
-                <div class="card-body">
-                    <h5 class="card-title">{{product.name}}</h5>
-                    <p class="card-text">Giá: {{product.price | vnd}}</p>
-                    <a href="{{url_for('detail', id = product.id)}}" class="btn btn-primary">Chi Tiết 123</a>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+{% extends 'layout.html' %} {% block head %}
+<link
+  href="{{ url_for('static', filename='css/products.css') }}"
+  rel="stylesheet"
+/>
+{% endblock %} {% block content %}
+
+<!-- Products Section -->
+<section id="products" class="products-section">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">Sản Phẩm Nổi Bật</h2>
+      <p class="section-subtitle" style="margin: auto">
+        Khám phá bộ sưu tập điện thoại và phụ kiện chất lượng cao
+      </p>
     </div>
-</div>
+
+    <div class="row">
+      {% for product in products.items %}
+      <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img
+              src="{{url_for('static', filename='images/' + product.image_1)}}"
+              alt="{{product.name}}"
+              class="img-fluid"
+            />
+            <div class="product-overlay">
+              <div class="overlay-buttons">
+                <a
+                  href="{{url_for('detail', id = product.id)}}"
+                  class="btn btn-outline-light btn-sm"
+                >
+                  <i class="fa fa-eye"></i> Xem chi tiết
+                </a>
+                <button
+                  class="btn btn-primary btn-sm add-to-cart"
+                  data-product-id="{{product.id}}"
+                >
+                  <i class="fa fa-shopping-cart"></i> Thêm vào giỏ
+                </button>
+              </div>
+            </div>
+            {% if product.discount > 0 %}
+            <div class="discount-badge">-{{product.discount}}%</div>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <h4 class="product-title">{{product.name}}</h4>
+            <div class="product-price">
+              {% if product.discount > 0 %}
+              <span class="original-price">{{product.price | vnd}}</span>
+              <span class="current-price"
+                >{{(product.price * (100 - product.discount) / 100) |
+                vnd}}</span
+              >
+              {% else %}
+              <span class="current-price">{{product.price | vnd}}</span>
+              {% endif %}
+            </div>
+            <div class="product-meta">
+              <span
+                class="stock-status {% if product.stock > 0 %}in-stock{% else %}out-of-stock{% endif %}"
+              >
+                {% if product.stock > 0 %}
+                <i class="fa fa-check-circle"></i> Còn hàng {% else %}
+                <i class="fa fa-times-circle"></i> Hết hàng {% endif %}
+              </span>
+            </div>
+            <div class="product-actions">
+              <div class="row">
+                <div class="col-6">
+                  <a
+                    href="{{url_for('detail', id = product.id)}}"
+                    class="btn btn-outline-primary btn-block"
+                  >
+                    <i class="fa fa-info-circle"></i> Chi tiết
+                  </a>
+                </div>
+                <div class="col-6">
+                  {% if product.stock > 0 %}
+                  <button
+                    class="btn btn-primary btn-block add-to-cart-btn"
+                    data-product-id="{{product.id}}"
+                    data-product-name="{{product.name}}"
+                    data-product-price="{{product.price}}"
+                    data-product-colors="{{product.colors}}"
+                  >
+                    <i class="fa fa-shopping-cart"></i> Thêm giỏ
+                  </button>
+                  {% else %}
+                  <button class="btn btn-secondary btn-block" disabled>
+                    <i class="fa fa-times-circle"></i> Hết hàng
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if products.pages > 1 %}
+    <div class="pagination-wrapper text-center mt-5">
+      <nav aria-label="Product pagination">
+        <ul class="pagination justify-content-center">
+          {% if products.has_prev %}
+          <li class="page-item">
+            <a
+              class="page-link"
+              href="{{ url_for('home', page=products.prev_num) }}"
+            >
+              <i class="fa fa-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %} {% for page_num in products.iter_pages() %} {% if page_num
+          %} {% if page_num != products.page %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('home', page=page_num) }}"
+              >{{ page_num }}</a
+            >
+          </li>
+          {% else %}
+          <li class="page-item active">
+            <span class="page-link">{{ page_num }}</span>
+          </li>
+          {% endif %} {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+          {% endif %} {% endfor %} {% if products.has_next %}
+          <li class="page-item">
+            <a
+              class="page-link"
+              href="{{ url_for('home', page=products.next_num) }}"
+            >
+              <i class="fa fa-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-3 col-sm-6">
+        <div class="feature-item text-center">
+          <div class="feature-icon">
+            <i class="fa fa-truck"></i>
+          </div>
+          <h5>Giao hàng nhanh</h5>
+          <p>Giao hàng toàn quốc trong 24h</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="feature-item text-center">
+          <div class="feature-icon">
+            <i class="fa fa-shield"></i>
+          </div>
+          <h5>Bảo hành chính hãng</h5>
+          <p>Bảo hành 12-24 tháng</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="feature-item text-center">
+          <div class="feature-icon">
+            <i class="fa fa-undo"></i>
+          </div>
+          <h5>Đổi trả dễ dàng</h5>
+          <p>30 ngày đổi trả miễn phí</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="feature-item text-center">
+          <div class="feature-icon">
+            <i class="fa fa-phone"></i>
+          </div>
+          <h5>Hỗ trợ 24/7</h5>
+          <p>Tư vấn và hỗ trợ mọi lúc</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Add to cart functionality
+  document.querySelectorAll(".add-to-cart-btn").forEach((button) => {
+    button.addEventListener("click", function () {
+      const productId = this.getAttribute("data-product-id");
+      const productName = this.getAttribute("data-product-name");
+      const productPrice = this.getAttribute("data-product-price");
+      const productColors = this.getAttribute("data-product-colors");
+
+      // Disable button to prevent multiple clicks
+      this.disabled = true;
+      this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang thêm...';
+
+      // Add to cart logic
+      addToCart(productId, productName, productPrice, productColors);
+    });
+  });
+
+  // Add to cart function
+  function addToCart(productId, productName, productPrice, productColors) {
+    // Create form data
+    const formData = new FormData();
+    formData.append("product_id", productId);
+    formData.append("quantity", 1);
+
+    // Add color if available
+    if (productColors) {
+      const colors = productColors.split(",");
+      if (colors.length > 0) {
+        const firstColor = colors[0].split(":")[0]; // Get first color
+        formData.append("colors", firstColor);
+      }
+    }
+
+    // Send request to add to cart
+    fetch("/addcart", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Show success message
+          showNotification("Sản phẩm đã được thêm vào giỏ hàng!", "success");
+
+          // Update cart count if available
+          updateCartCount(data.cart_count);
+        } else {
+          // Show error message
+          showNotification(
+            data.message || "Có lỗi xảy ra khi thêm sản phẩm!",
+            "error"
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showNotification("Có lỗi xảy ra khi thêm sản phẩm!", "error");
+      })
+      .finally(() => {
+        // Re-enable button
+        const button = document.querySelector(
+          `[data-product-id="${productId}"]`
+        );
+        if (button) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa fa-shopping-cart"></i> Thêm giỏ';
+        }
+      });
+  }
+
+  // Show notification function
+  function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fa fa-${
+              type === "success" ? "check-circle" : "exclamation-circle"
+            }"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Show notification
+    setTimeout(() => {
+      notification.classList.add("show");
+    }, 100);
+
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
+
+  // Update cart count function
+  function updateCartCount(count) {
+    const cartCountElement = document.querySelector(".cart-count");
+    if (cartCountElement) {
+      cartCountElement.textContent = count;
+      cartCountElement.classList.add("updated");
+      setTimeout(() => {
+        cartCountElement.classList.remove("updated");
+      }, 1000);
+    }
+  }
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute("href"));
+      if (target) {
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    });
+  });
+</script>
+
 {% endblock %}
