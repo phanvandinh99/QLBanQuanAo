@@ -9,6 +9,7 @@ from flask import Markup
 import secrets
 import os
 import json
+from datetime import datetime
 
 # import pdfkit
 # import stripe
@@ -90,29 +91,49 @@ def customer_register():
         return redirect(url_for('home'))
     form = CustomerRegisterForm()
     if form.validate_on_submit():
+        # Kiểm tra email đã tồn tại chưa
         if Admin.query.filter_by(email=form.email.data).first():
-            flash(f'Email Used!', 'danger')
+            flash(f'Email đã được sử dụng!', 'danger')
             return redirect(url_for('customer_register'))
         if Register.query.filter_by(email=form.email.data).first():
-            flash(f'Email Used!', 'danger')
+            flash(f'Email đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
+        
+        # Kiểm tra username đã tồn tại chưa
+        if Register.query.filter_by(username=form.username.data).first():
+            flash(f'Tên đăng nhập đã được sử dụng!', 'danger')
+            return redirect(url_for('customer_register'))
+        
+        # Kiểm tra số điện thoại đã tồn tại chưa
         if Register.query.filter_by(phone_number=form.phone_number.data).first():
-            flash(f'Phone Number Used!', 'danger')
+            flash(f'Số điện thoại đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
+        
         try:
+            # Tạo user mới
             hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
-            register = Register(username=form.username.data, email=form.email.data, first_name=form.first_name.data,
-                                last_name=form.last_name.data, phone_number=form.phone_number.data,
-                                gender=form.gender.data,
-                                password=hash_password)
+            register = Register(
+                username=form.username.data, 
+                email=form.email.data, 
+                first_name=form.first_name.data,
+                last_name=form.last_name.data, 
+                phone_number=form.phone_number.data,
+                gender=form.gender.data,
+                password=hash_password,
+                date_created=datetime.utcnow(),
+                lock=False
+            )
             db.session.add(register)
-            flash(f'Welcome {form.first_name.data} {form.last_name.data} Thank you for registering', 'success')
             db.session.commit()
-        except:
-            flash(f'Error!', 'danger')
+            
+            flash(f'Chào mừng {form.first_name.data} {form.last_name.data}! Cảm ơn bạn đã đăng ký', 'success')
+            return redirect(url_for('customer_login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Có lỗi xảy ra khi đăng ký! Vui lòng thử lại.', 'danger')
             return redirect(url_for('customer_register'))
 
-        return redirect(url_for('customer_login'))
     return render_template('customers/register.html', form=form, brands=brands(), categories=categories())
 
 
