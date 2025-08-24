@@ -26,7 +26,7 @@
                     <!-- general form elements -->
                     <div class="card card-primary">
                         <div class="card-header">
-                            <h3 class="card-title">Add a new product</h3>
+                            <h3 class="card-title">Thêm Mới Sản Phẩm</h3>
                         </div>
                         <!-- /.card-header -->
                         <!-- form start -->
@@ -42,18 +42,18 @@
                                         {{ render_field(form.price, class="form-control") }}
                                         {{ render_field(form.discount, class="form-control") }}
                                         {{ render_field(form.stock, class="form-control") }}
-                                        <label for="category">Add a category</label>
+                                        <label for="category">Loại sản phẩm</label>
                                         <select name="category" id="category" class="form-control"
                                                 onchange='myFunction()' required>
-                                            <option value=""> Select a category</option>
+                                            <option value=""> Chọn loại sp</option>
                                             {% for category in categories %}
                                             <option value="{{category.id}}">{{category.name}}
                                             </option>
                                             {% endfor %}
                                         </select>
-                                        <label for="brand">Add a brand</label>
+                                        <label for="brand">Thương Hiệu</label>
                                         <select name="brand" id="brand" class="form-control" required>
-                                            <option value="">Select a brand</option>
+                                            <option value="">Chọn thương hiệu</option>
                                             {% for brand in brands %}
                                             <option value="{{brand.id}}">{{brand.name}}</option>
                                             {% endfor %}
@@ -79,7 +79,7 @@
                                 </div>
                             </div><!-- /.card -->
                             <div class="card-footer">
-                                <button type="submit" class="btn btn-primary" onclick="return validateForm()">Add a product</button>
+                                <button type="submit" class="btn btn-primary" onclick="return validateForm()">Thêm Mới Sản Phẩm</button>
                             </div>
                         </form>
                         <!-- /.form-box -->
