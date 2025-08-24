@@ -1,224 +1,535 @@
 {% extends "base.html" %} {%block content%} {% include 'header.html' %}
-<div id="page-content" class="single-page">
+
+<style>
+  .account-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 40px 0;
+  }
+  
+  .account-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 30px;
+    border: 1px solid #e9ecef;
+  }
+  
+  .sidebar-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+  }
+  
+  .sidebar-header {
+    background: #0cafe5;
+    color: white;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .sidebar-header h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  
+  .nav-menu {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  
+  .nav-menu li {
+    border-bottom: 1px solid #f8f9fa;
+  }
+  
+  .nav-menu li:last-child {
+    border-bottom: none;
+  }
+  
+  .nav-menu a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+  }
+  
+  .nav-menu a:hover {
+    background: #e3f2fd;
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .nav-menu a.active {
+    background: #a0d6e7;
+    color: white;
+  }
+  
+  .nav-menu i {
+    margin-right: 10px;
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+  }
+  
+  .content-header {
+    background: #0cafe5;
+    color: white;
+    padding: 20px 25px;
+  }
+  
+  .content-header h4 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  
+  .content-body {
+    padding: 25px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  
+  .form-control {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 14px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    background: white;
+  }
+  
+  .form-control:focus {
+    border-color: #0cafe5;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: 0;
+  }
+  
+  .form-control[readonly] {
+    background: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  .btn-primary {
+    background: #0cafe5;
+    border: 1px solid #0cafe5;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    transform: none;
+  }
+  
+  .btn-logout {
+    background: #ffcdd2;
+    border: 1px solid #ffcdd2;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    color: white;
+  }
+  
+  .btn-logout:hover {
+    background: #ffa0aa;
+    border-color: #ffa0aa;
+    color: white;
+    text-decoration: none;
+  }
+  
+  .table {
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+  }
+  
+  .table thead th {
+    background: #a0d6e7;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  
+  .table tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+    font-size: 14px;
+  }
+  
+  .table tbody tr:hover {
+    background: #f8f9fa;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .status-pending { background: #fff3cd; color: #856404; }
+  .status-shipping { background: #d1ecf1; color: #0c5460; }
+  .status-delivered { background: #d4edda; color: #155724; }
+  .status-cancelled { background: #f8d7da; color: #721c24; }
+  
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  
+  .breadcrumb-item a {
+    color: #a0d6e7;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .breadcrumb-item.active {
+    color: #6c757d;
+  }
+  
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+  }
+  
+  .gender-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .gender-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  
+  .gender-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #007bff;
+  }
+  
+  .password-match {
+    color: #28a745;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .password-mismatch {
+    color: #dc3545;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .badge-primary {
+    background: #a0d6e7;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+  
+  @media (max-width: 768px) {
+    .account-container {
+      padding: 20px 0;
+    }
+    
+    .content-body {
+      padding: 20px;
+    }
+    
+    .sidebar-card {
+      margin-bottom: 20px;
+    }
+  }
+</style>
+
+<div class="account-container">
   <div class="container">
     <div class="row">
       <div class="col-lg-12">
-        <ul class="breadcrumb">
-          <li><a href="{{url_for('home')}}">Home</a></li>
-          <li><a href="{{url_for('update_account')}}">Tài Khoản</a></li>
-          {% if detail_customer %}
-          <li><a href="{{url_for('update_account')}}">Thông Tin Cá Nhân</a></li>
-          {% elif orders %}
-          <li><a href="{{url_for('payment_history')}}">Đơn Hàng</a></li>
-          {% elif detail_password_customer %}
-          <li><a href="{{url_for('change_password')}}">Đổi Mật Khẩu</a></li>
-          {% else %}
-          <li><a href="{{url_for('get_all_category', page=1)}}">Tất cả</a></li>
-          {% endif %}
-        </ul>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{url_for('home')}}"><i class="fa fa-home"></i> Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{{url_for('update_account')}}"><i class="fa fa-user"></i> Tài khoản</a></li>
+            {% if detail_customer %}
+            <li class="breadcrumb-item active"><i class="fa fa-info-circle"></i> Thông tin cá nhân</li>
+            {% elif orders %}
+            <li class="breadcrumb-item active"><i class="fa fa-shopping-bag"></i> Lịch sử đơn hàng</li>
+            {% elif detail_password_customer %}
+            <li class="breadcrumb-item active"><i class="fa fa-lock"></i> Đổi mật khẩu</li>
+            {% else %}
+            <li class="breadcrumb-item active"><i class="fa fa-th-large"></i> Tất cả</li>
+            {% endif %}
+          </ol>
+        </nav>
       </div>
     </div>
+    
     <div class="row">
-      <div id="sidebar" class="col-md-4">
-        <div class="widget wid-categories">
-          <div class="heading"><h4>Điều hướng</h4></div>
-          <div class="content">
-            <ul>
-              {% if detail_customer %}
-              <li>
-                <a href="{{url_for('update_account')}}" style="color: red"
-                  >Tài Khoản</a
-                >
-              </li>
-              {% else %}
-              <li><a href="{{url_for('update_account')}}">Tài Khoản</a></li>
-              {% endif %} {% if orders %}
-              <li>
-                <a href="{{url_for('payment_history')}}" style="color: red"
-                  >Đơn Hàng</a
-                >
-              </li>
-              {% else %}
-              <li><a href="{{url_for('payment_history')}}">Đơn Hàng</a></li>
-              {% endif %} {% if detail_password_customer %}
-              <li>
-                <a href="{{url_for('change_password')}}" style="color: red"
-                  >Đổi Mật Khẩu</a
-                >
-              </li>
-              {% else %}
-              <li><a href="{{url_for('change_password')}}">Đổi Mật Khẩu</a></li>
-              {% endif %}
-
-              <li><a href="{{url_for('customer_logout')}}">Đăng Xuất</a></li>
-            </ul>
+      <!-- Sidebar -->
+      <div class="col-lg-4 col-md-5">
+        <div class="sidebar-card">
+          <div class="sidebar-header">
+            <h4><i class="fa fa-cog"></i> Bảng điều khiển</h4>
           </div>
+          <ul class="nav-menu">
+            {% if detail_customer %}
+            <li>
+              <a href="{{url_for('update_account')}}" class="active">
+                <i class="fa fa-user"></i> Thông tin tài khoản
+              </a>
+            </li>
+            {% else %}
+            <li>
+              <a href="{{url_for('update_account')}}">
+                <i class="fa fa-user"></i> Thông tin tài khoản
+              </a>
+            </li>
+            {% endif %}
+            
+            {% if orders %}
+            <li>
+              <a href="{{url_for('payment_history')}}" class="active">
+                <i class="fa fa-shopping-bag"></i> Lịch sử đơn hàng
+              </a>
+            </li>
+            {% else %}
+            <li>
+              <a href="{{url_for('payment_history')}}">
+                <i class="fa fa-shopping-bag"></i> Lịch sử đơn hàng
+              </a>
+            </li>
+            {% endif %}
+            
+            {% if detail_password_customer %}
+            <li>
+              <a href="{{url_for('change_password')}}" class="active">
+                <i class="fa fa-lock"></i> Đổi mật khẩu
+              </a>
+            </li>
+            {% else %}
+            <li>
+              <a href="{{url_for('change_password')}}">
+                <i class="fa fa-lock"></i> Đổi mật khẩu
+              </a>
+            </li>
+            {% endif %}
+            
+            <li>
+              <a href="{{url_for('customer_logout')}}" class="btn-logout">
+                <i class="fa fa-sign-out"></i> Đăng xuất
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
 
-      <div id="main-content" class="col-md-8">
-        <div class="widget wid-categories">
-          <!-- My Account-->
+      <!-- Main Content -->
+      <div class="col-lg-8 col-md-7">
+        <div class="account-card">
+          <!-- My Account -->
           {% if detail_customer %}
-          <div class="heading"><h4>Thông tin tài khoản</h4></div>
-          <div class="content">
+          <div class="content-header">
+            <h4><i class="fa fa-user-circle"></i> Thông tin tài khoản</h4>
+          </div>
+          <div class="content-body">
             {% include '_messages.html' %}
             <form method="post" action="">
-              <div class="form-group">
-                <span> Tài Khoản: </span>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="username"
-                  id="username"
-                  value="{{detail_customer.username}}"
-                  readonly
-                />
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="username"><i class="fa fa-user"></i> Tài khoản</label>
+                    <input type="text" class="form-control" name="username" id="username" value="{{detail_customer.username}}" readonly />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="email"><i class="fa fa-envelope"></i> Email</label>
+                    <input type="email" class="form-control" name="email" id="email" value="{{detail_customer.email}}" required />
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <span> Họ: </span>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="firstname"
-                  id="firstname"
-                  value="{{detail_customer.first_name}}"
-                  required
-                />
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="firstname"><i class="fa fa-id-card"></i> Họ</label>
+                    <input type="text" class="form-control" name="firstname" id="firstname" value="{{detail_customer.first_name}}" required />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="lastname"><i class="fa fa-id-card"></i> Tên</label>
+                    <input type="text" class="form-control" name="lastname" id="lastname" value="{{detail_customer.last_name}}" required />
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <span> Tên: </span>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="lastname"
-                  id="lastname"
-                  value="{{detail_customer.last_name}}"
-                  required
-                />
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="phone"><i class="fa fa-phone"></i> Số điện thoại</label>
+                    <input type="tel" class="form-control" name="phone" id="phone" value="{{detail_customer.phone_number}}" required />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label><i class="fa fa-venus-mars"></i> Giới tính</label>
+                    <div class="gender-group">
+                      {% if detail_customer.gender=="M" %}
+                      <div class="gender-option">
+                        <input name="gender" type="radio" checked="checked" value="M" />
+                        <span>Nam</span>
+                      </div>
+                      <div class="gender-option">
+                        <input name="gender" type="radio" value="F" />
+                        <span>Nữ</span>
+                      </div>
+                      {% else %}
+                      <div class="gender-option">
+                        <input name="gender" type="radio" value="M" />
+                        <span>Nam</span>
+                      </div>
+                      <div class="gender-option">
+                        <input name="gender" type="radio" checked="checked" value="F" />
+                        <span>Nữ</span>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <span> Email: </span>
-                <input
-                  type="email"
-                  class="form-control"
-                  name="email"
-                  id="email"
-                  value="{{detail_customer.email}}"
-                  required
-                />
+              
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> Cập nhật thông tin
+                </button>
               </div>
-              <div class="form-group">
-                <span> Số điện thoại: </span>
-                <input
-                  type="tel"
-                  class="form-control"
-                  name="phone"
-                  id="phone"
-                  value="{{detail_customer.phone_number}}"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <span> Giới Tính: </span>
-                {% if detail_customer.gender=="M" %}
-                <input name="gender" type="radio" checked="checked" value="M" />
-                Nam <input name="gender" type="radio" value="F" /> Nữ {%
-                else %} <input name="gender" type="radio" value="M" /> Nam
-                <input name="gender" type="radio" checked="checked" value="F" />
-                Nữ {% endif %}
-              </div>
-              <button
-                type="submit"
-                class="btn btn-info"
-                style="padding: 5px 26px; background-color: #e51534"
-              >
-                Thay Đổi
-              </button>
             </form>
           </div>
-          {% endif %} {% if orders %}
-          <div class="heading"><h4>Lịch Sử Đơn Hàng</h4></div>
-          <div class="content">
-            <table class="table table-sm">
-              <thead>
-                <th>Ngày Đặt</th>
-                <th>Sản Phẩm</th>
-                <th>Số Lượng</th>
-                <th>Tổng Tiền</th>
-                <th>Trạng Thái</th>
-              </thead>
-              <tbody>
-                {% for order in orders %} {% set order_data =
-                get_order_data(order) %} {% for key, product in
-                order_data.items() %} {% set discount =(product.discount/100) *
-                product.price |float %} {% set subtotal = product.quantity|int *
-                product.price|float %}
-                <tr>
-                  <td>{{order.date_created}}</td>
-                  <td>{{product.name}}</td>
-                  <td>{{product.quantity}}</td>
-                  <td>{{(subtotal - discount|round(1,'floor')) | vnd}}</td>
-                  {% if order.status == "Đang xác nhận" %}
-                  <td><p style="color: #6c757d">{{order.status}}</p></td>
-                  {% elif order.status == "Đang giao" %}
-                  <td><p style="color: #17a2b8">{{order.status}}</p></td>
-                  {% elif order.status == "Đã giao" %}
-                  <td><p style="color: #007bff">{{order.status}}</p></td>
-                  {% elif order.status == "Hủy đơn" %}
-                  <td><p style="color: #dc3545">{{order.status}}</p></td>
-                  {% else %}
-                  <td><p style="color: #6c757d">{{order.status}}</p></td>
-                  {% endif %}
-                </tr>
-                {% endfor %} {% endfor %}
-              </tbody>
-            </table>
+          {% endif %}
+
+          <!-- Order History -->
+          {% if orders %}
+          <div class="content-header">
+            <h4><i class="fa fa-history"></i> Lịch sử đơn hàng</h4>
           </div>
-          {% endif %} {% if detail_password_customer %}
-          <div class="heading"><h4>Đổi Mật Khẩu</h4></div>
-          <div class="content">
+          <div class="content-body">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th><i class="fa fa-calendar"></i> Ngày đặt</th>
+                    <th><i class="fa fa-box"></i> Sản phẩm</th>
+                    <th><i class="fa fa-hashtag"></i> Số lượng</th>
+                    <th><i class="fa fa-money"></i> Tổng tiền</th>
+                    <th><i class="fa fa-info-circle"></i> Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for order in orders %}
+                  {% set order_data = get_order_data(order) %}
+                  {% for key, product in order_data.items() %}
+                  {% set discount = (product.discount/100) * product.price |float %}
+                  {% set subtotal = product.quantity|int * product.price|float %}
+                  <tr>
+                    <td><i class="fa fa-clock-o"></i> {{order.date_created}}</td>
+                    <td><strong>{{product.name}}</strong></td>
+                    <td><span class="badge-primary">{{product.quantity}}</span></td>
+                    <td><strong>{{(subtotal - discount|round(1,'floor')) | vnd}}</strong></td>
+                    <td>
+                      {% if order.status == "Đang xác nhận" %}
+                      <span class="status-badge status-pending">{{order.status}}</span>
+                      {% elif order.status == "Đang giao" %}
+                      <span class="status-badge status-shipping">{{order.status}}</span>
+                      {% elif order.status == "Đã giao" %}
+                      <span class="status-badge status-delivered">{{order.status}}</span>
+                      {% elif order.status == "Hủy đơn" %}
+                      <span class="status-badge status-cancelled">{{order.status}}</span>
+                      {% else %}
+                      <span class="status-badge status-pending">{{order.status}}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Change Password -->
+          {% if detail_password_customer %}
+          <div class="content-header">
+            <h4><i class="fa fa-key"></i> Đổi mật khẩu</h4>
+          </div>
+          <div class="content-body">
             {% include '_messages.html' %}
             <form method="post" action="">
               <div class="form-group">
-                <span> Mật khẩu cũ: </span>
-                <input
-                  type="password"
-                  class="form-control"
-                  name="oldpassword"
-                  required
-                />
+                <label for="oldpassword"><i class="fa fa-lock"></i> Mật khẩu hiện tại</label>
+                <input type="password" class="form-control" name="oldpassword" id="oldpassword" required />
               </div>
-              <div class="form-group">
-                <span> Mật khẩu mới: </span>
-                <input
-                  type="password"
-                  class="form-control"
-                  name="newpassword"
-                  id="newpassword"
-                  required
-                />
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="newpassword"><i class="fa fa-key"></i> Mật khẩu mới</label>
+                    <input type="password" class="form-control" name="newpassword" id="newpassword" required />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="renewpassword"><i class="fa fa-check-circle"></i> Xác nhận mật khẩu mới</label>
+                    <input type="password" class="form-control" name="renewpassword" id="renewpassword" onkeyup="check();" required />
+                    <span id="message" class="mt-2"></span>
+                  </div>
+                </div>
               </div>
-              <div class="form-group">
-                <span> Nhập lại mật khẩu mới: </span>
-                <input
-                  type="password"
-                  class="form-control"
-                  name="renewpassword"
-                  id="renewpassword"
-                  onkeyup="check();"
-                  required
-                />
-                <span id="message"></span>
+              
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary" onclick="return Validate()">
+                  <i class="fa fa-save"></i> Cập nhật mật khẩu
+                </button>
               </div>
-              <button
-                type="submit"
-                class="btn btn-info"
-                style="padding: 5px 26px; background-color: #e51534"
-                onclick="return Validate()"
-              >
-                Thay Đổi
-              </button>
             </form>
           </div>
           {% endif %}
@@ -227,29 +538,30 @@
     </div>
   </div>
 </div>
+
 {% include 'footer.html' %}
+
 <script>
   var check = function () {
-    if (
-      document.getElementById("newpassword").value ==
-      document.getElementById("renewpassword").value
-    ) {
-      document.getElementById("message").style.color = "green";
-      document.getElementById("message").innerHTML = "Match Password";
+    if (document.getElementById("newpassword").value == document.getElementById("renewpassword").value) {
+      document.getElementById("message").className = "password-match";
+      document.getElementById("message").innerHTML = "<i class='fa fa-check'></i> Mật khẩu khớp";
     } else {
-      document.getElementById("message").style.color = "red";
-      document.getElementById("message").innerHTML = "Not Matching Password";
+      document.getElementById("message").className = "password-mismatch";
+      document.getElementById("message").innerHTML = "<i class='fa fa-times'></i> Mật khẩu không khớp";
     }
   };
+  
   function Validate() {
     var password = document.getElementById("newpassword").value;
     var confirmPassword = document.getElementById("renewpassword").value;
     if (password != confirmPassword) {
-      document.getElementById("message").style.color = "red";
-      document.getElementById("message").innerHTML = "Not Matching Password";
+      document.getElementById("message").className = "password-mismatch";
+      document.getElementById("message").innerHTML = "<i class='fa fa-times'></i> Mật khẩu không khớp";
       return false;
     }
     return true;
   }
 </script>
+
 {% endblock content%}

@@ -58,7 +58,7 @@ def update_account():
         detail_customer.email = email
         detail_customer.phone_number = phone_number
         detail_customer.gender = gender
-        flash(f'Information change complete!', 'success')
+        flash(f'Cập nhật thành công', 'success')
         db.session.commit()
         return redirect(url_for('update_account'))
     return render_template('customers/myaccount.html', detail_customer=detail_customer, brands=brands(),
@@ -73,7 +73,7 @@ def change_password():
     new_password = request.form.get('newpassword')
     if request.method == "POST":
         if not bcrypt.check_password_hash(detail_password_customer.password, old_password.encode('utf8')):
-            flash(f'Old passwords do not match!', 'danger')
+            flash(f'Mật khẩu cũ không khớp!', 'danger')
             return redirect(url_for('change_password'))
 
         detail_password_customer.password = bcrypt.generate_password_hash(new_password).decode('utf8')
@@ -183,7 +183,7 @@ def customer_login():
 
             next = request.args.get('next')
             return redirect(next or url_for('home'))
-        flash('Incorrect email and password', 'danger')
+        flash('Email hoặc mật khẩu không đúng', 'danger')
         return redirect(url_for('customer_login'))
     return render_template('customers/login.html', form=form, brands=brands(), categories=categories())
 
@@ -199,7 +199,7 @@ def customer_login_page(page, id):
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             login_user(user)
             return redirect(url_for('detail', id=id))
-        flash('Incorrect email and password', 'danger')
+        flash('Email hoặc mật khẩu không đúng', 'danger')
         return redirect(url_for('customer_login_page', page=page, id=id))
     return render_template('customers/login.html', form=form, brands=brands(), categories=categories())
 
