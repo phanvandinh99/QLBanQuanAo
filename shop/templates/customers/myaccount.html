@@ -310,7 +310,7 @@
             <li class="breadcrumb-item"><a href="{{url_for('update_account')}}"><i class="fa fa-user"></i> Tài khoản</a></li>
             {% if detail_customer %}
             <li class="breadcrumb-item active"><i class="fa fa-info-circle"></i> Thông tin cá nhân</li>
-            {% elif orders %}
+            {% elif orders_with_totals %}
             <li class="breadcrumb-item active"><i class="fa fa-shopping-bag"></i> Lịch sử đơn hàng</li>
             {% elif detail_password_customer %}
             <li class="breadcrumb-item active"><i class="fa fa-lock"></i> Đổi mật khẩu</li>
@@ -344,7 +344,7 @@
             </li>
             {% endif %}
             
-            {% if orders %}
+            {% if orders_with_totals %}
             <li>
               <a href="{{url_for('payment_history')}}" class="active">
                 <i class="fa fa-shopping-bag"></i> Lịch sử đơn hàng
@@ -476,7 +476,7 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th><i class="fa fa-hashtag"></i> Mã đơn hàng</th>
+                    <th><i class="fa fa-hashtag"></i> Mã đơn</th>
                     <th><i class="fa fa-calendar"></i> Ngày đặt</th>
                     <th><i class="fa fa-box"></i> SL sản phẩm</th>
                     <th><i class="fa fa-money"></i> Tổng tiền</th>
