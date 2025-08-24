@@ -281,15 +281,36 @@ def payment_history():
     orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
         CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
     
-    # Update old statuses to new ones in memory (for display)
+    # Calculate totals for each order
+    orders_with_totals = []
     for order in orders:
+        # Update old statuses to new ones in memory (for display)
         if order.status == 'Pending':
             order.status = 'Đang xác nhận'
         elif order.status == 'Accepted':
             order.status = 'Đã giao'
         elif order.status == 'Cancelled':
             order.status = 'Hủy đơn'
-    return render_template('customers/myaccount.html', orders=orders, brands=brands(), categories=categories(), get_order_data=get_order_data)
+        
+        # Calculate totals
+        order_data = get_order_data(order)
+        total_quantity = 0
+        total_amount = 0
+        
+        if order_data:
+            for key, product in order_data.items():
+                product_total = float(product['price']) * int(product['quantity'])
+                product_discount = (float(product['discount']) / 100) * product_total
+                total_quantity += int(product['quantity'])
+                total_amount += (product_total - product_discount)
+        
+        orders_with_totals.append({
+            'order': order,
+            'total_quantity': total_quantity,
+            'total_amount': total_amount
+        })
+    
+    return render_template('customers/myaccount.html', orders_with_totals=orders_with_totals, brands=brands(), categories=categories(), get_order_data=get_order_data)
 
 
 @app.route('/order_detail/<invoice>')
@@ -347,6 +368,40 @@ def order_detail(invoice):
                          total_before_discount=total_before_discount,
                          total_discount=total_discount,
                          final_total=final_total)
+
+
+@app.route('/cancel_order/<invoice>', methods=['POST'])
+@login_required
+def cancel_order(invoice):
+    """Cancel an order"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('customer_login'))
+    
+    # Get the specific order by invoice
+    order = CustomerOrder.query.filter_by(
+        invoice=invoice, 
+        customer_id=current_user.id
+    ).first()
+    
+    if not order:
+        flash('Không tìm thấy đơn hàng!', 'danger')
+        return redirect(url_for('payment_history'))
+    
+    # Check if order can be cancelled (only pending orders)
+    if order.status != 'Đang xác nhận':
+        flash('Chỉ có thể hủy đơn hàng đang xác nhận!', 'warning')
+        return redirect(url_for('order_detail', invoice=invoice))
+    
+    try:
+        # Update order status to cancelled
+        order.status = 'Hủy đơn'
+        db.session.commit()
+        flash('Đơn hàng đã được hủy thành công!', 'success')
+    except Exception as e:
+        print("Cancel Order Error:", e)
+        flash('Có lỗi xảy ra khi hủy đơn hàng', 'danger')
+    
+    return redirect(url_for('order_detail', invoice=invoice))
 
 
 @app.route('/debug_order_data/<invoice>')

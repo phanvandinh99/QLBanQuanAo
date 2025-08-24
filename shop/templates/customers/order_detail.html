@@ -150,19 +150,32 @@
     font-weight: 600;
   }
 
-  .total-row {
-    background: #f8f9fa;
-    font-weight: 600;
-  }
+     .total-row {
+     background: #f8f9fa;
+     font-weight: 600;
+     border-top: 2px solid #dee2e6;
+   }
 
-  .total-row td {
-    border-bottom: none;
-  }
+   .total-row td {
+     border-bottom: none;
+     padding: 12px 8px;
+   }
 
-  .total-amount {
-    color: #007bff;
-    font-size: 16px;
-  }
+   .total-amount {
+     color: #007bff;
+     font-size: 16px;
+     font-weight: 700;
+   }
+
+   .total-row:last-child {
+     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+     border-top: 3px solid #2196f3;
+   }
+
+   .total-row:last-child td {
+     font-size: 18px;
+     font-weight: 700;
+   }
 
   .sidebar {
     display: flex;
@@ -252,12 +265,33 @@
     margin-bottom: 20px;
   }
 
-  .back-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
-    color: white;
-    text-decoration: none;
-  }
+     .back-button:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+     color: white;
+     text-decoration: none;
+   }
+
+   .cancel-button {
+     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+     color: white;
+     border: none;
+     padding: 10px 20px;
+     border-radius: 6px;
+     text-decoration: none;
+     display: inline-block;
+     font-size: 14px;
+     font-weight: 600;
+     transition: all 0.2s ease;
+     cursor: pointer;
+   }
+
+   .cancel-button:hover {
+     transform: translateY(-1px);
+     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+     color: white;
+     text-decoration: none;
+   }
 
   @media (max-width: 768px) {
     .main-content {
@@ -367,10 +401,32 @@
               {{(subtotal - discount|round(1,'floor')) | vnd}}
             </td>
           </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+                     {% endfor %}
+           
+           <!-- Tổng thanh toán -->
+           {% if order_data and order_data|length > 0 %}
+           <tr class="total-row">
+             <td colspan="6" style="text-align: right; font-weight: 600; color: #495057;">
+               Tạm tính:
+             </td>
+             <td class="total-amount">{{total_before_discount | vnd}}</td>
+           </tr>
+           <tr class="total-row">
+             <td colspan="6" style="text-align: right; font-weight: 600; color: #dc3545;">
+               Giảm giá:
+             </td>
+             <td class="total-amount" style="color: #dc3545;">-{{total_discount | vnd}}</td>
+           </tr>
+           <tr class="total-row">
+             <td colspan="6" style="text-align: right; font-weight: 700; color: #007bff; font-size: 16px;">
+               Tổng cộng:
+             </td>
+             <td class="total-amount" style="color: #007bff; font-size: 18px; font-weight: 700;">{{final_total | vnd}}</td>
+           </tr>
+           {% endif %}
+         </tbody>
+       </table>
+     </div>
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -393,68 +449,60 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
-      <div class="order-summary-sidebar">
-        <h3>💰 Tổng thanh toán</h3>
-        <div class="info-container">
-          {% set order_data = get_order_data(order) %} {% if order_data and
-          order_data|length > 0 %}
-          <div class="info-row">
-            <span class="info-label-sidebar">Tạm tính:</span>
-            <span class="info-value-sidebar"
-              >{{total_before_discount | vnd}}</span
-            >
-          </div>
-          <div class="info-row">
-            <span class="info-label-sidebar">Giảm giá:</span>
-            <span class="info-value-sidebar">-{{total_discount | vnd}}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label-sidebar">Tổng cộng:</span>
-            <span class="info-value-sidebar">{{final_total | vnd}}</span>
-          </div>
-
-          <!-- Debug info (tạm thời) -->
-          <div
-            class="info-row"
-            style="
-              margin-top: 10px;
-              padding-top: 10px;
-              border-top: 1px solid #eee;
-              font-size: 10px;
-            "
-          >
-            <span class="info-label-sidebar">Số lượng sản phẩm:</span>
-            <span class="info-value-sidebar"
-              >{{order_data|length}} sản phẩm</span
-            >
-          </div>
-          {% else %}
-          <div class="info-row">
-            <span class="info-label-sidebar">Lỗi:</span>
-            <span class="info-value-sidebar">Không có dữ liệu đơn hàng</span>
-          </div>
-          <div class="info-row" style="font-size: 10px">
-            <span class="info-label-sidebar">Debug:</span>
-            <span class="info-value-sidebar">
-              <a
-                href="{{url_for('debug_order_data', invoice=order.invoice)}}"
-                target="_blank"
-                style="color: #007bff; text-decoration: none"
-              >
-                Xem dữ liệu thô
-              </a>
-            </span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
+             <!-- Order Summary -->
+       <div class="order-summary-sidebar">
+         <h3>🔍 Thông tin đơn hàng</h3>
+         <div class="info-container">
+           {% set order_data = get_order_data(order) %} {% if order_data and
+           order_data|length > 0 %}
+           <div class="info-row">
+             <span class="info-label-sidebar">Mã đơn hàng:</span>
+             <span class="info-value-sidebar">{{order.invoice}}</span>
+           </div>
+           <div class="info-row">
+             <span class="info-label-sidebar">Số sản phẩm:</span>
+             <span class="info-value-sidebar">{{order_data|length}} sản phẩm</span>
+           </div>
+           <div class="info-row">
+             <span class="info-label-sidebar">Tổng tiền:</span>
+             <span class="info-value-sidebar">{{final_total | vnd}}</span>
+           </div>
+           {% else %}
+           <div class="info-row">
+             <span class="info-label-sidebar">Lỗi:</span>
+             <span class="info-value-sidebar">Không có dữ liệu đơn hàng</span>
+           </div>
+           <div class="info-row" style="font-size: 10px">
+             <span class="info-label-sidebar">Debug:</span>
+             <span class="info-value-sidebar">
+               <a
+                 href="{{url_for('debug_order_data', invoice=order.invoice)}}"
+                 target="_blank"
+                 style="color: #007bff; text-decoration: none"
+               >
+                 Xem dữ liệu thô
+               </a>
+             </span>
+           </div>
+           {% endif %}
+         </div>
+       </div>
     </div>
   </div>
 
-    <a href="{{url_for('payment_history')}}" class="back-button">
-    ← Quay lại lịch sử đơn hàng
-  </a>
+         <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+       <a href="{{url_for('payment_history')}}" class="back-button">
+         ← Quay lại lịch sử đơn hàng
+       </a>
+       
+       {% if order.status == 'Đang xác nhận' %}
+       <form method="POST" action="{{url_for('cancel_order', invoice=order.invoice)}}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');">
+         <button type="submit" class="cancel-button">
+           <i class="fa fa-times"></i> Hủy đơn hàng
+         </button>
+       </form>
+       {% endif %}
+     </div>
   
 </div>
 

@@ -467,7 +467,7 @@
           {% endif %}
 
           <!-- Order History -->
-          {% if orders %}
+          {% if orders_with_totals %}
           <div class="content-header">
             <h4><i class="fa fa-history"></i> Lịch sử đơn hàng</h4>
           </div>
@@ -476,25 +476,22 @@
               <table class="table">
                 <thead>
                   <tr>
+                    <th><i class="fa fa-hashtag"></i> Mã đơn hàng</th>
                     <th><i class="fa fa-calendar"></i> Ngày đặt</th>
-                    <th><i class="fa fa-box"></i> Sản phẩm</th>
-                    <th><i class="fa fa-hashtag"></i> Số lượng</th>
+                    <th><i class="fa fa-box"></i> SL sản phẩm</th>
                     <th><i class="fa fa-money"></i> Tổng tiền</th>
                     <th><i class="fa fa-info-circle"></i> Trạng thái</th>
                     <th><i class="fa fa-cogs"></i> Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for order in orders %}
-                  {% set order_data = get_order_data(order) %}
-                  {% for key, product in order_data.items() %}
-                  {% set discount = (product.discount/100) * product.price |float %}
-                  {% set subtotal = product.quantity|int * product.price|float %}
+                  {% for order_info in orders_with_totals %}
+                  {% set order = order_info.order %}
                   <tr>
-                    <td><i class="fa fa-clock-o"></i> {{order.date_created}}</td>
-                    <td><strong>{{product.name}}</strong></td>
-                    <td><span class="badge-primary">{{product.quantity}}</span></td>
-                    <td><strong>{{(subtotal - discount|round(1,'floor')) | vnd}}</strong></td>
+                    <td><strong>{{order.invoice}}</strong></td>
+                    <td><i class="fa fa-clock-o"></i> {{order.date_created.strftime('%d/%m/%Y %H:%M')}}</td>
+                    <td><span class="badge-primary">{{order_info.total_quantity}} sản phẩm</span></td>
+                    <td><strong>{{order_info.total_amount | vnd}}</strong></td>
                     <td>
                       {% if order.status == "Đang xác nhận" %}
                       <span class="status-badge status-pending">{{order.status}}</span>
@@ -510,11 +507,10 @@
                     </td>
                     <td>
                       <a href="{{url_for('order_detail', invoice=order.invoice)}}" class="btn btn-sm btn-outline-primary">
-                        <i class="fa fa-eye"></i> chi tiết
+                        <i class="fa fa-eye"></i> Chi tiết
                       </a>
                     </td>
                   </tr>
-                  {% endfor %}
                   {% endfor %}
                 </tbody>
               </table>
