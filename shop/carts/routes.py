@@ -46,7 +46,7 @@ def AddCart():
                             if current_user.is_authenticated:
                                 orders = CustomerOrder.query.filter(
                                     CustomerOrder.customer_id == current_user.id).filter(
-                                    CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
+                                    CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
                                 for order in orders:
                                     if order.orders:
                                         order_data = json.loads(order.orders)
@@ -106,7 +106,7 @@ def getCart():
         orders = CustomerOrder.query.filter(
             CustomerOrder.customer_id == current_user.id
         ).filter(
-            CustomerOrder.status == None
+            CustomerOrder.status == "Đang xác nhận"
         ).order_by(CustomerOrder.id.desc()).all()
         invoices = [order.invoice for order in orders]
     
@@ -135,7 +135,7 @@ def updatecart(code):
                     if current_user.is_authenticated:
                         orders = CustomerOrder.query.filter(
                             CustomerOrder.customer_id == current_user.id).filter(
-                            CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
+                            CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
                         for order in orders:
                             if order.orders:
                                 order_data = json.loads(order.orders)
@@ -156,7 +156,7 @@ def deleteitem(id):
     try:
         orders = CustomerOrder.query.filter(
             CustomerOrder.customer_id == current_user.id).filter(
-            CustomerOrder.status == None).all()
+            CustomerOrder.status == "Đang xác nhận").all()
         for order in orders:
             if order.orders:
                 order_data = json.loads(order.orders)
@@ -182,7 +182,7 @@ def clearcart():
         session.pop('Shoppingcart', None)
         if current_user.is_authenticated:
             orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
-                CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
+                CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
             for order in orders:
                 db.session.delete(order)
                 db.session.commit()
@@ -219,7 +219,7 @@ def vnpay_payment():
         invoice = secrets.token_hex(5)
         order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                               orders=json.dumps(session['Shoppingcart']),
-                              status="Pending", address=customer_address)
+                              status="Đang xác nhận", address=customer_address)
         db.session.add(order)
         db.session.commit()
         

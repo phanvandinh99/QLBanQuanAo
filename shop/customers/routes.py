@@ -202,7 +202,7 @@ def get_order():
     customer = Register.query.filter_by(id=customer_id).first()
     orders = CustomerOrder.query.filter(
         CustomerOrder.customer_id == current_user.id).filter(
-        CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
+        CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
     invoices = [order.invoice for order in orders]
     orders = []
     for invoice in invoices:
@@ -234,7 +234,6 @@ def submit_order():
                     if invoice.strip():  # Check if invoice is not empty
                         customer_order = CustomerOrder.query.filter_by(invoice=invoice).first()
                         if customer_order:
-                            customer_order.status = "Đang xác nhận"
                             customer_order.address = address
                             db.session.commit()
             else:
