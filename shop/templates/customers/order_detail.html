@@ -1,0 +1,461 @@
+{% extends "base.html" %} {% block content%} {% include 'header.html' %}
+
+<style>
+  .order-detail-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 15px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
+
+  .order-header {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .order-header h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .order-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .info-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+  }
+
+  .info-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .info-value {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-accepted {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .order-summary {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .order-summary h3 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: 0;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .product-table th {
+    background: #f8f9fa;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 13px;
+  }
+
+  .product-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+  }
+
+  .product-table tr:hover {
+    background: #f8f9fa;
+  }
+
+  .product-name {
+    font-weight: 600;
+    color: #212529;
+    max-width: 200px;
+  }
+
+  .product-color {
+    background: #e9ecef;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #6c757d;
+  }
+
+  .price {
+    font-weight: 600;
+    color: #28a745;
+  }
+
+  .discount {
+    color: #dc3545;
+    font-weight: 600;
+  }
+
+  .total-row {
+    background: #f8f9fa;
+    font-weight: 600;
+  }
+
+  .total-row td {
+    border-bottom: none;
+  }
+
+  .total-amount {
+    color: #007bff;
+    font-size: 16px;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .customer-info,
+  .order-summary-sidebar {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .customer-info h3,
+  .order-summary-sidebar h3 {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    margin: 0;
+    padding: 12px 15px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .order-summary-sidebar h3 {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  }
+
+  .info-container {
+    padding: 15px 20px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f3f4;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 16px;
+    color: #007bff;
+  }
+
+  .info-label-sidebar {
+    color: #6c757d;
+    font-size: 13px;
+  }
+
+  .info-value-sidebar {
+    color: #333;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+
+  .breadcrumb-item a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .breadcrumb-item.active {
+    color: #6c757d;
+  }
+
+  .back-button {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-bottom: 20px;
+  }
+
+  .back-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+    color: white;
+    text-decoration: none;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .order-detail-container {
+      padding: 10px;
+    }
+
+    .product-table {
+      font-size: 12px;
+    }
+
+    .product-table th,
+    .product-table td {
+      padding: 6px 4px;
+    }
+
+    .product-name {
+      max-width: 120px;
+    }
+
+    .order-info {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="order-detail-container">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="{{url_for('home')}}">Trang chủ</a>
+      </li>
+      <li class="breadcrumb-item">
+        <a href="{{url_for('payment_history')}}">Lịch sử đơn hàng</a>
+      </li>
+      <li class="breadcrumb-item active">Chi tiết đơn hàng</li>
+    </ol>
+  </nav>
+
+  {% include '_messages.html' %}
+
+  <!-- Order Header -->
+  <div class="order-header">
+    <h2>📋 Chi tiết đơn hàng #{{order.invoice}}</h2>
+    <div class="order-info">
+      <div class="info-item">
+        <div class="info-label">Ngày đặt</div>
+        <div class="info-value">
+          {{order.date_created.strftime('%d/%m/%Y %H:%M')}}
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Trạng thái</div>
+        <div class="info-value">
+          <span
+            class="status-badge {% if order.status == 'Đang xác nhận' %}status-pending {% elif order.status == 'Đã giao' %}status-accepted {% elif order.status == 'Hủy đơn' %}status-cancelled{% endif %}"
+          >
+            {{order.status}}
+          </span>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Địa chỉ giao hàng</div>
+        <div class="info-value">{{order.address}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <h3>🛍️ Danh sách sản phẩm</h3>
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Sản phẩm</th>
+            <th>Màu</th>
+            <th>Giá</th>
+            <th>SL</th>
+            <th>Giảm</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set order_data = get_order_data(order) %} {% for key, product in
+          order_data.items() %} {% set discount =(product.discount/100) *
+          product.price |float %} {% set subtotal = product.quantity|int *
+          product.price|float %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="product-name">{{product.name}}</td>
+            <td>
+              <span class="product-color">{{product.color|capitalize}}</span>
+            </td>
+            <td class="price">{{product.price | vnd}}</td>
+            <td>{{product.quantity}}</td>
+            <td class="discount">
+              {% if product.discount %}-{{product.discount}}%{% else %}-{% endif
+              %}
+            </td>
+            <td class="price">
+              {{(subtotal - discount|round(1,'floor')) | vnd}}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Customer Information -->
+      <div class="customer-info">
+        <h3>👤 Thông tin khách hàng</h3>
+        <div class="info-container">
+          <div class="info-row">
+            <span class="info-label-sidebar">Họ tên:</span>
+            <span class="info-value-sidebar">{{customer.username}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label-sidebar">Email:</span>
+            <span class="info-value-sidebar">{{customer.email}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label-sidebar">Số điện thoại:</span>
+            <span class="info-value-sidebar">{{customer.phone_number}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary-sidebar">
+        <h3>💰 Tổng thanh toán</h3>
+        <div class="info-container">
+          {% set order_data = get_order_data(order) %} {% if order_data and
+          order_data|length > 0 %}
+          <div class="info-row">
+            <span class="info-label-sidebar">Tạm tính:</span>
+            <span class="info-value-sidebar"
+              >{{total_before_discount | vnd}}</span
+            >
+          </div>
+          <div class="info-row">
+            <span class="info-label-sidebar">Giảm giá:</span>
+            <span class="info-value-sidebar">-{{total_discount | vnd}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label-sidebar">Tổng cộng:</span>
+            <span class="info-value-sidebar">{{final_total | vnd}}</span>
+          </div>
+
+          <!-- Debug info (tạm thời) -->
+          <div
+            class="info-row"
+            style="
+              margin-top: 10px;
+              padding-top: 10px;
+              border-top: 1px solid #eee;
+              font-size: 10px;
+            "
+          >
+            <span class="info-label-sidebar">Số lượng sản phẩm:</span>
+            <span class="info-value-sidebar"
+              >{{order_data|length}} sản phẩm</span
+            >
+          </div>
+          {% else %}
+          <div class="info-row">
+            <span class="info-label-sidebar">Lỗi:</span>
+            <span class="info-value-sidebar">Không có dữ liệu đơn hàng</span>
+          </div>
+          <div class="info-row" style="font-size: 10px">
+            <span class="info-label-sidebar">Debug:</span>
+            <span class="info-value-sidebar">
+              <a
+                href="{{url_for('debug_order_data', invoice=order.invoice)}}"
+                target="_blank"
+                style="color: #007bff; text-decoration: none"
+              >
+                Xem dữ liệu thô
+              </a>
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <a href="{{url_for('payment_history')}}" class="back-button">
+    ← Quay lại lịch sử đơn hàng
+  </a>
+  
+</div>
+
+{% endblock content %}

@@ -43,39 +43,11 @@ def AddCart():
                         if int(key) == int(product_id):
                             session.modified = True
                             item['quantity'] += quantity;
-                            if current_user.is_authenticated:
-                                orders = CustomerOrder.query.filter(
-                                    CustomerOrder.customer_id == current_user.id).filter(
-                                    CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
-                                for order in orders:
-                                    if order.orders:
-                                        order_data = json.loads(order.orders)
-                                        if product_id in order_data:
-                                            customer_order = CustomerOrder.query.get_or_404(order.id)
-                                            customer_order.orders = json.dumps({product_id: session['Shoppingcart'][product_id]})
-                                            db.session.commit()
                 else:
                     session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
-                    if current_user.is_authenticated:
-                        customer_id = current_user.id
-                        invoice = secrets.token_hex(5)
-                        order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                              orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
-                                              status="Đang xác nhận")
-                        db.session.add(order)
-                        db.session.commit()
-                    return redirect(request.referrer)
+                return redirect(request.referrer)
             else:
                 session['Shoppingcart'] = DictItems
-                if current_user.is_authenticated:
-                    customer_id = current_user.id
-                    invoice = secrets.token_hex(5)
-                    order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                          orders=json.dumps({product_id: session['Shoppingcart'][product_id]}),
-                                          status="Đang xác nhận")
-                    db.session.add(order)
-                    db.session.commit()
-
                 return redirect(request.referrer)
 
     except Exception as e:
@@ -99,22 +71,13 @@ def getCart():
     
     # Get customer info if authenticated
     customer = None
-    invoices = []
     if current_user.is_authenticated:
         customer = current_user
-        # Get pending orders for this customer
-        orders = CustomerOrder.query.filter(
-            CustomerOrder.customer_id == current_user.id
-        ).filter(
-            CustomerOrder.status == "Đang xác nhận"
-        ).order_by(CustomerOrder.id.desc()).all()
-        invoices = [order.invoice for order in orders]
     
     return render_template('products/carts.html', 
                          discounttotal=discounttotal, 
                          subtotals=subtotals, 
                          customer=customer,
-                         invoices=invoices,
                          brands=brands(),
                          categories=categories())
 
@@ -132,17 +95,6 @@ def updatecart(code):
                 if int(key) == code:
                     item['quantity'] = quantity
                     item['color'] = color
-                    if current_user.is_authenticated:
-                        orders = CustomerOrder.query.filter(
-                            CustomerOrder.customer_id == current_user.id).filter(
-                            CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
-                        for order in orders:
-                            if order.orders:
-                                order_data = json.loads(order.orders)
-                                if key in order_data:
-                                    customer_order = CustomerOrder.query.get_or_404(order.id)
-                                    customer_order.orders = json.dumps({key: session['Shoppingcart'][key]})
-                                    db.session.commit()
                     return redirect(url_for('getCart'))
         except Exception as e:
             print(e)
@@ -154,18 +106,6 @@ def deleteitem(id):
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return redirect(url_for('getCart'))
     try:
-        orders = CustomerOrder.query.filter(
-            CustomerOrder.customer_id == current_user.id).filter(
-            CustomerOrder.status == "Đang xác nhận").all()
-        for order in orders:
-            if order.orders:
-                order_data = json.loads(order.orders)
-                for key, item in order_data.items():
-                    if int(key) == id:
-                        customer = CustomerOrder.query.get_or_404(order.id)
-                        db.session.delete(customer)
-                        db.session.commit()
-                        break
         session.modified = True
         for key, item in session['Shoppingcart'].items():
             if int(key) == id:
@@ -180,12 +120,6 @@ def deleteitem(id):
 def clearcart():
     try:
         session.pop('Shoppingcart', None)
-        if current_user.is_authenticated:
-            orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
-                CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
-            for order in orders:
-                db.session.delete(order)
-                db.session.commit()
         return redirect(url_for('getCart'))
     except Exception as e:
         print(e)

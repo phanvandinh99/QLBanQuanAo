@@ -29,63 +29,31 @@
             <div class="card-header p-0 pt-1">
               <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
                 <li class="nav-item">
-                  <a
-                    class="nav-link active"
-                    id="custom-tabs-one-home-tab"
-                    data-toggle="pill"
-                    href="#custom-tabs-one-home"
-                    role="tab"
-                    aria-controls="custom-tabs-one-home"
-                    aria-selected="true"
-                    >Đang xác nhận</a
-                  >
+                  <a class="nav-link active" id="custom-tabs-one-home-tab" data-toggle="pill"
+                    href="#custom-tabs-one-home" role="tab" aria-controls="custom-tabs-one-home"
+                    aria-selected="true">Đang xác nhận</a>
                 </li>
                 <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    id="custom-tabs-one-profile-tab"
-                    data-toggle="pill"
-                    href="#custom-tabs-one-profile"
-                    role="tab"
-                    aria-controls="custom-tabs-one-profile"
-                    aria-selected="false"
-                    >Đang giao</a
-                  >
+                  <a class="nav-link" id="custom-tabs-one-profile-tab" data-toggle="pill"
+                    href="#custom-tabs-one-profile" role="tab" aria-controls="custom-tabs-one-profile"
+                    aria-selected="false">Đang giao</a>
                 </li>
                 <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    id="custom-tabs-one-messages-tab"
-                    data-toggle="pill"
-                    href="#custom-tabs-one-messages"
-                    role="tab"
-                    aria-controls="custom-tabs-one-messages"
-                    aria-selected="false"
-                    >Đã giao</a
-                  >
+                  <a class="nav-link" id="custom-tabs-one-messages-tab" data-toggle="pill"
+                    href="#custom-tabs-one-messages" role="tab" aria-controls="custom-tabs-one-messages"
+                    aria-selected="false">Đã giao</a>
                 </li>
                 <li class="nav-item">
-                  <a
-                    class="nav-link"
-                    id="custom-tabs-one-cancelled-tab"
-                    data-toggle="pill"
-                    href="#custom-tabs-one-cancelled"
-                    role="tab"
-                    aria-controls="custom-tabs-one-cancelled"
-                    aria-selected="false"
-                    >Hủy đơn</a
-                  >
+                  <a class="nav-link" id="custom-tabs-one-cancelled-tab" data-toggle="pill"
+                    href="#custom-tabs-one-cancelled" role="tab" aria-controls="custom-tabs-one-cancelled"
+                    aria-selected="false">Hủy đơn</a>
                 </li>
               </ul>
             </div>
             <div class="card-body">
               <div class="tab-content" id="custom-tabs-one-tabContent">
-                <div
-                  class="tab-pane fade show active"
-                  id="custom-tabs-one-home"
-                  role="tabpanel"
-                  aria-labelledby="custom-tabs-one-home-tab"
-                >
+                <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel"
+                  aria-labelledby="custom-tabs-one-home-tab">
                   <div>
                     <!-- /.card -->
                     <div class="card">
@@ -96,10 +64,7 @@
                       </div>
                       <!-- /.card-header -->
                       <div class="card-body">
-                        <table
-                          id="example1"
-                          class="table table-bordered table-striped"
-                        >
+                        <table id="example1" class="table table-bordered table-striped">
                           <thead>
                             <tr>
                               <th>Tên khách hàng</th>
@@ -126,88 +91,49 @@
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                               <td>
-                                <button
-                                  type="button"
-                                  class="btn btn-info"
-                                  data-toggle="modal"
-                                  data-target="#details-{{order.id}}"
-                                >
+                                <button type="button" class="btn btn-info" data-toggle="modal"
+                                  data-target="#details-{{order.id}}">
                                   Chi tiết
                                 </button>
                               </td>
                               <td>
-                                <button
-                                  type="button"
-                                  class="btn btn-success"
-                                  data-toggle="modal"
-                                  data-target="#accept-{{order.id}}"
-                                  style="margin-left: -5px"
-                                >
+                                <button type="button" class="btn btn-success" data-toggle="modal"
+                                  data-target="#accept-{{order.id}}" style="margin-left: -5px">
                                   Xác nhận
                                 </button>
                               </td>
                               <td>
-                                <button
-                                  type="button"
-                                  class="btn btn-danger"
-                                  data-toggle="modal"
-                                  data-target="#delete-{{order.id}}"
-                                >
+                                <button type="button" class="btn btn-danger" data-toggle="modal"
+                                  data-target="#delete-{{order.id}}">
                                   Hủy
                                 </button>
                               </td>
                             </tr>
                             {% endif %}
                             <!-- Modal -->
-                            <div
-                              class="modal fade"
-                              id="accept-{{order.id}}"
-                              data-backdrop="static"
-                              data-keyboard="false"
-                              tabindex="-1"
-                              aria-labelledby="staticBackdropLabel"
-                              aria-hidden="true"
-                            >
+                            <div class="modal fade" id="accept-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
                               <div class="modal-dialog">
                                 <div class="modal-content">
                                   <div class="modal-header">
-                                    <h5
-                                      class="modal-title"
-                                      id="staticBackdropLabel"
-                                    >
+                                    <h5 class="modal-title" id="staticBackdropLabel">
                                       {{'Mã đơn ' + order.invoice}}
                                     </h5>
-                                    <button
-                                      type="button"
-                                      class="close"
-                                      data-dismiss="modal"
-                                      aria-label="Close"
-                                    >
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                       <span aria-hidden="true">&times;</span>
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                    <span class="text-danger"
-                                      >Bạn có muốn xác nhận giao đơn hàng này
-                                      không?</span
-                                    >
+                                    <span class="text-danger">Bạn có muốn xác nhận giao đơn hàng này
+                                      không?</span>
                                   </div>
                                   <div class="modal-footer">
-                                    <button
-                                      type="button"
-                                      class="btn btn-warning btn-secondary"
-                                      data-dismiss="modal"
-                                    >
+                                    <button type="button" class="btn btn-warning btn-secondary" data-dismiss="modal">
                                       Hủy
                                     </button>
-                                    <form
-                                      action="{{url_for('accept_order', id=order.id)}}"
-                                      method="POST"
-                                    >
-                                      <button
-                                        type="submit"
-                                        class="btn btn-success"
-                                      >
+                                    <form action="{{url_for('accept_order', id=order.id)}}" method="POST">
+                                      <button type="submit" class="btn btn-success">
                                         Xác nhận
                                       </button>
                                     </form>
@@ -215,51 +141,28 @@
                                 </div>
                               </div>
                             </div>
-                            <div
-                              class="modal fade"
-                              id="delete-{{order.id}}"
-                              data-backdrop="static"
-                              data-keyboard="false"
-                              tabindex="-1"
-                              aria-labelledby="staticBackdropLabel"
-                              aria-hidden="true"
-                            >
+                            <div class="modal fade" id="delete-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
                               <div class="modal-dialog">
                                 <div class="modal-content">
                                   <div class="modal-header">
                                     <h5 class="modal-title">
                                       {{'Mã đơn ' + order.invoice}}
                                     </h5>
-                                    <button
-                                      type="button"
-                                      class="close"
-                                      data-dismiss="modal"
-                                      aria-label="Close"
-                                    >
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                       <span aria-hidden="true">&times;</span>
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                    <span class="text-danger"
-                                      >Bạn có muốn hủy đơn hàng này không?</span
-                                    >
+                                    <span class="text-danger">Bạn có muốn hủy đơn hàng này không?</span>
                                   </div>
                                   <div class="modal-footer">
-                                    <button
-                                      type="button"
-                                      class="btn btn-warning btn-secondary"
-                                      data-dismiss="modal"
-                                    >
+                                    <button type="button" class="btn btn-warning btn-secondary" data-dismiss="modal">
                                       Hủy
                                     </button>
-                                    <form
-                                      action="{{url_for('delete_order', id=order.id)}}"
-                                      method="POST"
-                                    >
-                                      <button
-                                        type="submit"
-                                        class="btn btn-danger"
-                                      >
+                                    <form action="{{url_for('delete_order', id=order.id)}}" method="POST">
+                                      <button type="submit" class="btn btn-danger">
                                         Hủy đơn
                                       </button>
                                     </form>
@@ -267,27 +170,16 @@
                                 </div>
                               </div>
                             </div>
-                            <div
-                              class="modal fade"
-                              id="details-{{order.id}}"
-                              data-backdrop="static"
-                              data-keyboard="false"
-                              tabindex="-1"
-                              aria-labelledby="staticBackdropLabel"
-                              aria-hidden="true"
-                            >
+                            <div class="modal fade" id="details-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
                               <div class="modal-dialog">
                                 <div class="modal-content">
                                   <div class="modal-header">
                                     <h5 class="modal-title" id="">
                                       {{'Mã đơn: ' + order.invoice}}
                                     </h5>
-                                    <button
-                                      type="button"
-                                      class="close"
-                                      data-dismiss="modal"
-                                      aria-label="Close"
-                                    >
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                       <span aria-hidden="true">&times;</span>
                                     </button>
                                   </div>
@@ -319,21 +211,14 @@
                     <!-- /.card -->
                   </div>
                 </div>
-                <div
-                  class="tab-pane fade"
-                  id="custom-tabs-one-profile"
-                  role="tabpanel"
-                  aria-labelledby="custom-tabs-one-profile-tab"
-                >
+                <div class="tab-pane fade" id="custom-tabs-one-profile" role="tabpanel"
+                  aria-labelledby="custom-tabs-one-profile-tab">
                   <div>
                     <!-- /.card -->
                     <div class="card">
                       <!-- /.card-header -->
                       <div class="card-body">
-                        <table
-                          id="example2"
-                          class="table table-bordered table-striped"
-                        >
+                        <table id="example2" class="table table-bordered table-striped">
                           <thead>
                             <tr>
                               <th>STT</th>
@@ -360,75 +245,40 @@
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                               <td>
-                                <button
-                                  type="button"
-                                  class="btn btn-primary"
-                                  data-toggle="modal"
-                                  data-target="#delivered-{{order.id}}"
-                                  style="margin-right: 5px;"
-                                >
+                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                  data-target="#delivered-{{order.id}}" style="margin-right: 5px;">
                                   Đã giao
                                 </button>
-                                <button
-                                  type="button"
-                                  class="btn btn-danger"
-                                  data-toggle="modal"
-                                  data-target="#cancel-delivering-{{order.id}}"
-                                >
+                                <button type="button" class="btn btn-danger" data-toggle="modal"
+                                  data-target="#cancel-delivering-{{order.id}}">
                                   Hủy
                                 </button>
                               </td>
                             </tr>
                             <!-- Modal for delivered -->
-                            <div
-                              class="modal fade"
-                              id="delivered-{{order.id}}"
-                              data-backdrop="static"
-                              data-keyboard="false"
-                              tabindex="-1"
-                              aria-labelledby="staticBackdropLabel"
-                              aria-hidden="true"
-                            >
+                            <div class="modal fade" id="delivered-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
                               <div class="modal-dialog">
                                 <div class="modal-content">
                                   <div class="modal-header">
-                                    <h5
-                                      class="modal-title"
-                                      id="staticBackdropLabel"
-                                    >
+                                    <h5 class="modal-title" id="staticBackdropLabel">
                                       {{'Mã đơn ' + order.invoice}}
                                     </h5>
-                                    <button
-                                      type="button"
-                                      class="close"
-                                      data-dismiss="modal"
-                                      aria-label="Close"
-                                    >
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                       <span aria-hidden="true">&times;</span>
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                    <span class="text-primary"
-                                      >Bạn có muốn xác nhận đơn hàng đã được
-                                      giao thành công?</span
-                                    >
+                                    <span class="text-primary">Bạn có muốn xác nhận đơn hàng đã được
+                                      giao thành công?</span>
                                   </div>
                                   <div class="modal-footer">
-                                    <button
-                                      type="button"
-                                      class="btn btn-warning btn-secondary"
-                                      data-dismiss="modal"
-                                    >
+                                    <button type="button" class="btn btn-warning btn-secondary" data-dismiss="modal">
                                       Hủy
                                     </button>
-                                    <form
-                                      action="{{url_for('delivered_order', id=order.id)}}"
-                                      method="POST"
-                                    >
-                                      <button
-                                        type="submit"
-                                        class="btn btn-primary"
-                                      >
+                                    <form action="{{url_for('delivered_order', id=order.id)}}" method="POST">
+                                      <button type="submit" class="btn btn-primary">
                                         Xác nhận đã giao
                                       </button>
                                     </form>
@@ -437,54 +287,29 @@
                               </div>
                             </div>
                             <!-- Modal for cancel delivering order -->
-                            <div
-                              class="modal fade"
-                              id="cancel-delivering-{{order.id}}"
-                              data-backdrop="static"
-                              data-keyboard="false"
-                              tabindex="-1"
-                              aria-labelledby="staticBackdropLabel"
-                              aria-hidden="true"
-                            >
+                            <div class="modal fade" id="cancel-delivering-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
                               <div class="modal-dialog">
                                 <div class="modal-content">
                                   <div class="modal-header">
-                                    <h5
-                                      class="modal-title"
-                                      id="staticBackdropLabel"
-                                    >
+                                    <h5 class="modal-title" id="staticBackdropLabel">
                                       {{'Mã đơn ' + order.invoice}}
                                     </h5>
-                                    <button
-                                      type="button"
-                                      class="close"
-                                      data-dismiss="modal"
-                                      aria-label="Close"
-                                    >
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                       <span aria-hidden="true">&times;</span>
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                    <span class="text-danger"
-                                      >Bạn có muốn hủy đơn hàng đang giao này không? (Trường hợp khách hàng không nhận)</span
-                                    >
+                                    <span class="text-danger">Bạn có muốn hủy đơn hàng đang giao này không? (Trường hợp
+                                      khách hàng không nhận)</span>
                                   </div>
                                   <div class="modal-footer">
-                                    <button
-                                      type="button"
-                                      class="btn btn-warning btn-secondary"
-                                      data-dismiss="modal"
-                                    >
+                                    <button type="button" class="btn btn-warning btn-secondary" data-dismiss="modal">
                                       Hủy
                                     </button>
-                                    <form
-                                      action="{{url_for('delete_order', id=order.id)}}"
-                                      method="POST"
-                                    >
-                                      <button
-                                        type="submit"
-                                        class="btn btn-danger"
-                                      >
+                                    <form action="{{url_for('delete_order', id=order.id)}}" method="POST">
+                                      <button type="submit" class="btn btn-danger">
                                         Xác nhận hủy
                                       </button>
                                     </form>
@@ -501,21 +326,14 @@
                     <!-- /.card -->
                   </div>
                 </div>
-                <div
-                  class="tab-pane fade"
-                  id="custom-tabs-one-messages"
-                  role="tabpanel"
-                  aria-labelledby="custom-tabs-one-messages-tab"
-                >
+                <div class="tab-pane fade" id="custom-tabs-one-messages" role="tabpanel"
+                  aria-labelledby="custom-tabs-one-messages-tab">
                   <div>
                     <!-- /.card -->
                     <div class="card">
                       <!-- /.card-header -->
                       <div class="card-body">
-                        <table
-                          id="example3"
-                          class="table table-bordered table-striped"
-                        >
+                        <table id="example3" class="table table-bordered table-striped">
                           <thead>
                             <tr>
                               <th>STT</th>
@@ -528,7 +346,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                                                         {%for order in orders %} {% if order.status == "Đã giao" %}
+                            {%for order in orders %} {% if order.status == "Đã giao" %}
                             <tr>
                               <td>{{loop.index}}</td>
                               {%for customer in customers%} {% if customer.id ==
@@ -558,21 +376,14 @@
                     <!-- /.card -->
                   </div>
                 </div>
-                <div
-                  class="tab-pane fade"
-                  id="custom-tabs-one-cancelled"
-                  role="tabpanel"
-                  aria-labelledby="custom-tabs-one-cancelled-tab"
-                >
+                <div class="tab-pane fade" id="custom-tabs-one-cancelled" role="tabpanel"
+                  aria-labelledby="custom-tabs-one-cancelled-tab">
                   <div>
                     <!-- /.card -->
                     <div class="card">
                       <!-- /.card-header -->
                       <div class="card-body">
-                        <table
-                          id="example4"
-                          class="table table-bordered table-striped"
-                        >
+                        <table id="example4" class="table table-bordered table-striped">
                           <thead>
                             <tr>
                               <th>STT</th>
@@ -583,7 +394,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                                                         {%for order in orders %} {% if order.status == "Hủy đơn" %}
+                            {%for order in orders %} {% if order.status == "Hủy đơn" %}
                             <tr>
                               <td>{{loop.index}}</td>
                               {%for customer in customers%} {% if customer.id ==

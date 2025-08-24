@@ -321,13 +321,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for i in range(invoices|length) %}
-                    {% set order_data = get_order_data(orders[i]) %}
-                    {% for key, product in order_data.items() %}
+                    {% set cart_items = session.get('Shoppingcart', {}) %}
+                    {% for key, product in cart_items.items() %}
                     {% set discount =(product.discount/100) * product.price |float %}
                     {% set subtotal = product.quantity|int * product.price|float %}
                     <tr>
-                        <td>{{ i+1 }}</td>
+                        <td>{{ loop.index }}</td>
                         <td class="product-name">{{product.name}}</td>
                         <td><span class="product-color">{{product.color|capitalize}}</span></td>
                         <td class="price">{{product.price | vnd}}</td>
@@ -335,7 +334,6 @@
                         <td class="discount">{% if product.discount %}-{{product.discount}}%{% else %}-{% endif %}</td>
                         <td class="price">{{(subtotal - discount|round(1,'floor')) | vnd}}</td>
                     </tr>
-                    {% endfor %}
                     {% endfor %}
                     <tr class="total-row">
                         <td colspan="6" style="text-align: right;"><strong>Tổng cộng:</strong></td>
@@ -352,8 +350,6 @@
                 <h3>👤 Thông tin đặt hàng</h3>
                 <div class="form-container">
                     <form action="{{ url_for('submit_order') }}" method="POST" onsubmit="return confirmForm();">
-                        <input type="hidden" name="invoice_customer" value="{{','.join(invoices)}}">
-                        
                         <div class="form-group">
                             <label>Họ tên</label>
                             <input type="text" class="form-control" value="{{customer.username}}" readonly>

@@ -29,9 +29,13 @@ def get_order_data(order):
     """Helper function to parse order data from JSON"""
     if order.orders:
         try:
-            return json.loads(order.orders)
-        except:
+            parsed_data = json.loads(order.orders)
+            print(f"DEBUG: Parsed order data for order {order.invoice}: {len(parsed_data)} products")
+            return parsed_data
+        except Exception as e:
+            print(f"DEBUG: Error parsing order data for order {order.invoice}: {e}")
             return {}
+    print(f"DEBUG: No orders data for order {order.invoice}")
     return {}
 
 
@@ -219,58 +223,49 @@ def customer_logout():
 def get_order():
     if not current_user.is_authenticated:
         return redirect(url_for('customer_login'))
+    
+    # Check if cart is empty
+    if 'Shoppingcart' not in session or not session['Shoppingcart']:
+        flash('Giỏ hàng trống!', 'danger')
+        return redirect(url_for('getCart'))
+    
     customer_id = current_user.id
     customer = Register.query.filter_by(id=customer_id).first()
-    orders = CustomerOrder.query.filter(
-        CustomerOrder.customer_id == current_user.id).filter(
-        CustomerOrder.status == "Đang xác nhận").order_by(CustomerOrder.id.desc()).all()
-    invoices = [order.invoice for order in orders]
-    orders = []
-    for invoice in invoices:
-        order = CustomerOrder.query.filter_by(customer_id=customer_id, invoice=invoice).order_by(
-            CustomerOrder.id.desc()).first()
-        orders.append(order)
+    
+    # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
-    if 'Shoppingcart' in session and session['Shoppingcart']:
-        for key, product in session['Shoppingcart'].items():
-            discounttotal += float(product['discount'] / 100) * float(product['price']) * int(product['quantity'])
-            subtotals += float(product['price']) * int(product['quantity'])
-        subtotals -= discounttotal
-    return render_template('customers/order.html', invoices=invoices, subtotals=subtotals, customer=customer,
-                           orders=orders, brands=brands(), categories=categories(), get_order_data=get_order_data)
+    for key, product in session['Shoppingcart'].items():
+        discounttotal += float(product['discount'] / 100) * float(product['price']) * int(product['quantity'])
+        subtotals += float(product['price']) * int(product['quantity'])
+    subtotals -= discounttotal
+    
+    return render_template('customers/order.html', subtotals=subtotals, customer=customer,
+                           brands=brands(), categories=categories(), get_order_data=get_order_data)
 
 
 @app.route('/submit_order', methods=['POST'])
 @login_required
 def submit_order():
     address = request.form.get('CustomerAddress')
-    invoice_customer = request.form.get('invoice_customer')
     
     if request.method == "POST":
         try:
-            # If there are existing orders, update them
-            if invoice_customer:
-                for invoice in invoice_customer.split(','):
-                    if invoice.strip():  # Check if invoice is not empty
-                        customer_order = CustomerOrder.query.filter_by(invoice=invoice).first()
-                        if customer_order:
-                            customer_order.address = address
-                            db.session.commit()
+            # Create new order from session cart
+            if 'Shoppingcart' in session and session['Shoppingcart']:
+                customer_id = current_user.id
+                invoice = secrets.token_hex(5)
+                order = CustomerOrder(invoice=invoice, customer_id=customer_id,
+                                      orders=json.dumps(session['Shoppingcart']),
+                                      status="Đang xác nhận", address=address)
+                db.session.add(order)
+                db.session.commit()
+                
+                # Clear cart
+                session.pop('Shoppingcart', None)
+                flash('Đơn hàng đã được đặt thành công!', 'success')
             else:
-                # Create new order from session cart
-                if 'Shoppingcart' in session and session['Shoppingcart']:
-                    customer_id = current_user.id
-                    invoice = secrets.token_hex(5)
-                    order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                          orders=json.dumps(session['Shoppingcart']),
-                                          status="Đang xác nhận", address=address)
-                    db.session.add(order)
-                    db.session.commit()
-            
-            # Clear cart
-            session.pop('Shoppingcart', None)
-            flash('Đơn hàng đã được đặt thành công!', 'success')
+                flash('Giỏ hàng trống!', 'danger')
             
         except Exception as e:
             print("Submit Order Error:", e)
@@ -295,3 +290,120 @@ def payment_history():
         elif order.status == 'Cancelled':
             order.status = 'Hủy đơn'
     return render_template('customers/myaccount.html', orders=orders, brands=brands(), categories=categories(), get_order_data=get_order_data)
+
+
+@app.route('/order_detail/<invoice>')
+@login_required
+def order_detail(invoice):
+    if not current_user.is_authenticated:
+        return redirect(url_for('customer_login'))
+    
+    # Get the specific order by invoice
+    order = CustomerOrder.query.filter_by(
+        invoice=invoice, 
+        customer_id=current_user.id
+    ).first()
+    
+    if not order:
+        flash('Không tìm thấy đơn hàng!', 'danger')
+        return redirect(url_for('payment_history'))
+    
+    # Debug: Print order data
+    print(f"DEBUG: Order {order.invoice} - Raw orders data: {order.orders}")
+    
+    # Calculate totals in Python
+    order_data = get_order_data(order)
+    total_before_discount = 0
+    total_discount = 0
+    
+    if order_data:
+        for key, product in order_data.items():
+            product_total = float(product['price']) * int(product['quantity'])
+            product_discount = (float(product['discount']) / 100) * product_total
+            total_before_discount += product_total
+            total_discount += product_discount
+    
+    final_total = total_before_discount - total_discount
+    
+    print(f"DEBUG: Calculated totals - Before: {total_before_discount}, Discount: {total_discount}, Final: {final_total}")
+    
+    # Update old statuses to new ones in memory (for display)
+    if order.status == 'Pending':
+        order.status = 'Đang xác nhận'
+    elif order.status == 'Accepted':
+        order.status = 'Đã giao'
+    elif order.status == 'Cancelled':
+        order.status = 'Hủy đơn'
+    
+    # Get customer info
+    customer = Register.query.filter_by(id=current_user.id).first()
+    
+    return render_template('customers/order_detail.html', 
+                         order=order, 
+                         customer=customer,
+                         brands=brands(), 
+                         categories=categories(), 
+                         get_order_data=get_order_data,
+                         total_before_discount=total_before_discount,
+                         total_discount=total_discount,
+                         final_total=final_total)
+
+
+@app.route('/debug_order_data/<invoice>')
+@login_required
+def debug_order_data(invoice):
+    """Debug route to check order data"""
+    order = CustomerOrder.query.filter_by(
+        invoice=invoice, 
+        customer_id=current_user.id
+    ).first()
+    
+    if not order:
+        return "Order not found"
+    
+    order_data = get_order_data(order)
+    
+    # Calculate totals manually
+    total_before_discount = 0
+    total_discount = 0
+    
+    if order_data:
+        for key, product in order_data.items():
+            product_total = float(product['price']) * int(product['quantity'])
+            product_discount = (float(product['discount']) / 100) * product_total
+            total_before_discount += product_total
+            total_discount += product_discount
+    
+    final_total = total_before_discount - total_discount
+    
+    debug_info = {
+        'order_id': order.id,
+        'invoice': order.invoice,
+        'status': order.status,
+        'address': order.address,
+        'raw_orders': order.orders,
+        'parsed_orders': order_data,
+        'order_count': len(order_data) if order_data else 0,
+        'total_before_discount': total_before_discount,
+        'total_discount': total_discount,
+        'final_total': final_total
+    }
+    
+    return f"""
+    <h2>Debug Order Info</h2>
+    <pre>{debug_info}</pre>
+    
+    <h3>Raw Orders Data:</h3>
+    <pre>{order.orders}</pre>
+    
+    <h3>Parsed Orders:</h3>
+    <pre>{order_data}</pre>
+    
+    <h3>Calculations:</h3>
+    <p>Total before discount: {total_before_discount}</p>
+    <p>Total discount: {total_discount}</p>
+    <p>Final total: {final_total}</p>
+    """
+
+
+

@@ -200,6 +200,26 @@
     text-transform: uppercase;
   }
   
+  .btn-outline-primary {
+    border: 1px solid #0cafe5;
+    color: #0cafe5;
+    background: transparent;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+  }
+  
+  .btn-outline-primary:hover {
+    background: #0cafe5;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(12, 175, 229, 0.3);
+  }
+  
   .status-pending { background: #fff3cd; color: #856404; }
   .status-shipping { background: #d1ecf1; color: #0c5460; }
   .status-delivered { background: #d4edda; color: #155724; }
@@ -461,6 +481,7 @@
                     <th><i class="fa fa-hashtag"></i> Số lượng</th>
                     <th><i class="fa fa-money"></i> Tổng tiền</th>
                     <th><i class="fa fa-info-circle"></i> Trạng thái</th>
+                    <th><i class="fa fa-cogs"></i> Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -486,6 +507,11 @@
                       {% else %}
                       <span class="status-badge status-pending">{{order.status}}</span>
                       {% endif %}
+                    </td>
+                    <td>
+                      <a href="{{url_for('order_detail', invoice=order.invoice)}}" class="btn btn-sm btn-outline-primary">
+                        <i class="fa fa-eye"></i> chi tiết
+                      </a>
                     </td>
                   </tr>
                   {% endfor %}
