@@ -33,12 +33,6 @@
                 >
                   <i class="fa fa-eye"></i> Xem chi tiết
                 </a>
-                <button
-                  class="btn btn-primary btn-sm add-to-cart"
-                  data-product-id="{{product.id}}"
-                >
-                  <i class="fa fa-shopping-cart"></i> Thêm vào giỏ
-                </button>
               </div>
             </div>
             {% if product.discount > 0 %}
@@ -46,7 +40,9 @@
             {% endif %}
           </div>
           <div class="product-info">
-            <h4 class="product-title">{{product.name}}</h4>
+            <a href="{{url_for('detail', id = product.id)}}">
+                <h4 class="product-title">{{product.name}}</h4>
+            </a>
             <div class="product-price">
               {% if product.discount > 0 %}
               <span class="original-price">{{product.price | vnd}}</span>
@@ -70,24 +66,30 @@
             <div class="product-actions">
               <div class="row">
                 <div class="col-6">
-                  <a
-                    href="{{url_for('detail', id = product.id)}}"
-                    class="btn btn-outline-primary btn-block"
-                  >
-                    <i class="fa fa-info-circle"></i> Chi tiết
-                  </a>
-                </div>
-                <div class="col-6">
                   {% if product.stock > 0 %}
-                  <button
-                    class="btn btn-primary btn-block add-to-cart-btn"
-                    data-product-id="{{product.id}}"
-                    data-product-name="{{product.name}}"
-                    data-product-price="{{product.price}}"
-                    data-product-colors="{{product.colors}}"
+                  <form
+                    action="{{url_for('AddCart')}}"
+                    method="post"
+                    class="add-to-cart-form"
                   >
-                    <i class="fa fa-shopping-cart"></i> Thêm giỏ
-                  </button>
+                    <input
+                      type="hidden"
+                      name="product_id"
+                      value="{{product.id}}"
+                    />
+                    <input type="hidden" name="quantity" value="1" />
+                    {% set colors = product.colors.split(',') %}
+                    <select name="colors" style="display: none">
+                      {% for color in colors %} {% set col = color.split(':') %}
+                      <option value="{{col[0]}}">
+                        {{col[0] | capitalize }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-block">
+                      <i class="fa fa-shopping-cart"></i> Thêm vào giỏ
+                    </button>
+                  </form>
                   {% else %}
                   <button class="btn btn-secondary btn-block" disabled>
                     <i class="fa fa-times-circle"></i> Hết hàng
@@ -193,122 +195,6 @@
 </section>
 
 <script>
-  // Add to cart functionality
-  document.querySelectorAll(".add-to-cart-btn").forEach((button) => {
-    button.addEventListener("click", function () {
-      const productId = this.getAttribute("data-product-id");
-      const productName = this.getAttribute("data-product-name");
-      const productPrice = this.getAttribute("data-product-price");
-      const productColors = this.getAttribute("data-product-colors");
-
-      // Disable button to prevent multiple clicks
-      this.disabled = true;
-      this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang thêm...';
-
-      // Add to cart logic
-      addToCart(productId, productName, productPrice, productColors);
-    });
-  });
-
-  // Add to cart function
-  function addToCart(productId, productName, productPrice, productColors) {
-    // Create form data
-    const formData = new FormData();
-    formData.append("product_id", productId);
-    formData.append("quantity", 1);
-
-    // Add color if available
-    if (productColors) {
-      const colors = productColors.split(",");
-      if (colors.length > 0) {
-        const firstColor = colors[0].split(":")[0]; // Get first color
-        formData.append("colors", firstColor);
-      }
-    }
-
-    // Send request to add to cart
-    fetch("/addcart", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // Show success message
-          showNotification("Sản phẩm đã được thêm vào giỏ hàng!", "success");
-
-          // Update cart count if available
-          updateCartCount(data.cart_count);
-        } else {
-          // Show error message
-          showNotification(
-            data.message || "Có lỗi xảy ra khi thêm sản phẩm!",
-            "error"
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        showNotification("Có lỗi xảy ra khi thêm sản phẩm!", "error");
-      })
-      .finally(() => {
-        // Re-enable button
-        const button = document.querySelector(
-          `[data-product-id="${productId}"]`
-        );
-        if (button) {
-          button.disabled = false;
-          button.innerHTML = '<i class="fa fa-shopping-cart"></i> Thêm giỏ';
-        }
-      });
-  }
-
-  // Show notification function
-  function showNotification(message, type) {
-    // Create notification element
-    const notification = document.createElement("div");
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fa fa-${
-              type === "success" ? "check-circle" : "exclamation-circle"
-            }"></i>
-            <span>${message}</span>
-        </div>
-    `;
-
-    // Add to page
-    document.body.appendChild(notification);
-
-    // Show notification
-    setTimeout(() => {
-      notification.classList.add("show");
-    }, 100);
-
-    // Remove notification after 3 seconds
-    setTimeout(() => {
-      notification.classList.remove("show");
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 3000);
-  }
-
-  // Update cart count function
-  function updateCartCount(count) {
-    const cartCountElement = document.querySelector(".cart-count");
-    if (cartCountElement) {
-      cartCountElement.textContent = count;
-      cartCountElement.classList.add("updated");
-      setTimeout(() => {
-        cartCountElement.classList.remove("updated");
-      }, 1000);
-    }
-  }
-
   // Smooth scroll for anchor links
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", function (e) {
