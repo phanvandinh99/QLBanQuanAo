@@ -105,6 +105,12 @@ def customer_manager():
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Register.query.all()
+    
+    # Kiểm tra xem mỗi customer có thể xóa hay không
+    for customer in customers:
+        customer_orders = CustomerOrder.query.filter_by(customer_id=customer.id).all()
+        customer.can_delete = len(customer_orders) == 0
+    
     return render_template('admin/customer_manager.html', title='Customer manager page', user=user[0],
                            customers=customers)
 
@@ -223,16 +229,27 @@ def delete_customer(id):
         flash(f'Please login first', 'danger')
         return redirect(url_for('login'))
     customer = Register.query.get_or_404(id)
+    
+    # Kiểm tra xem customer có đơn hàng nào không
+    customer_orders = CustomerOrder.query.filter_by(customer_id=id).all()
+    if customer_orders:
+        flash(f"Tài khoản {customer.username} đã đặt hàng (Ràng buộc khóa) không thể xóa.", "danger")
+        return redirect(url_for('customer_manager'))
+    
     if request.method == "POST":
+        # Xóa các đánh giá của customer trước
         rates = Rate.query.filter(Rate.register_id == id).all()
         for rate in rates:
             db.session.delete(rate)
             db.session.commit()
+        
+        # Xóa customer
         db.session.delete(customer)
         db.session.commit()
-        flash(f"The customer {customer.username} was deleted from your database", "success")
+        flash(f"Tài khoản {customer.username} đã được xóa thành công", "success")
         return redirect(url_for('customer_manager'))
-    flash(f"The customer {customer.username} can't be  deleted from your database", "warning")
+    
+    flash(f"Tài khoản {customer.username} không thể xóa", "warning")
     return redirect(url_for('customer_manager'))
 
 

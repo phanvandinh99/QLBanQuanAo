@@ -83,14 +83,25 @@
                       {% endif %}
                     </td>
                     <td>
+                      {% if customer.can_delete %}
                       <button
                         type="button"
                         class="btn btn-danger"
                         data-toggle="modal"
-                        data-target="#staticBackdrop-{{customer.id}}"
+                        data-target="#detail-{{customer.id}}"
                       >
                         Xóa
                       </button>
+                      {% else %}
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        disabled
+                        title="Tài khoản đã đặt hàng không thể xóa"
+                      >
+                        Xóa
+                      </button>
+                      {% endif %}
                     </td>
                   </tr>
                   <!-- Modal -->
@@ -193,6 +204,7 @@
                       </div>
                     </div>
                   </div>
+                  {% if customer.can_delete %}
                   <div
                     class="modal fade"
                     id="detail-{{customer.id}}"
@@ -219,7 +231,8 @@
                         </div>
                         <div class="modal-body">
                           <span class="text-danger">
-                            Bạn muốn xóa tài khoản {{customer.username}} không?
+                            Bạn có chắc chắn muốn xóa tài khoản <strong>{{customer.username}}</strong> không?<br>
+                            <small class="text-muted">Lưu ý: Tài khoản đã đặt hàng sẽ không thể xóa.</small>
                           </span>
                         </div>
                         <div class="modal-footer">
@@ -242,6 +255,7 @@
                       </div>
                     </div>
                   </div>
+                  {% endif %}
                   {%endfor%}
                 </tbody>
               </table>
