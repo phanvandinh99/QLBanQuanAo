@@ -53,7 +53,7 @@ def get_category(name):
 @app.route('/addbrand', methods=['GET', 'POST'])
 def addbrand():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     if request.method == "POST":
         getbrand = request.form.get('brand')
@@ -61,7 +61,7 @@ def addbrand():
         brand = Brand(name=getbrand, category_id=category)
 
         db.session.add(brand)
-        flash(f'The brand {getbrand} was added to your database', 'success')
+        flash(f'Thương hiệu {getbrand} đã xóa khỏi database hệ thống', 'success')
         db.session.commit()
         return redirect(url_for('addbrand'))
     user = Admin.query.filter_by(email=session['email']).all()
@@ -80,7 +80,7 @@ def updatebrand(id):
     if request.method == "POST":
         print("Brand", brand)
         updatebrand.name = brand
-        flash(f'The brand {updatebrand.name} was updated', 'success')
+        flash(f'Thương hiệu {updatebrand.name} đã được cập nhật', 'success')
         db.session.commit()
         return redirect(url_for('brands'))
     user = Admin.query.filter_by(email=session['email']).all()
@@ -91,7 +91,7 @@ def updatebrand(id):
 @app.route('/deletebrand/<int:id>', methods=['GET', 'POST'])
 def deletebrand(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     brand = Brand.query.get_or_404(id)
     if request.method == "POST":
@@ -105,22 +105,22 @@ def deletebrand(id):
             db.session.commit()
         db.session.delete(brand)
         db.session.commit()
-        flash(f"The brand {brand.name} was deleted from your database", "success")
+        flash(f"Thương hiệu {brand.name} đã xóa thành công", "success")
         return redirect(url_for('brands'))
-    flash(f"The brand {brand.name} can't be  deleted from your database", "warning")
+    flash(f"Thương hiệu {brand.name} không thể xóa", "warning")
     return redirect(url_for('brands'))
 
 
 @app.route('/addcat', methods=['GET', 'POST'])
 def addcat():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     if request.method == "POST":
         getcat = request.form.get('category')
         cat = Category(name=getcat)
         db.session.add(cat)
-        flash(f'The category {getcat} was added to your database', 'success')
+        flash(f'{getcat} đã được xóa', 'success')
         db.session.commit()
         return redirect(url_for('addcat'))
     user = Admin.query.filter_by(email=session['email']).all()
@@ -130,13 +130,13 @@ def addcat():
 @app.route('/updatecat/<int:id>', methods=['GET', 'POST'])
 def updatecat(id):
     if 'email' not in session:
-        flash('Login first please', 'danger')
+        flash('Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     updatecat = Category.query.get_or_404(id)
     category = request.form.get('category')
     if request.method == "POST":
         updatecat.name = category
-        flash(f'The category {updatecat.name} was updated', 'success')
+        flash(f'Loại sản phẩm {updatecat.name} đã được cập nhật', 'success')
         db.session.commit()
         return redirect(url_for('categories'))
     user = Admin.query.filter_by(email=session['email']).all()
@@ -146,7 +146,7 @@ def updatecat(id):
 @app.route('/deletecat/<int:id>', methods=['GET', 'POST'])
 def deletecat(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     category = Category.query.get_or_404(id)
     if request.method == "POST":
@@ -174,7 +174,7 @@ def deletecat(id):
 @app.route('/addproduct', methods=['GET', 'POST'])
 def addproduct():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
     form = Addproducts(request.form)
@@ -256,7 +256,7 @@ def addproduct():
 @app.route('/updateproduct/<int:id>', methods=['GET', 'POST'])
 def updateproduct(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
     # bucket.child('images').delete("30d516e59ed7deb97ed8.png")
@@ -347,7 +347,7 @@ def updateproduct(id):
 @app.route('/deleteproduct/<int:id>', methods=['POST'])
 def deleteproduct(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     product = Addproduct.query.get_or_404(id)
     if request.method == "POST":
@@ -363,7 +363,7 @@ def deleteproduct(id):
             db.session.commit()
         db.session.delete(product)
         db.session.commit()
-        flash(f'The product {product.name} was delete from your record', 'success')
+        flash(f'Sản phẩm {product.name} đã được xóa khỏi hệ thống', 'success')
         return redirect(url_for('product'))
     flash(f'Can not delete the product', 'success')
     return redirect(url_for('product'))

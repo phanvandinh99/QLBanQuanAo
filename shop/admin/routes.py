@@ -37,7 +37,7 @@ from shop.customers.forms import CustomerRegisterForm
 # @app.route('/synchronization')
 # def data_syn():
 #     if 'email' not in session:
-#         flash(f'please login first', 'danger')
+#         flash(f'Yêu cầu đăng nhập', 'danger')
 #         return redirect(url_for('login'))
 #     if synchronization():
 #         flash(f'Synchronization Data Success', 'success')
@@ -50,7 +50,7 @@ from shop.customers.forms import CustomerRegisterForm
 @app.route('/admin/customer_register', methods=['GET', 'POST'])
 def admin_register_custormer():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     form = CustomerRegisterForm()
     if form.validate_on_submit():
@@ -83,7 +83,7 @@ def admin_register_custormer():
 @app.route('/admin')
 def admin():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     return redirect(url_for('admin_manager'))
 
@@ -91,7 +91,7 @@ def admin():
 @app.route('/admin_manager')
 def admin_manager():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
     admins = Admin.query.all()
@@ -101,7 +101,7 @@ def admin_manager():
 @app.route('/customer_manager')
 def customer_manager():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Register.query.all()
@@ -118,7 +118,7 @@ def customer_manager():
 @app.route('/admin/orders')
 def orders_manager():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     # page = request.args.get('page', 1, type=int)
     user = Admin.query.filter_by(email=session['email']).all()
@@ -145,7 +145,7 @@ def orders_manager():
 @app.route('/accept_order/<int:id>', methods=['GET', 'POST'])
 def accept_order(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     
     if request.method == "POST":
@@ -170,7 +170,7 @@ def accept_order(id):
 @app.route('/delivered_order/<int:id>', methods=['GET', 'POST'])
 def delivered_order(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     
     if request.method == "POST":
@@ -186,7 +186,7 @@ def delivered_order(id):
 @app.route('/delete_order/<int:id>', methods=['GET', 'POST'])
 def delete_order(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     customer = CustomerOrder.query.get_or_404(id)
     if request.method == "POST":
@@ -200,7 +200,7 @@ def delete_order(id):
 @app.route('/lock_customer/<int:id>', methods=['GET', 'POST'])
 def lock_customer(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     customer = Register.query.get_or_404(id)
     if request.method == "POST":
@@ -213,7 +213,7 @@ def lock_customer(id):
 @app.route('/unlock_customer/<int:id>', methods=['GET', 'POST'])
 def unlock_customer(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     customer = Register.query.get_or_404(id)
     if request.method == "POST":
@@ -226,7 +226,7 @@ def unlock_customer(id):
 @app.route('/delete_customer/<int:id>', methods=['GET', 'POST'])
 def delete_customer(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     customer = Register.query.get_or_404(id)
     
@@ -256,7 +256,7 @@ def delete_customer(id):
 @app.route('/delete_admin/<int:id>', methods=['GET', 'POST'])
 def delete_admin(id):
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     admin = Admin.query.get_or_404(id)
     if request.method == "POST":
@@ -271,7 +271,7 @@ def delete_admin(id):
 @app.route('/product')
 def product():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     # products = Addproduct.query.all()
     # page = request.args.get('page', 1, type=int)
@@ -284,7 +284,7 @@ def product():
 @app.route('/brands')
 def brands():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
     brands = Brand.query.join(Category).add_columns(Category.name).filter(Brand.category_id == Category.id).order_by(
@@ -297,7 +297,7 @@ def brands():
 @app.route('/categories')
 def categories():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     categories = Category.query.order_by(Category.id.desc()).all()
     user = Admin.query.filter_by(email=session['email']).all()
@@ -307,7 +307,7 @@ def categories():
 @app.route('/admin/changepassword', methods=['GET', 'POST'])
 def changes_password():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email'])
     detail_password_admin = Admin.query.get_or_404(user[0].id)
@@ -327,7 +327,7 @@ def changes_password():
 @app.route('/admin/register', methods=['GET', 'POST'])
 def register():
     if 'email' not in session:
-        flash(f'please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
@@ -360,7 +360,7 @@ def login():
 @app.route('/admin/logout')
 def logout():
     if 'email' not in session:
-        flash(f'Please login first', 'danger')
+        flash(f'Yêu cầu đăng nhập', 'danger')
     else:
         session.pop('email', None)
     return redirect(url_for('login'))
