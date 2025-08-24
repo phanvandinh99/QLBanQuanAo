@@ -1,126 +1,136 @@
-{% extends "base.html" %}
-{%block content%}
-{% include 'header.html' %}
-{% from "_formhelpers.html" import render_field %}
+{% extends "base.html" %} {%block content%} {% include 'header.html' %} {% from
+"_formhelpers.html" import render_field %}
 <div id="page-content" class="single-page">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <ul class="breadcrumb">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="account.html">Registers</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-3 "></div>
-            <div class="col-md-6 ">
-                <div class="heading"><h2>New User ? Create An Account.</h2></div>
-                {% include '_messages.html' %}
-                <form name="form2" id="ff2" method="post" action="{{ url_for('customer_register') }}"
-                      onsubmit="if(document.getElementById('agree').checked) { return true; } else { alert('Please indicate that you have read and agree to the Terms and Conditions and Privacy Policy'); return false; }">
-                    {{ form.hidden_tag() }}
-                    <div class="form-group">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control") }}
-                        {% if form.username.errors %}
-                            <div class="text-danger">
-                                {% for error in form.username.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.first_name.label(class="form-label") }}
-                        {{ form.first_name(class="form-control") }}
-                        {% if form.first_name.errors %}
-                            <div class="text-danger">
-                                {% for error in form.first_name.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.last_name.label(class="form-label") }}
-                        {{ form.last_name(class="form-control") }}
-                        {% if form.last_name.errors %}
-                            <div class="text-danger">
-                                {% for error in form.last_name.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control") }}
-                        {% if form.email.errors %}
-                            <div class="text-danger">
-                                {% for error in form.email.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.phone_number.label(class="form-label") }}
-                        {{ form.phone_number(class="form-control") }}
-                        {% if form.phone_number.errors %}
-                            <div class="text-danger">
-                                {% for error in form.phone_number.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.gender.label(class="form-label") }}
-                        {{ form.gender(class="form-control") }}
-                        {% if form.gender.errors %}
-                            <div class="text-danger">
-                                {% for error in form.gender.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
-                        {% if form.password.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ form.confirm.label(class="form-label") }}
-                        {{ form.confirm(class="form-control") }}
-                        {% if form.confirm.errors %}
-                            <div class="text-danger">
-                                {% for error in form.confirm.errors %}
-                                    <small>{{ error }}</small><br>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <input type="checkbox" name="checkbox" value="check" id="agree" required/> I have read and agree to the
-                        Terms and Conditions and Privacy Policy
-                    </div>
-                    {{ form.submit(class="btn btn-2", style="margin-left: 0px; padding: 5px 26px;") }}
-                    <a href="{{url_for('customer_login')}}" style="margin-left: 216px; color:#207fcaba">Already have
-                        an account? Sign in</a>
-                </form>
-            </div>
-            <div class="col-md-3 "></div>
-        </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <ul class="breadcrumb">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="account.html">Registers</a></li>
+        </ul>
+      </div>
     </div>
+    <div class="row">
+      <div class="col-md-3"></div>
+      <div class="col-md-6">
+        <div class="heading">
+          <h2>Tạo Mới Tài Khoản</h2>
+        </div>
+        {% include '_messages.html' %}
+        <form
+          name="form2"
+          id="ff2"
+          method="post"
+          action="{{ url_for('customer_register') }}"
+          onsubmit="if(document.getElementById('agree').checked) { return true; } else { alert('Vui lòng cho biết bạn đã đọc và đồng ý với Điều khoản và Điều kiện và Chính sách Bảo mật'); return false; }"
+        >
+          {{ form.hidden_tag() }}
+          <div class="form-group">
+            {{ form.username.label(class="form-label") }} {{
+            form.username(class="form-control") }} {% if form.username.errors %}
+            <div class="text-danger">
+              {% for error in form.username.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.first_name.label(class="form-label") }} {{
+            form.first_name(class="form-control") }} {% if
+            form.first_name.errors %}
+            <div class="text-danger">
+              {% for error in form.first_name.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.last_name.label(class="form-label") }} {{
+            form.last_name(class="form-control") }} {% if form.last_name.errors
+            %}
+            <div class="text-danger">
+              {% for error in form.last_name.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.email.label(class="form-label") }} {{
+            form.email(class="form-control") }} {% if form.email.errors %}
+            <div class="text-danger">
+              {% for error in form.email.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.phone_number.label(class="form-label") }} {{
+            form.phone_number(class="form-control") }} {% if
+            form.phone_number.errors %}
+            <div class="text-danger">
+              {% for error in form.phone_number.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.gender.label(class="form-label") }} {{
+            form.gender(class="form-control") }} {% if form.gender.errors %}
+            <div class="text-danger">
+              {% for error in form.gender.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.password.label(class="form-label") }} {{
+            form.password(class="form-control") }} {% if form.password.errors %}
+            <div class="text-danger">
+              {% for error in form.password.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            {{ form.confirm.label(class="form-label") }} {{
+            form.confirm(class="form-control") }} {% if form.confirm.errors %}
+            <div class="text-danger">
+              {% for error in form.confirm.errors %}
+              <small>{{ error }}</small><br />
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <input
+              type="checkbox"
+              name="checkbox"
+              value="check"
+              id="agree"
+              required
+            />
+            Tôi đã đọc và đồng ý với Điều khoản và Điều kiện và Chính sách Bảo
+            mật
+          </div>
+          {{ form.submit(class="btn btn-2", style="margin-left: 0px; padding:
+          5px 26px;") }}
+          <a
+            href="{{url_for('customer_login')}}"
+            style="margin-left: 216px; color: #207fcaba"
+            >Bạn đã có tài khoản? Đăng nhập</a
+          >
+        </form>
+      </div>
+      <div class="col-md-3"></div>
+    </div>
+  </div>
 </div>
-{% include 'footer.html' %}
-{% endblock content%}
+{% include 'footer.html' %} {% endblock content%}
 <!-- /.footer -->
