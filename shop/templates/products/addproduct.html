@@ -67,7 +67,7 @@
                                                 <div class="col-md-4">
                                                     <label for="image_1">Ảnh 1 <span style="color: red;">*</span></label>
                                                     <input type="file" name="image_1" id="image_1" class="form-control"
-                                                           accept="image/*" required>
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.ico,image/jpeg,image/png,image/gif,image/webp,image/svg+xml" required>
                                                     {% if form.image_1.errors %}
                                                         <div class="text-danger">
                                                             {% for error in form.image_1.errors %}
@@ -79,7 +79,7 @@
                                                 <div class="col-md-4">
                                                     <label for="image_2">Ảnh 2 <span style="color: red;">*</span></label>
                                                     <input type="file" name="image_2" id="image_2" class="form-control"
-                                                           accept="image/*" required>
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.ico,image/jpeg,image/png,image/gif,image/webp,image/svg+xml" required>
                                                     {% if form.image_2.errors %}
                                                         <div class="text-danger">
                                                             {% for error in form.image_2.errors %}
@@ -91,7 +91,7 @@
                                                 <div class="col-md-4">
                                                     <label for="image_3">Ảnh 3 <span style="color: red;">*</span></label>
                                                     <input type="file" name="image_3" id="image_3" class="form-control"
-                                                           accept="image/*" required>
+                                                           accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.ico,image/jpeg,image/png,image/gif,image/webp,image/svg+xml" required>
                                                     {% if form.image_3.errors %}
                                                         <div class="text-danger">
                                                             {% for error in form.image_3.errors %}
@@ -195,14 +195,25 @@ document.querySelector('form').addEventListener('submit', function(e) {
     }
 
     // Validate file types
-    var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'];
+    var allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.ico'];
     var files = [image1, image2, image3];
 
     for (var i = 0; i < files.length; i++) {
-        if (files[i] && !allowedTypes.includes(files[i].type)) {
-            e.preventDefault();
-            alert('Chỉ chấp nhận file ảnh (JPG, PNG, GIF)!');
-            return false;
+        if (files[i]) {
+            var fileType = files[i].type;
+            var fileName = files[i].name.toLowerCase();
+
+            // Check MIME type
+            if (!allowedTypes.includes(fileType)) {
+                // Also check file extension as fallback
+                var hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+                if (!hasValidExtension) {
+                    e.preventDefault();
+                    alert('Chỉ chấp nhận file ảnh (JPG, PNG, GIF, JPEG, WEBP, BMP, SVG, ICO)!');
+                    return false;
+                }
+            }
         }
     }
 

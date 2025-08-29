@@ -24,7 +24,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'customer_login'
 
-photos = UploadSet('photos', IMAGES)
+# Custom image extensions including webp, bmp, svg, ico
+ALLOWED_EXTENSIONS = (
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico',
+    'JPG', 'JPEG', 'PNG', 'GIF', 'WEBP', 'BMP', 'SVG', 'ICO'
+)
+
+photos = UploadSet('photos', ALLOWED_EXTENSIONS)
 configure_uploads(app, photos)
 
 # Custom filter for VND currency format

@@ -246,7 +246,11 @@ def addproduct():
                     for error in errors:
                         error_messages.append(f"{field}: {error}")
                 if error_messages:
-                    flash('Lỗi xác thực dữ liệu: ' + '; '.join(error_messages), 'danger')
+                    # Hiển thị thông báo lỗi chi tiết hơn
+                    if len(error_messages) == 1 and 'Chỉ chấp nhận file ảnh' in error_messages[0]:
+                        flash('Vui lòng chọn file ảnh có định dạng đúng (JPG, PNG, GIF, JPEG, WEBP, BMP, SVG, ICO)', 'danger')
+                    else:
+                        flash('Lỗi xác thực dữ liệu: ' + '; '.join(error_messages), 'danger')
                 else:
                     flash('Lỗi khi thêm mới sản phẩm vào hệ thống', 'danger')
 

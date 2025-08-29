@@ -20,11 +20,11 @@ class Addproducts(Form):
     description = TextAreaField('Description', [validators.DataRequired()])
 
     image_1 = FileField('Image 1',
-                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg'], 'Images only please')])
+                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg', 'webp', 'bmp', 'svg', 'ico'], 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, JPEG, WEBP, BMP, SVG, ICO)')])
     image_2 = FileField('Image 2',
-                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg'], 'Images only please')])
+                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg', 'webp', 'bmp', 'svg', 'ico'], 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, JPEG, WEBP, BMP, SVG, ICO)')])
     image_3 = FileField('Image 3',
-                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg'], 'Images only please')])
+                        validators=[FileAllowed(['jpg', 'png', 'gif', 'jpeg', 'webp', 'bmp', 'svg', 'ico'], 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, JPEG, WEBP, BMP, SVG, ICO)')])
 
 
 class Rates(Form):
