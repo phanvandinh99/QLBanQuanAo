@@ -64,14 +64,41 @@
 
                                         <div class="container">
                                             <div class="row">
-                                                <div class="col-md-4" aria-required="true">{{ render_field(form.image_1,
-                                                    class='form-control')}}
+                                                <div class="col-md-4">
+                                                    <label for="image_1">Ảnh 1 <span style="color: red;">*</span></label>
+                                                    <input type="file" name="image_1" id="image_1" class="form-control"
+                                                           accept="image/*" required>
+                                                    {% if form.image_1.errors %}
+                                                        <div class="text-danger">
+                                                            {% for error in form.image_1.errors %}
+                                                                <small>{{ error }}</small>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
                                                 </div>
-                                                <div class="col-md-4">{{ render_field(form.image_2,
-                                                    class='form-control')}}
+                                                <div class="col-md-4">
+                                                    <label for="image_2">Ảnh 2 <span style="color: red;">*</span></label>
+                                                    <input type="file" name="image_2" id="image_2" class="form-control"
+                                                           accept="image/*" required>
+                                                    {% if form.image_2.errors %}
+                                                        <div class="text-danger">
+                                                            {% for error in form.image_2.errors %}
+                                                                <small>{{ error }}</small>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
                                                 </div>
-                                                <div class="col-md-4">{{ render_field(form.image_3,
-                                                    class='form-control')}}
+                                                <div class="col-md-4">
+                                                    <label for="image_3">Ảnh 3 <span style="color: red;">*</span></label>
+                                                    <input type="file" name="image_3" id="image_3" class="form-control"
+                                                           accept="image/*" required>
+                                                    {% if form.image_3.errors %}
+                                                        <div class="text-danger">
+                                                            {% for error in form.image_3.errors %}
+                                                                <small>{{ error }}</small>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -79,19 +106,134 @@
                                 </div>
                             </div><!-- /.card -->
                             <div class="card-footer">
-                                <button type="submit" class="btn btn-primary" onclick="return validateForm()">Thêm Mới Sản Phẩm</button>
+                                <button type="submit" class="btn btn-primary">Thêm Mới Sản Phẩm</button>
                             </div>
                         </form>
                         <!-- /.form-box -->
 
+                        <!-- Image Preview Section -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h3 class="card-title">Xem trước ảnh</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        <div id="preview1" class="image-preview">
+                                            <img id="img-preview1" src="" alt="Ảnh 1" style="max-width: 100%; max-height: 200px; display: none;">
+                                            <div id="no-image1" class="no-image">Chưa chọn ảnh 1</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <div id="preview2" class="image-preview">
+                                            <img id="img-preview2" src="" alt="Ảnh 2" style="max-width: 100%; max-height: 200px; display: none;">
+                                            <div id="no-image2" class="no-image">Chưa chọn ảnh 2</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <div id="preview3" class="image-preview">
+                                            <img id="img-preview3" src="" alt="Ảnh 3" style="max-width: 100%; max-height: 200px; display: none;">
+                                            <div id="no-image3" class="no-image">Chưa chọn ảnh 3</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.card -->
                 </div>
+                <!-- /.col-md-8 -->
             </div>
         </div>
     </section>
 </div>
-{%include 'admin/footer.html'%}
+
+<script>
+// Image preview functionality
+document.getElementById('image_1').addEventListener('change', function(e) {
+    previewImage(e.target, 'img-preview1', 'no-image1');
+});
+
+document.getElementById('image_2').addEventListener('change', function(e) {
+    previewImage(e.target, 'img-preview2', 'no-image2');
+});
+
+document.getElementById('image_3').addEventListener('change', function(e) {
+    previewImage(e.target, 'img-preview3', 'no-image3');
+});
+
+function previewImage(input, imgId, noImgId) {
+    var img = document.getElementById(imgId);
+    var noImg = document.getElementById(noImgId);
+
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            img.style.display = 'block';
+            noImg.style.display = 'none';
+        }
+
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        img.style.display = 'none';
+        noImg.style.display = 'block';
+    }
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    var image1 = document.getElementById('image_1').files[0];
+    var image2 = document.getElementById('image_2').files[0];
+    var image3 = document.getElementById('image_3').files[0];
+
+    if (!image1 || !image2 || !image3) {
+        e.preventDefault();
+        alert('Vui lòng chọn đầy đủ 3 ảnh cho sản phẩm!');
+        return false;
+    }
+
+    // Validate file types
+    var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    var files = [image1, image2, image3];
+
+    for (var i = 0; i < files.length; i++) {
+        if (files[i] && !allowedTypes.includes(files[i].type)) {
+            e.preventDefault();
+            alert('Chỉ chấp nhận file ảnh (JPG, PNG, GIF)!');
+            return false;
+        }
+    }
+
+    return true;
+});
+
+// Add CSS for image preview
+var style = document.createElement('style');
+style.innerHTML = `
+    .image-preview {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .no-image {
+        color: #999;
+        font-style: italic;
+    }
+    .image-preview img {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+{% include 'admin/footer.html' %}
 <script>
 function myFunction() {
      $("#brand option").remove();

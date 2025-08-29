@@ -56,14 +56,32 @@ def addbrand():
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     if request.method == "POST":
-        getbrand = request.form.get('brand')
-        category = request.form.get('category')
-        brand = Brand(name=getbrand, category_id=category)
-
-        db.session.add(brand)
-        flash(f'Thương hiệu {getbrand} đã thêm thành công', 'success')
-        db.session.commit()
-        return redirect(url_for('addbrand'))
+        try:
+            getbrand = request.form.get('brand')
+            category = request.form.get('category')
+            
+            if not getbrand or not category:
+                flash('Vui lòng điền đầy đủ thông tin thương hiệu và danh mục', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                categories = Category.query.all()
+                return render_template('products/addbrand.html', title='Add brand', categories=categories, brands='brands',
+                                       user=user[0])
+            
+            brand = Brand(name=getbrand, category_id=category)
+            db.session.add(brand)
+            db.session.commit()
+            flash(f'Thương hiệu {getbrand} đã thêm thành công', 'success')
+            return redirect(url_for('addbrand'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi thêm thương hiệu: {str(e)}', 'danger')
+            print(f"Error adding brand: {str(e)}")  # Log lỗi để debug
+            user = Admin.query.filter_by(email=session['email']).all()
+            categories = Category.query.all()
+            return render_template('products/addbrand.html', title='Add brand', categories=categories, brands='brands',
+                                   user=user[0])
+    
     user = Admin.query.filter_by(email=session['email']).all()
     categories = Category.query.all()
     return render_template('products/addbrand.html', title='Add brand', categories=categories, brands='brands',
@@ -117,12 +135,27 @@ def addcat():
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     if request.method == "POST":
-        getcat = request.form.get('category')
-        cat = Category(name=getcat)
-        db.session.add(cat)
-        flash(f'{getcat} đã được xóa', 'success')
-        db.session.commit()
-        return redirect(url_for('addcat'))
+        try:
+            getcat = request.form.get('category')
+            
+            if not getcat:
+                flash('Vui lòng nhập tên danh mục', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addbrand.html', title='Add category', user=user[0])
+            
+            cat = Category(name=getcat)
+            db.session.add(cat)
+            db.session.commit()
+            flash(f'Danh mục {getcat} đã được thêm thành công', 'success')
+            return redirect(url_for('addcat'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi thêm danh mục: {str(e)}', 'danger')
+            print(f"Error adding category: {str(e)}")  # Log lỗi để debug
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/addbrand.html', title='Add category', user=user[0])
+    
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('products/addbrand.html', title='Add category', user=user[0])
 
@@ -177,77 +210,169 @@ def addproduct():
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
-    form = Addproducts(request.form)
+    form = Addproducts()
     brands = Brand.query.all()
     categories = Category.query.all()
+
+    print(f"Request method: {request.method}")
+    print(f"Request files: {request.files}")
+    print(f"Request form data: {dict(request.form)}")
+
     if request.method == "POST":
-        # Validate form data
-        if not form.validate():
-            flash('Please check the form and try again', 'danger')
+        try:
+            # Populate form with request data and files
+            form = Addproducts(request.form)
+            form.image_1.data = request.files.get('image_1')
+            form.image_2.data = request.files.get('image_2')
+            form.image_3.data = request.files.get('image_3')
+
+            print(f"Form image_1 data: {form.image_1.data}")
+            print(f"Form image_2 data: {form.image_2.data}")
+            print(f"Form image_3 data: {form.image_3.data}")
+
+            # Manual validation for required images
+            if not form.image_1.data or not form.image_1.data.filename:
+                form.image_1.errors.append('Vui lòng chọn ảnh 1')
+            if not form.image_2.data or not form.image_2.data.filename:
+                form.image_2.errors.append('Vui lòng chọn ảnh 2')
+            if not form.image_3.data or not form.image_3.data.filename:
+                form.image_3.errors.append('Vui lòng chọn ảnh 3')
+
+            # Validate form data
+            if not form.validate():
+                # Hiển thị lỗi chi tiết từ form validation
+                error_messages = []
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        error_messages.append(f"{field}: {error}")
+                if error_messages:
+                    flash('Lỗi xác thực dữ liệu: ' + '; '.join(error_messages), 'danger')
+                else:
+                    flash('Lỗi khi thêm mới sản phẩm vào hệ thống', 'danger')
+
+                print(f"Form validation errors: {form.errors}")  # Log chi tiết
+                print(f"Form data after validation: {form.data}")
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+            
+            name = form.name.data
+            price = form.price.data
+            discount = form.discount.data or 0
+            stock = form.stock.data
+            colors = form.colors.data
+            desc = form.description.data
+            brand = request.form.get('brand')
+            category = request.form.get('category')
+
+            print(f"Received data: name={name}, price={price}, discount={discount}, stock={stock}")
+            print(f"Brand: {brand}, Category: {category}")
+
+            # Additional server-side validation
+            if price <= 0:
+                flash('Giá sản phẩm phải lớn hơn 0', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+
+            if discount < 0 or discount > 100:
+                flash('Giảm giá phải nằm trong khoảng 0-100%', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+
+            if stock < 0:
+                flash('Số lượng tồn kho phải lớn hơn hoặc bằng 0', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+
+            # Kiểm tra file ảnh
+            image_1 = request.files.get('image_1')
+            image_2 = request.files.get('image_2')
+            image_3 = request.files.get('image_3')
+
+            print(f"Image files: image_1={bool(image_1)}, image_2={bool(image_2)}, image_3={bool(image_3)}")
+            print(f"Image filenames: {image_1.filename if image_1 else 'None'}, {image_2.filename if image_2 else 'None'}, {image_3.filename if image_3 else 'None'}")
+
+            if not image_1 or not image_2 or not image_3:
+                flash('Vui lòng chọn đầy đủ 3 ảnh cho sản phẩm', 'danger')
+                print("Missing image files - validation failed")
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+
+            name_random_1 = secrets.token_hex(10) + "."
+            name_random_2 = secrets.token_hex(10) + "."
+            name_random_3 = secrets.token_hex(10) + "."
+
+            print(f"Generated random names: {name_random_1}, {name_random_2}, {name_random_3}")
+
+            # Save in firebase database
+            save_link_1 = "" + name_random_1 + image_1.filename.split('.')[-1]
+            save_link_2 = "" + name_random_2 + image_2.filename.split('.')[-1]
+            save_link_3 = "" + name_random_3 + image_3.filename.split('.')[-1]
+
+            print(f"Save links: {save_link_1}, {save_link_2}, {save_link_3}")
+
+            # save static/images
+            try:
+                print("Attempting to save images...")
+                image_1 = photos.save(image_1, name=name_random_1)
+                image_2 = photos.save(image_2, name=name_random_2)
+                image_3 = photos.save(image_3, name=name_random_3)
+                print(f"Images saved successfully: {image_1}, {image_2}, {image_3}")
+            except Exception as img_error:
+                print(f"Error saving images: {str(img_error)}")
+                print(f"Error type: {type(img_error)}")
+                import traceback
+                print(f"Traceback: {traceback.format_exc()}")
+                flash(f'Lỗi khi lưu ảnh: {str(img_error)}', 'danger')
+                user = Admin.query.filter_by(email=session['email']).all()
+                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
+                                       categories=categories, user=user[0])
+
+            # Assuming 'storage' is defined elsewhere or needs to be imported
+            # from firebase_admin import storage
+            # storage = storage.bucket() # Assuming 'storage' is a bucket object
+
+            # storage.child("images/" + save_link_1).put(os.path.join(current_app.root_path, "static/images/" + save_link_1))
+            # storage.child("images/" + save_link_2).put(os.path.join(current_app.root_path, "static/images/" + save_link_2))
+            # storage.child("images/" + save_link_3).put(os.path.join(current_app.root_path, "static/images/" + save_link_3))
+
+            print("Creating product object...")
+            try:
+                product = Addproduct(name=name, price=price, discount=discount, stock=stock, colors=colors, desc=desc,
+                                     category_id=category, brand_id=brand, image_1=image_1, image_2=image_2, image_3=image_3)
+                print(f"Product object created: {product}")
+                print(f"Product attributes: name={product.name}, price={product.price}, category_id={product.category_id}, brand_id={product.brand_id}")
+
+                print("Adding product to database session...")
+                db.session.add(product)
+
+                print("Committing to database...")
+                db.session.commit()
+                print(f"Product successfully committed with ID: {product.id}")
+
+                flash(f'Sản phẩm {product.name} đã được thêm thành công vào cơ sở dữ liệu', 'success')
+                return redirect(url_for('addproduct'))
+
+            except Exception as db_error:
+                print(f"Database error: {str(db_error)}")
+                print(f"Error type: {type(db_error)}")
+                import traceback
+                print(f"Database traceback: {traceback.format_exc()}")
+                raise  # Re-raise để catch block bên ngoài xử lý
+            
+        except Exception as e:
+            # Rollback session nếu có lỗi
+            db.session.rollback()
+            flash(f'Lỗi khi thêm sản phẩm: {str(e)}', 'danger')
+            print(f"Error adding product: {str(e)}")  # Log lỗi để debug
             user = Admin.query.filter_by(email=session['email']).all()
             return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
                                    categories=categories, user=user[0])
-        
-        name = form.name.data
-        price = form.price.data
-        discount = form.discount.data or 0
-        stock = form.stock.data
-        colors = form.colors.data
-        desc = form.description.data
-        brand = request.form.get('brand')
-        category = request.form.get('category')
-        
-        # Additional server-side validation
-        if price <= 0:
-            flash('Price must be greater than 0', 'danger')
-            user = Admin.query.filter_by(email=session['email']).all()
-            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                   categories=categories, user=user[0])
-        
-        if discount < 0 or discount > 100:
-            flash('Discount must be between 0 and 100', 'danger')
-            user = Admin.query.filter_by(email=session['email']).all()
-            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                   categories=categories, user=user[0])
-        
-        if stock < 0:
-            flash('Stock must be greater than or equal to 0', 'danger')
-            user = Admin.query.filter_by(email=session['email']).all()
-            return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                   categories=categories, user=user[0])
-
-        image_1 = request.files.get('image_1')
-        image_2 = request.files.get('image_2')
-        image_3 = request.files.get('image_3')
-
-        name_random_1 = secrets.token_hex(10) + "."
-        name_random_2 = secrets.token_hex(10) + "."
-        name_random_3 = secrets.token_hex(10) + "."
-
-        # Save in firebase database
-        save_link_1 = "" + name_random_1 + image_1.filename.split('.')[-1]
-        save_link_2 = "" + name_random_2 + image_2.filename.split('.')[-1]
-        save_link_3 = "" + name_random_3 + image_3.filename.split('.')[-1]
-
-        # save static/images
-        image_1 = photos.save(image_1, name=name_random_1)
-        image_2 = photos.save(image_2, name=name_random_2)
-        image_3 = photos.save(image_3, name=name_random_3)
-
-        # Assuming 'storage' is defined elsewhere or needs to be imported
-        # from firebase_admin import storage
-        # storage = storage.bucket() # Assuming 'storage' is a bucket object
-
-        # storage.child("images/" + save_link_1).put(os.path.join(current_app.root_path, "static/images/" + save_link_1))
-        # storage.child("images/" + save_link_2).put(os.path.join(current_app.root_path, "static/images/" + save_link_2))
-        # storage.child("images/" + save_link_3).put(os.path.join(current_app.root_path, "static/images/" + save_link_3))
-
-        product = Addproduct(name=name, price=price, discount=discount, stock=stock, colors=colors, desc=desc,
-                             category_id=category, brand_id=brand, image_1=image_1, image_2=image_2, image_3=image_3)
-        db.session.add(product)
-        flash(f'The product {product.name} was added in database', 'success')
-        db.session.commit()
-        return redirect(url_for('addproduct'))
+    
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
                            categories=categories, user=user[0])
@@ -268,68 +393,85 @@ def updateproduct(id):
     category = request.form.get('category')
 
     if request.method == "POST":
-        product.name = form.name.data
-        product.price = form.price.data
-        product.discount = form.discount.data
-        product.stock = form.stock.data
-        product.colors = form.colors.data
-        product.desc = form.description.data
-        product.category_id = category
-        product.brand_id = brand
-        if request.files.get('image_1'):
-            image_1 = request.files.get('image_1')
-            name_random_1 = secrets.token_hex(10) + "."
-            save_link_1 = "" + name_random_1 + image_1.filename.split('.')[-1]
-            try:
-                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
-                # Assuming 'storage' is defined elsewhere or needs to be imported
-                # from firebase_admin import storage
-                # storage = storage.bucket() # Assuming 'storage' is a bucket object
-                # storage.delete("images/" + product.image_1)
-                product.image_1 = photos.save(image_1, name=name_random_1)
-                # storage.child("images/" + save_link_1).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
-            except:
-                product.image_1 = photos.save(image_1, name=name_random_1)
-                # storage.child("images/" + save_link_1).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
-        if request.files.get('image_2'):
-            image_2 = request.files.get('image_2')
-            name_random_2 = secrets.token_hex(10) + "."
-            save_link_2 = "" + name_random_2 + image_2.filename.split('.')[-1]
-            try:
-                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
-                # Assuming 'storage' is defined elsewhere or needs to be imported
-                # from firebase_admin import storage
-                # storage = storage.bucket() # Assuming 'storage' is a bucket object
-                # storage.delete("images/" + product.image_2)
-                product.image_2 = photos.save(image_2, name=name_random_2)
-                # storage.child("images/" + save_link_2).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
-            except:
-                product.image_2 = photos.save(image_2, name=name_random_2)
-                # storage.child("images/" + save_link_2).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
-        if request.files.get('image_3'):
-            image_3 = request.files.get('image_3')
-            name_random_3 = secrets.token_hex(10) + "."
-            save_link_3 = "" + name_random_3 + image_3.filename.split('.')[-1]
-            try:
-                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
-                # Assuming 'storage' is defined elsewhere or needs to be imported
-                # from firebase_admin import storage
-                # storage = storage.bucket() # Assuming 'storage' is a bucket object
-                # storage.delete("images/" + product.image_3)
-                product.image_3 = photos.save(image_3, name=name_random_3)
-                # storage.child("images/" + save_link_3).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
-            except:
-                product.image_3 = photos.save(image_3, name=name_random_3)
-                # storage.child("images/" + save_link_3).put(
-                #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
-        db.session.commit()
-        flash(f'The product was updated', 'success')
-        return redirect(url_for('product'))
+        try:
+            product.name = form.name.data
+            product.price = form.price.data
+            product.discount = form.discount.data
+            product.stock = form.stock.data
+            product.colors = form.colors.data
+            product.desc = form.description.data
+            product.category_id = category
+            product.brand_id = brand
+            
+            if request.files.get('image_1'):
+                image_1 = request.files.get('image_1')
+                name_random_1 = secrets.token_hex(10) + "."
+                save_link_1 = "" + name_random_1 + image_1.filename.split('.')[-1]
+                try:
+                    os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
+                    # Assuming 'storage' is defined elsewhere or needs to be imported
+                    # from firebase_admin import storage
+                    # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                    # storage.delete("images/" + product.image_1)
+                    product.image_1 = photos.save(image_1, name=name_random_1)
+                    # storage.child("images/" + save_link_1).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
+                except Exception as img_error:
+                    flash(f'Lỗi khi cập nhật ảnh 1: {str(img_error)}', 'warning')
+                    product.image_1 = photos.save(image_1, name=name_random_1)
+                    # storage.child("images/" + save_link_1).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_1))
+            
+            if request.files.get('image_2'):
+                image_2 = request.files.get('image_2')
+                name_random_2 = secrets.token_hex(10) + "."
+                save_link_2 = "" + name_random_2 + image_2.filename.split('.')[-1]
+                try:
+                    os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
+                    # Assuming 'storage' is defined elsewhere or needs to be imported
+                    # from firebase_admin import storage
+                    # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                    # storage.delete("images/" + product.image_2)
+                    product.image_2 = photos.save(image_2, name=name_random_2)
+                    # storage.child("images/" + save_link_2).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
+                except Exception as img_error:
+                    flash(f'Lỗi khi cập nhật ảnh 2: {str(img_error)}', 'warning')
+                    product.image_2 = photos.save(image_2, name=name_random_2)
+                    # storage.child("images/" + save_link_2).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_2))
+            
+            if request.files.get('image_3'):
+                image_3 = request.files.get('image_3')
+                name_random_3 = secrets.token_hex(10) + "."
+                save_link_3 = "" + name_random_3 + image_3.filename.split('.')[-1]
+                try:
+                    os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
+                    # Assuming 'storage' is defined elsewhere or needs to be imported
+                    # from firebase_admin import storage
+                    # storage = storage.bucket() # Assuming 'storage' is a bucket object
+                    # storage.delete("images/" + product.image_3)
+                    product.image_3 = photos.save(image_3, name=name_random_3)
+                    # storage.child("images/" + save_link_3).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
+                except Exception as img_error:
+                    flash(f'Lỗi khi cập nhật ảnh 3: {str(img_error)}', 'warning')
+                    product.image_3 = photos.save(image_3, name=name_random_3)
+                    # storage.child("images/" + save_link_3).put(
+                    #     os.path.join(current_app.root_path, "static/images/" + save_link_3))
+            
+            db.session.commit()
+            flash(f'Sản phẩm {product.name} đã được cập nhật thành công', 'success')
+            return redirect(url_for('product'))
+            
+        except Exception as e:
+            # Rollback session nếu có lỗi
+            db.session.rollback()
+            flash(f'Lỗi khi cập nhật sản phẩm: {str(e)}', 'danger')
+            print(f"Error updating product: {str(e)}")  # Log lỗi để debug
+            user = Admin.query.filter_by(email=session['email']).all()
+            return render_template('products/updateproduct.html', form=form, product=product, title='Update Product', brands=brands,
+                                   categories=categories, user=user[0])
 
     form.name.data = product.name
     form.price.data = product.price
