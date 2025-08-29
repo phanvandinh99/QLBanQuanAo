@@ -132,18 +132,21 @@
   </div>
 </div>
 <!-- /. header-section-->
+
+
 <!-- slide -->
 <div class="slider">
   <div class="owl-carousel owl-one owl-theme">
-    <!-- Slide 1 - Google Pixel 2 -->
+
+    <!-- SLIDE 1 -->
     <div class="item">
       <div class="slider-img">
         <img
-          src="{{ url_for('static', filename='images/slider_1.jpg') }}"
+          src="{{ url_for('static', filename='images/banner_4.jpg') }}"
           alt=""
         />
       </div>
-      <div class="container">
+      <div class="container" style="display: none;">
         <div class="row">
           <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
             <div class="slider-captions">
@@ -165,66 +168,36 @@
       </div>
     </div>
     
-    <!-- Slide 2 - iPhone 8 Plus -->
+    <!-- SLIDE 2 -->
     <div class="item">
       <div class="slider-img">
         <img
-          src="{{ url_for('static', filename='images/slider_2.jpg') }}"
+          src="{{ url_for('static', filename='images/banner_1.jpg') }}"
           alt=""
         />
-      </div>
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
-            <div class="slider-captions">
-              <div class="brand-img">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="" />
-              </div>
-              <h1 class="slider-title">iPhone 8 Plus</h1>
-              <p class="hidden-xs">
-                5.5 inch Retina HD Display | 12MP wide-angle cameras
-                <br />
-                | 64 GB &amp; 256 GB ROM Memory
-              </p>
-              <p class="slider-price">{{ 759640 | vnd }}</p>
-              <a href="#" class="btn btn-primary btn-lg hidden-xs"
-                >Mua Ngay</a
-              >
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     
-    <!-- Slide 3 - Red Mi Y1 -->
+    <!-- SLIDE 3 -->
     <div class="item">
       <div class="slider-img">
         <img
-          src="{{ url_for('static', filename='images/slider_3.jpg') }}"
+          src="{{ url_for('static', filename='images/banner_2.png') }}"
           alt=""
         />
       </div>
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-5 col-md-8 col-sm-6 col-xs-12">
-            <div class="slider-captions">
-              <div class="brand-img">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="" />
-              </div>
-              <h1 class="slider-title">Red Mi <span>Y1</span></h1>
-              <p class="hidden-xs">
-                LED Selfie-light | Fingerprint sensor | Dedicated microSD
-                card slot Snapdragon 435 octa-core processor
-              </p>
-              <p class="slider-price">{{ 138990 | vnd }}</p>
-              <a href="#" class="btn btn-primary btn-lg hidden-xs"
-                >Mua Ngay</a
-              >
-            </div>
-          </div>
-        </div>
+    </div>
+
+    <!-- SLIDE 4 -->
+    <div class="item">
+      <div class="slider-img">
+        <img
+          src="{{ url_for('static', filename='images/banner_6.jpg') }}"
+          alt=""
+        />
       </div>
     </div>
+
   </div>
 </div>
 <!-- /. slide-->
