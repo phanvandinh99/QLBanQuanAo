@@ -61,7 +61,7 @@ def addbrand():
         brand = Brand(name=getbrand, category_id=category)
 
         db.session.add(brand)
-        flash(f'Thương hiệu {getbrand} đã xóa khỏi database hệ thống', 'success')
+        flash(f'Thương hiệu {getbrand} đã thêm thành công', 'success')
         db.session.commit()
         return redirect(url_for('addbrand'))
     user = Admin.query.filter_by(email=session['email']).all()
