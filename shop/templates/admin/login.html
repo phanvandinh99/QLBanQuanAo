@@ -1,13 +1,264 @@
 {% extends "admin/layout.html"%}
 {% block content %}
-<div
-        class="hold-transition login-page"
-        style="
-    background-image: url('../../static/images/bg.jpg');
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-size: 100% 100%;"
->
+<style>
+    /* Beautiful Color Scheme with #0cafe5 */
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0cafe5 0%, #00a3cc 50%, #0088b2 100%);
+        position: relative;
+    }
+
+    .login-page::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 40%, rgba(12, 202, 229, 0.1) 0%, transparent 40%);
+        pointer-events: none;
+    }
+
+    /* Login Box Styling */
+    .login-box {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Beautiful Logo Styling */
+    .login-logo {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .login-logo a {
+        font-size: 28px;
+        font-weight: 800;
+        color: white !important;
+        text-decoration: none;
+        letter-spacing: 3px;
+        text-shadow: 0 2px 15px rgba(0,0,0,0.4);
+        background: linear-gradient(45deg, #ffffff 0%, #e0f7fa 50%, #b2ebf2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transition: all 0.3s ease;
+    }
+
+    .login-logo a:hover {
+        transform: scale(1.05);
+        text-shadow: 0 4px 20px rgba(255,255,255,0.4);
+    }
+
+    /* Beautiful Card Styling */
+    .card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border: none;
+        border-radius: 20px;
+        box-shadow:
+            0 20px 40px rgba(0,0,0,0.1),
+            0 10px 20px rgba(0,0,0,0.05),
+            0 0 0 1px rgba(255,255,255,0.2);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg,
+            #0cafe5 0%,
+            #00a3cc 50%,
+            #0088b2 100%);
+        border-radius: 20px 20px 0 0;
+    }
+
+    /* Remove complex animations */
+
+    /* Beautiful Login Card Body */
+    .login-card-body {
+        padding: 40px 35px;
+        position: relative;
+    }
+
+    .login-box-msg {
+        color: #2d3748;
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 30px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        background: linear-gradient(135deg, #0cafe5 0%, #00a3cc 50%, #0088b2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+
+    .login-box-msg::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #0cafe5 0%, #00a3cc 50%, #0088b2 100%);
+        border-radius: 2px;
+    }
+
+    /* Beautiful Input Fields */
+    .form-control {
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        font-size: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        color: #2d3748;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .form-control:focus {
+        border-color: #0cafe5;
+        background: rgba(255, 255, 255, 1);
+        outline: none;
+        box-shadow:
+            0 0 0 3px rgba(12, 202, 229, 0.2),
+            0 8px 25px rgba(12, 202, 229, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .form-control:hover {
+        border-color: rgba(12, 202, 229, 0.5);
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    .form-control::placeholder {
+        color: #a0aec0;
+        font-weight: 400;
+    }
+
+    /* Remove complex input-group styling */
+    .input-group {
+        margin-bottom: 15px;
+    }
+
+    .input-group-append {
+        display: none;
+    }
+
+    /* Clean and simple styling */
+
+    /* Beautiful Button Styling */
+    .btn-primary {
+        width: 100%;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #0cafe5 0%, #00a3cc 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow:
+            0 6px 20px rgba(12, 202, 229, 0.3),
+            0 2px 8px rgba(12, 202, 229, 0.2);
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #00a3cc 0%, #0088b2 100%);
+        transform: translateY(-3px);
+        box-shadow:
+            0 12px 35px rgba(12, 202, 229, 0.4),
+            0 6px 15px rgba(12, 202, 229, 0.3);
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary:active {
+        transform: translateY(-1px);
+        box-shadow:
+            0 8px 25px rgba(12, 202, 229, 0.3),
+            0 3px 10px rgba(12, 202, 229, 0.2);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .login-box {
+            margin: 1rem;
+            width: calc(100% - 2rem);
+        }
+
+        .login-card-body {
+            padding: 30px 25px;
+        }
+
+        .login-logo a {
+            font-size: 24px;
+        }
+
+        .form-control {
+            padding: 14px 18px;
+            font-size: 16px; /* Prevent zoom on iOS */
+        }
+
+        .btn-primary {
+            padding: 14px 20px;
+            font-size: 15px;
+        }
+    }
+
+    /* Focus states for better accessibility */
+    .form-control:focus {
+        border-color: #0cafe5 !important;
+    }
+
+    /* Button states */
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+<div class="hold-transition login-page">
     {% include '_messages.html'%}
     <div class="login-box">
         <div class="login-logo">
@@ -19,31 +270,47 @@
                 <p class="login-box-msg">ĐĂNG NHẬP VỚI TÀI KHOẢN ADMIN</p>
                 <form method=post enctype="multipart/form-data">
                     {{form.csrf_token}}
-                    <div class="input-group mb-3">
                         <input type="email" class="form-control" placeholder="Email" name='email' required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-envelope"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="input-group mb-3">
                         <input type="password" class="form-control" placeholder="Mật khẩu" name='password' required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
-                            </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <span class="btn-text">Đăng Nhập</span>
+                                <span class="btn-loading" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
+                                </span>
+                            </button>
                         </div>
                     </div>
-                    <div class="row mb-2">
-                        <div class="col-5">
-                            <button type="submit" class="btn btn-primary btn-block">Đăng Nhập</button>
+                    <div class="row mt-3">
+                        <div class="col-12 text-center">
+                            <a href="{{ url_for('home') }}" class="text-muted" style="text-decoration: none; font-size: 0.9rem;">
+                                <i class="fas fa-arrow-left mr-1"></i> Quay lại trang chủ
+                            </a>
                         </div>
                     </div>
-
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- Remove loading overlay -->
+
+    <script>
+        // Simple form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const button = this.querySelector('.btn-primary');
+            button.disabled = true;
+            button.textContent = 'Đang xử lý...';
+        });
+
+        // Auto-focus on email input when page loads
+        window.addEventListener('load', () => {
+            const emailInput = document.querySelector('input[name="email"]');
+            if (emailInput) {
+                emailInput.focus();
+            }
+        });
+    </script>
 </div>
-{% endblock  content%}
+{% endblock content %}
