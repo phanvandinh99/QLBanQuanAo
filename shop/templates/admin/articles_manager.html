@@ -1,0 +1,117 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+{% include 'admin/header.html' %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Quản lý bài viết</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{url_for('admin_manager')}}">Home</a></li>
+                        <li class="breadcrumb-item active">Bài viết</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách bài viết</h3>
+                            <div class="card-tools">
+                                <a href="{{ url_for('add_article') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Thêm bài viết
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card-body table-responsive p-0">
+                            {% if articles %}
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Ảnh bìa</th>
+                                        <th>Tiêu đề</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for article in articles %}
+                                    <tr>
+                                        <td>{{ article.id }}</td>
+                                        <td>
+                                            <img src="{{ url_for('static', filename='images/articles/' + article.cover_image) }}"
+                                                 alt="Cover" class="img-thumbnail" style="width: 60px; height: 40px; object-fit: cover;">
+                                        </td>
+                                        <td>
+                                            <strong>{{ article.title[:50] }}{% if article.title|length > 50 %}...{% endif %}</strong>
+                                            <br>
+                                            <small class="text-muted">Slug: {{ article.slug }}</small>
+                                        </td>
+                                        <td>
+                                            {% if article.status == 'published' %}
+                                                <span class="badge badge-success">Đã xuất bản</span>
+                                            {% elif article.status == 'draft' %}
+                                                <span class="badge badge-warning">Bản nháp</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">{{ article.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ article.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('edit_article', id=article.id) }}"
+                                                   class="btn btn-info">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('toggle_article_status', id=article.id) }}"
+                                                      style="display: inline;">
+                                                    <button type="submit" class="btn btn-warning"
+                                                            title="{% if article.status == 'published' %}Chuyển về bản nháp{% else %}Xuất bản{% endif %}">
+                                                        <i class="fas fa-{% if article.status == 'published' %}eye-slash{% else %}eye{% endif %}"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('delete_article', id=article.id) }}"
+                                                      style="display: inline;"
+                                                      onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?')">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">Chưa có bài viết nào</h4>
+                                <p class="text-muted">Hãy tạo bài viết đầu tiên của bạn!</p>
+                                <a href="{{ url_for('add_article') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Thêm bài viết đầu tiên
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% include 'admin/footer.html' %}
+{% endblock %}

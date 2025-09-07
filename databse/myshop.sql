@@ -358,6 +358,52 @@ ALTER TABLE `product`
 ALTER TABLE `rate`
   ADD CONSTRAINT `rate_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `addproduct` (`id`),
   ADD CONSTRAINT `rate_ibfk_2` FOREIGN KEY (`register_id`) REFERENCES `register` (`id`);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `articles`
+--
+
+CREATE TABLE `articles` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content` text NOT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  `admin_id` int(11) NOT NULL,
+  `status` enum('draft','published','archived') DEFAULT 'draft',
+  `slug` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
+-- Dumping data for table `articles`
+--
+
+INSERT INTO `articles` (`id`, `title`, `content`, `cover_image`, `created_at`, `updated_at`, `admin_id`, `status`, `slug`) VALUES
+(1, 'Chào mừng đến với MobileStore', 'Chào mừng bạn đến với MobileStore - nơi cung cấp các sản phẩm thời trang chất lượng cao với giá cả phải chăng.\r\n\r\nChúng tôi cam kết mang đến cho khách hàng những sản phẩm tốt nhất với dịch vụ chăm sóc khách hàng tận tình.', 'welcome-cover.jpg', '2025-08-29 10:00:00', NULL, 1, 'published', 'chao-mung-den-voi-mobilestore');
+
+--
+-- Indexes for table `articles`
+--
+ALTER TABLE `articles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD KEY `admin_id` (`admin_id`);
+
+--
+-- AUTO_INCREMENT for table `articles`
+--
+ALTER TABLE `articles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- Constraints for table `articles`
+--
+ALTER TABLE `articles`
+  ADD CONSTRAINT `articles_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`id`) ON DELETE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

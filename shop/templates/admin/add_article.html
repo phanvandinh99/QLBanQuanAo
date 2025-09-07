@@ -1,0 +1,156 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+{% include 'admin/header.html' %}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Thêm bài viết mới</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{url_for('admin_manager')}}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{url_for('articles_manager')}}">Bài viết</a></li>
+                        <li class="breadcrumb-item active">Thêm mới</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Thông tin bài viết</h3>
+                        </div>
+
+                        <form method="post" enctype="multipart/form-data">
+                            {{ form.csrf_token }}
+                            <div class="card-body">
+                                {% include '_messages.html' %}
+
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="title">Tiêu đề bài viết <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="title" name="title"
+                                                   placeholder="Nhập tiêu đề bài viết" required>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="content">Nội dung bài viết <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" id="content" name="content" rows="15"
+                                                      placeholder="Nhập nội dung bài viết..." required></textarea>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="status">Trạng thái</label>
+                                            <select class="form-control" id="status" name="status">
+                                                <option value="draft">Bản nháp</option>
+                                                <option value="published">Xuất bản</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="cover_image">Ảnh bìa</label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="cover_image"
+                                                       name="cover_image" accept="image/*">
+                                                <label class="custom-file-label" for="cover_image">Chọn ảnh bìa</label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                Chọn ảnh để làm ảnh bìa cho bài viết (không bắt buộc)
+                                            </small>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Xem trước ảnh bìa</label>
+                                            <div id="image-preview" class="text-center">
+                                                <img id="preview-img" src="{{ url_for('static', filename='images/article-default.jpg') }}"
+                                                     alt="Preview" class="img-fluid rounded" style="max-height: 200px;">
+                                            </div>
+                                        </div>
+
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5 class="card-title">Thông tin bổ sung</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <p><strong>Người tạo:</strong> {{ user.name }}</p>
+                                                <p><strong>Ngày tạo:</strong> <span id="current-date"></span></p>
+                                                <p><strong>Slug:</strong> <span id="slug-preview">-</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Lưu bài viết
+                                </button>
+                                <a href="{{ url_for('articles_manager') }}" class="btn btn-secondary ml-2">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+// Update current date
+document.getElementById('current-date').textContent = new Date().toLocaleString('vi-VN');
+
+// Generate slug preview
+document.getElementById('title').addEventListener('input', function() {
+    const title = this.value;
+    const slug = title.toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    document.getElementById('slug-preview').textContent = slug || '-';
+});
+
+// Image preview
+document.getElementById('cover_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Update file label
+document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name || 'Chọn ảnh bìa';
+    const label = e.target.nextElementSibling;
+    label.textContent = fileName;
+});
+</script>
+
+<style>
+.custom-file-label {
+    overflow: hidden;
+}
+
+.custom-file-label::after {
+    content: "Browse";
+}
+</style>
+
+{% include 'admin/footer.html' %}
+{% endblock %}

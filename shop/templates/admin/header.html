@@ -186,6 +186,33 @@
                         </ul>
                     </li>
 
+                    <li class="nav-item has-treeview {% if request.endpoint == 'articles_manager' or request.endpoint == 'add_article' or request.endpoint == 'edit_article' %} menu-open {% endif %}">
+                        <a href="{{ url_for('articles_manager') }}"
+                           class="nav-link {% if request.endpoint == 'articles_manager' or request.endpoint == 'add_article' or request.endpoint == 'edit_article' %} active {% endif %}">
+                            <i class="nav-icon fas fa-newspaper"></i>
+                            <p>
+                                Bài Viết
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ url_for('articles_manager') }}"
+                                   class="nav-link {% if request.endpoint == 'articles_manager' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Quản Lý Bài Viết</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('add_article') }}"
+                                   class="nav-link {% if request.endpoint == 'add_article' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Thêm Mới</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     <li class="nav-item">
                         <a href="{{ url_for('orders_manager')}}"
                            class="nav-link {% if request.endpoint == 'orders' %} active {% endif %}">

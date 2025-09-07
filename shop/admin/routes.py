@@ -1,11 +1,12 @@
 import os
 import urllib
 from itertools import product
+from werkzeug.utils import secure_filename
 
 from flask import render_template, session, request, redirect, url_for, flash, current_app
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate
+from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate, Article
 from .forms import LoginForm, RegistrationForm
 from shop.customers.forms import CustomerRegisterForm
 
@@ -374,3 +375,157 @@ def get_order_data(order):
         except:
             return {}
     return {}
+
+
+# ============= ARTICLE MANAGEMENT ROUTES =============
+
+@app.route('/admin/articles')
+def articles_manager():
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    user = Admin.query.filter_by(email=session['email']).first()
+    articles = Article.query.order_by(Article.created_at.desc()).all()
+    return render_template('admin/articles_manager.html', title='Quản lý bài viết', user=user, articles=articles)
+
+
+@app.route('/admin/article/add', methods=['GET', 'POST'])
+def add_article():
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    user = Admin.query.filter_by(email=session['email']).first()
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        status = request.form.get('status', 'draft')
+
+        if not title or not content:
+            flash('Vui lòng điền đầy đủ thông tin', 'danger')
+            return redirect(url_for('add_article'))
+
+        # Handle cover image upload
+        cover_image = None
+        if 'cover_image' in request.files:
+            file = request.files['cover_image']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(current_app.root_path, 'static/images/articles', filename)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                file.save(file_path)
+                cover_image = filename
+
+        # Create article
+        article = Article(
+            title=title,
+            content=content,
+            cover_image=cover_image or 'article-default.jpg',
+            admin_id=user.id,
+            status=status
+        )
+
+        # Generate slug
+        article.slug = article.generate_slug()
+
+        try:
+            db.session.add(article)
+            db.session.commit()
+            flash('Bài viết đã được tạo thành công!', 'success')
+            return redirect(url_for('articles_manager'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi tạo bài viết: {str(e)}', 'danger')
+            return redirect(url_for('add_article'))
+
+    return render_template('admin/add_article.html', title='Thêm bài viết', user=user)
+
+
+@app.route('/admin/article/edit/<int:id>', methods=['GET', 'POST'])
+def edit_article(id):
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    user = Admin.query.filter_by(email=session['email']).first()
+    article = Article.query.get_or_404(id)
+
+    if request.method == 'POST':
+        article.title = request.form.get('title')
+        article.content = request.form.get('content')
+        article.status = request.form.get('status', 'draft')
+
+        # Handle cover image upload
+        if 'cover_image' in request.files:
+            file = request.files['cover_image']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(current_app.root_path, 'static/images/articles', filename)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                file.save(file_path)
+                article.cover_image = filename
+
+        # Update slug if title changed
+        article.slug = article.generate_slug()
+
+        try:
+            db.session.commit()
+            flash('Bài viết đã được cập nhật thành công!', 'success')
+            return redirect(url_for('articles_manager'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi cập nhật bài viết: {str(e)}', 'danger')
+
+    return render_template('admin/edit_article.html', title='Chỉnh sửa bài viết', user=user, article=article)
+
+
+@app.route('/admin/article/delete/<int:id>', methods=['POST'])
+def delete_article(id):
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    article = Article.query.get_or_404(id)
+
+    try:
+        # Delete cover image file if it exists
+        if article.cover_image and article.cover_image != 'article-default.jpg':
+            image_path = os.path.join(current_app.root_path, 'static/images/articles', article.cover_image)
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        db.session.delete(article)
+        db.session.commit()
+        flash('Bài viết đã được xóa thành công!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Lỗi khi xóa bài viết: {str(e)}', 'danger')
+
+    return redirect(url_for('articles_manager'))
+
+
+@app.route('/admin/article/toggle-status/<int:id>', methods=['POST'])
+def toggle_article_status(id):
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    article = Article.query.get_or_404(id)
+
+    # Toggle status between published and draft
+    if article.status == 'published':
+        article.status = 'draft'
+        flash('Bài viết đã được chuyển về bản nháp!', 'info')
+    else:
+        article.status = 'published'
+        flash('Bài viết đã được xuất bản!', 'success')
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Lỗi khi cập nhật trạng thái: {str(e)}', 'danger')
+
+    return redirect(url_for('articles_manager'))
