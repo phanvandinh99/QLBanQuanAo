@@ -2,6 +2,7 @@ import os
 import urllib
 from itertools import product
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 
 from flask import render_template, session, request, redirect, url_for, flash, current_app
 from shop import app, db, bcrypt

@@ -82,7 +82,7 @@ class Article(db.Model):
     content = db.Column(db.Text, nullable=False)
     cover_image = db.Column(db.String(255), default='article-default.jpg')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
     admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
     status = db.Column(db.Enum('draft', 'published', 'archived'), default='draft')
     slug = db.Column(db.String(255), unique=True)
