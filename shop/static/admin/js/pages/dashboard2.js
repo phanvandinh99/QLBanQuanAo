@@ -2,17 +2,28 @@ $(function () {
 
   'use strict'
 
-  /* ChartJS
-   * -------
-   * Here we will create a few charts using ChartJS
-   */
+  try {
+    /* ChartJS
+     * -------
+     * Here we will create a few charts using ChartJS
+     */
 
-  //-----------------------
-  //- MONTHLY SALES CHART -
-  //-----------------------
+    // Check if required libraries are available
+    if (typeof Chart === 'undefined') {
+      console.log('Chart.js not loaded, skipping dashboard charts');
+      return;
+    }
+    if (typeof $ === 'undefined') {
+      console.log('jQuery not loaded, skipping dashboard charts');
+      return;
+    }
 
-  // Get context with jQuery - using jQuery's .get() method.
-  var salesChartCanvas = $('#salesChart').get(0).getContext('2d')
+    //-----------------------
+    //- MONTHLY SALES CHART -
+    //-----------------------
+
+    // Get context with jQuery - using jQuery's .get() method.
+    var salesChartCanvas = $('#salesChart').length > 0 ? $('#salesChart').get(0).getContext('2d') : null
 
   var salesChartData = {
     labels  : ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
@@ -63,12 +74,18 @@ $(function () {
   }
 
   // This will get the first returned node in the jQuery collection.
-  var salesChart = new Chart(salesChartCanvas, { 
-      type: 'line', 
-      data: salesChartData, 
-      options: salesChartOptions
+  if (salesChartCanvas) {
+    try {
+      var salesChart = new Chart(salesChartCanvas, {
+          type: 'line',
+          data: salesChartData,
+          options: salesChartOptions
+        }
+      )
+    } catch (chartError) {
+      console.log('Error creating sales chart:', chartError.message);
     }
-  )
+  }
 
   //---------------------------
   //- END MONTHLY SALES CHART -
@@ -78,7 +95,7 @@ $(function () {
   //- PIE CHART -
   //-------------
   // Get context with jQuery - using jQuery's .get() method.
-    var pieChartCanvas = $('#pieChart').get(0).getContext('2d')
+    var pieChartCanvas = $('#pieChart').length > 0 ? $('#pieChart').get(0).getContext('2d') : null
     var pieData        = {
       labels: [
           'Chrome', 
@@ -102,11 +119,17 @@ $(function () {
     }
     //Create pie or douhnut chart
     // You can switch between pie and douhnut using the method below.
-    var pieChart = new Chart(pieChartCanvas, {
-      type: 'doughnut',
-      data: pieData,
-      options: pieOptions      
-    })
+    if (pieChartCanvas) {
+      try {
+        var pieChart = new Chart(pieChartCanvas, {
+          type: 'doughnut',
+          data: pieData,
+          options: pieOptions
+        })
+      } catch (pieError) {
+        console.log('Error creating pie chart:', pieError.message);
+      }
+    }
 
   //-----------------
   //- END PIE CHART -
@@ -116,16 +139,22 @@ $(function () {
    * ------------
    * Create a world map with markers
    */
-  $('#world-map-markers').mapael({
-      map: {
-        name : "usa_states",
-        zoom: {
-          enabled: true,
-          maxLevel: 10
+  if ($('#world-map-markers').length > 0) {
+    try {
+      $('#world-map-markers').mapael({
+        map: {
+          name : "usa_states",
+          zoom: {
+            enabled: true,
+            maxLevel: 10
+          },
         },
-      },
+      }
+    );
+    } catch (mapError) {
+      console.log('Error creating map:', mapError.message);
     }
-  );
+  }
 
   // $('#world-map-markers').vectorMap({
   //   map              : 'world_en',
@@ -263,5 +292,9 @@ $(function () {
   //     }
   //   ]
   // })
+
+  } catch (error) {
+    console.log('Dashboard charts initialization skipped - elements not found:', error.message);
+  }
 
 })

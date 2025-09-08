@@ -131,7 +131,7 @@ def orders_manager():
 
     # Get all orders and update old statuses to new ones
     orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
-    
+
     # Update old statuses to new ones in memory (for display)
     for order in orders:
         if order.status == 'Pending':
@@ -140,8 +140,43 @@ def orders_manager():
             order.status = 'Đã giao'
         elif order.status == 'Cancelled':
             order.status = 'Hủy đơn'
+
+        # Calculate totals for each order
+        order_data = get_order_data(order)
+        total_quantity = 0
+        total_price = 0
+
+        if order_data and isinstance(order_data, dict):
+            for key, product in order_data.items():
+                if product and isinstance(product, dict):
+                    quantity = product.get('quantity', 0)
+                    price = product.get('price', 0)
+                    discount = product.get('discount', 0)
+
+                    # Convert to numbers
+                    try:
+                        quantity = int(quantity) if quantity else 0
+                        price = int(price) if price else 0
+                        discount = int(discount) if discount else 0
+                    except (ValueError, TypeError):
+                        quantity = 0
+                        price = 0
+                        discount = 0
+
+                    # Calculate if quantity > 0
+                    if quantity > 0:
+                        total_quantity += quantity
+                        discount_amount = int(price * discount / 100)
+                        item_total = (price - discount_amount) * quantity
+                        total_price += item_total
+
+        # Add calculated totals and product details to order object
+        order.total_quantity = total_quantity
+        order.total_price = total_price
+        order.product_details = order_data if order_data else {}
+
     return render_template('admin/manage_orders.html', title='Order manager page', user=user[0], orders=orders,
-                           customers=customers, get_order_data=get_order_data)
+                           customers=customers)
 
 
 @app.route('/accept_order/<int:id>', methods=['GET', 'POST'])
@@ -370,12 +405,50 @@ def logout():
 
 def get_order_data(order):
     """Helper function to parse order data from JSON"""
+    print(f"DEBUG: Order ID {order.id}")
+    print(f"DEBUG: Raw orders field: {order.orders}")
+    print(f"DEBUG: Orders field type: {type(order.orders)}")
+    print(f"DEBUG: Orders field is None: {order.orders is None}")
+
     if order.orders:
         try:
-            return json.loads(order.orders)
-        except:
+            parsed_data = json.loads(order.orders)
+            print(f"DEBUG: Successfully parsed: {parsed_data}")
+            print(f"DEBUG: Parsed type: {type(parsed_data)}")
+            print(f"DEBUG: Parsed length: {len(parsed_data) if isinstance(parsed_data, dict) else 'N/A'}")
+            return parsed_data
+        except Exception as e:
+            print(f"DEBUG: JSON parse error: {e}")
             return {}
+    print("DEBUG: No orders data found")
     return {}
+
+
+# ============= TEST ROUTE FOR DEBUGGING =============
+@app.route('/admin/test_orders')
+def test_orders():
+    """Test route to check order data structure"""
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    # Get all orders
+    orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).limit(5).all()
+
+    test_results = []
+    for order in orders:
+        result = {
+            'order_id': order.id,
+            'invoice': order.invoice,
+            'status': order.status,
+            'raw_orders': order.orders,
+            'orders_type': str(type(order.orders)),
+            'orders_is_none': order.orders is None,
+            'parsed_data': get_order_data(order)
+        }
+        test_results.append(result)
+
+    return render_template('admin/test_orders.html', test_results=test_results)
 
 
 # ============= ARTICLE MANAGEMENT ROUTES =============

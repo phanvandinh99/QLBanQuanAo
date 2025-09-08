@@ -68,7 +68,8 @@
                           <thead>
                             <tr>
                               <th>Tên khách hàng</th>
-                              <th>Sản phẩm mua</th>
+                              <th>Tổng sản phẩm</th>
+                              <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
                               <th>Chi Tiết</th>
@@ -78,16 +79,18 @@
                           </thead>
                           <tbody>
                             {%for order in orders %} {% if order.status == "Đang xác nhận" %}
+                            <!-- Order {{order.id}} - Products: {{order.product_details|length if order.product_details else 0}}, Qty: {{order.total_quantity}}, Price: {{order.total_price}} -->
                             <tr>
                               {%for customer in customers%} {% if customer.id ==
                               order.customer_id %} {% set customer_name =
                               customer.first_name +" "+customer.last_name %}
                               <td>{{customer_name}}</td>
                               {% endif %} {%endfor%}
-                              {% set order_data = get_order_data(order) %} {%
-                              for key, product in order_data.items() %}
-                              <td>{{product.name}}</td>
-                              {% endfor %}
+                              {# Use pre-calculated totals from route #}
+                              {% set total_quantity = order.total_quantity %}
+                              {% set total_price = order.total_price %}
+                              <td><strong>{{total_quantity or 0}}</strong></td>
+                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                               <td>
@@ -184,19 +187,28 @@
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                    {% set order_data = get_order_data(order) %}
-                                    {% for key, product in order_data.items() %}
-                                    <h5>{{"Sản phẩm: " + product.name}}</h5>
-                                    <h5>{{"Thương Hiệu: " + product.brand}}</h5>
-                                    <h5>Giá: {{product.price | vnd}}</h5>
-                                    <h5>Giảm giá: {{product.discount}}%</h5>
-                                    <h5>Số lượng: {{product.quantity}}</h5>
-                                    <h5>{{"Màu sắc: " + product.color}}</h5>
-                                    {% endfor %}
+                                    {# Use pre-calculated totals from route #}
+                                    {% set total_quantity = order.total_quantity %}
+                                    {% set total_price = order.total_price %}
+                                    <h5><strong>Tổng số sản phẩm:</strong> {{total_quantity or 0}}</h5>
+                                    <h5><strong>Tổng giá trị:</strong> {{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</h5>
                                     <h5>Ngày mua: {{order.date_created}}</h5>
                                     <h5>
                                       {{"Địa chỉ:" + order.address}}
                                     </h5>
+                                    <hr>
+                                    <h6>Chi tiết sản phẩm:</h6>
+                                    {% if order.product_details %}
+                                      {% for key, product in order.product_details.items() %}
+                                      <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <strong>{{product.get('name', 'N/A')}}</strong><br>
+                                        Thương hiệu: {{product.get('brand', 'N/A')}} | Màu: {{product.get('color', 'N/A')}}<br>
+                                        Giá: {{product.get('price', 0) | vnd}} | SL: {{product.get('quantity', 0)}} | Giảm: {{product.get('discount', 0)}}%
+                                      </div>
+                                      {% endfor %}
+                                    {% else %}
+                                      <p><em>Không có thông tin chi tiết sản phẩm</em></p>
+                                    {% endif %}
                                   </div>
                                   <div class="modal-footer"></div>
                                 </div>
@@ -223,7 +235,8 @@
                             <tr>
                               <th>STT</th>
                               <th>Tên khách hàng</th>
-                              <th>Sản phẩm mua</th>
+                              <th>Tổng sản phẩm</th>
+                              <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
                               <th>Thao tác</th>
@@ -238,10 +251,11 @@
                               customer.first_name +" "+customer.last_name %}
                               <td>{{customer_name}}</td>
                               {% endif %} {%endfor%}
-                              {% set order_data = get_order_data(order) %} {%
-                              for key, product in order_data.items() %}
-                              <td>{{product.name}}</td>
-                              {% endfor %}
+                              {# Use pre-calculated totals from route #}
+                              {% set total_quantity = order.total_quantity %}
+                              {% set total_price = order.total_price %}
+                              <td><strong>{{total_quantity or 0}}</strong></td>
+                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                               <td>
@@ -338,11 +352,10 @@
                             <tr>
                               <th>STT</th>
                               <th>Tên khách hàng</th>
+                              <th>Tổng sản phẩm</th>
+                              <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
-                              <th>Sản phẩm</th>
-                              <th>Số lượng</th>
-                              <th>Doanh thu</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -354,18 +367,13 @@
                               customer.first_name +" "+customer.last_name %}
                               <td>{{customer_name}}</td>
                               {% endif %} {%endfor%}
+                              {# Use pre-calculated totals from route #}
+                              {% set total_quantity = order.total_quantity %}
+                              {% set total_price = order.total_price %}
+                              <td><strong>{{total_quantity or 0}}</strong></td>
+                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
-                              {% set order_data = get_order_data(order) %} {%
-                              for key, product in order_data.items() %}
-                              <td>{{product.name}}</td>
-                              <td>{{product.quantity}}</td>
-                              <td>
-                                {{(product.quantity|int * product.price|float -
-                                product.discount|int * product.price|float/100)
-                                | vnd}}
-                              </td>
-                              {% endfor %}
                             </tr>
                             {% endif %} {%endfor%}
                           </tbody>
@@ -388,7 +396,8 @@
                             <tr>
                               <th>STT</th>
                               <th>Tên khách hàng</th>
-                              <th>Sản phẩm mua</th>
+                              <th>Tổng sản phẩm</th>
+                              <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
                             </tr>
@@ -402,10 +411,11 @@
                               customer.first_name +" "+customer.last_name %}
                               <td>{{customer_name}}</td>
                               {% endif %} {%endfor%}
-                              {% set order_data = get_order_data(order) %} {%
-                              for key, product in order_data.items() %}
-                              <td>{{product.name}}</td>
-                              {% endfor %}
+                              {# Use pre-calculated totals from route #}
+                              {% set total_quantity = order.total_quantity %}
+                              {% set total_price = order.total_price %}
+                              <td><strong>{{total_quantity or 0}}</strong></td>
+                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                             </tr>
