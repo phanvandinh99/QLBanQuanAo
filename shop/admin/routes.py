@@ -146,9 +146,15 @@ def orders_manager():
         total_quantity = 0
         total_price = 0
 
+        # Initialize enhanced products dictionary
+        enhanced_products = {}
+
         if order_data and isinstance(order_data, dict):
             for key, product in order_data.items():
                 if product and isinstance(product, dict):
+                    # Create enhanced product with original data
+                    enhanced_product = product.copy()
+
                     quantity = product.get('quantity', 0)
                     price = product.get('price', 0)
                     discount = product.get('discount', 0)
@@ -166,14 +172,43 @@ def orders_manager():
                     # Calculate if quantity > 0
                     if quantity > 0:
                         total_quantity += quantity
-                        discount_amount = int(price * discount / 100)
-                        item_total = (price - discount_amount) * quantity
-                        total_price += item_total
 
-        # Add calculated totals and product details to order object
+                        # Calculate prices
+                        original_price = price * quantity
+                        discount_amount = int(price * discount / 100) if discount > 0 else 0
+                        discounted_price_per_item = price - discount_amount
+                        discounted_total_per_item = discounted_price_per_item * quantity
+
+                        # Add calculated prices to enhanced product
+                        enhanced_product['original_price'] = price
+                        enhanced_product['discounted_price'] = discounted_price_per_item
+                        enhanced_product['discount_amount'] = discount_amount
+                        enhanced_product['original_total'] = original_price
+                        enhanced_product['discounted_total'] = discounted_total_per_item
+
+                        total_price += discounted_total_per_item
+
+                    # Try to get product image from database if we have product ID
+                    if 'id' in product or key.isdigit():
+                        try:
+                            from shop.models import Addproduct
+                            product_id = product.get('id', key if key.isdigit() else None)
+                            if product_id:
+                                db_product = Addproduct.query.get(int(product_id))
+                                if db_product and db_product.image_1:
+                                    enhanced_product['image_1'] = db_product.image_1
+                        except:
+                            pass  # Ignore errors, image is optional
+
+                    enhanced_products[key] = enhanced_product
+
+        # Calculate order totals
         order.total_quantity = total_quantity
         order.total_price = total_price
-        order.product_details = order_data if order_data else {}
+        order.total_original_price = sum(p.get('original_total', 0) for p in enhanced_products.values())
+        order.total_discount_amount = sum(p.get('discount_amount', 0) * p.get('quantity', 0) for p in enhanced_products.values())
+
+        order.product_details = enhanced_products if enhanced_products else order_data
 
     return render_template('admin/manage_orders.html', title='Order manager page', user=user[0], orders=orders,
                            customers=customers)
