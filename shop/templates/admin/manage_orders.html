@@ -359,33 +359,63 @@
   /* Mobile summary item adjustments */
   @media (max-width: 768px) {
     .summary-item {
-      min-height: 50px !important;
-      margin-bottom: 0.5rem !important;
-      padding: 0.5rem !important;
+      min-height: 45px !important;
+      margin-bottom: 0.25rem !important;
+      padding: 0.375rem !important;
     }
 
     .d-flex.flex-wrap.gap-2 {
-      gap: 0.5rem !important;
+      gap: 0.375rem !important;
     }
 
     .summary-item .text-center {
-      padding: 0.25rem;
+      padding: 0.125rem;
     }
 
     .summary-item i {
-      font-size: 12px !important;
+      font-size: 13px !important;
     }
 
     .summary-item .font-weight-bold {
-      font-size: 11px !important;
+      font-size: 12px !important;
     }
 
     .summary-item div[style*="font-size: 10px"] {
-      font-size: 9px !important;
+      font-size: 10px !important;
+    }
+
+    .summary-item div[style*="font-size: 12px"] {
+      font-size: 12px !important;
     }
 
     .summary-item div[style*="font-size: 14px"] {
-      font-size: 12px !important;
+      font-size: 13px !important;
+    }
+
+    .summary-item div[style*="font-size: 16px"] {
+      font-size: 15px !important;
+    }
+
+    /* Reduce modal body padding on mobile */
+    .modal-body {
+      padding: 0.75rem !important;
+    }
+
+    /* Adjust font sizes for mobile readability */
+    h6[style*="font-size: 16px"] {
+      font-size: 15px !important;
+    }
+
+    span[style*="font-size: 14px"] {
+      font-size: 13px !important;
+    }
+
+    div[style*="font-size: 14px"] {
+      font-size: 13px !important;
+    }
+
+    div[style*="font-size: 16px"] {
+      font-size: 15px !important;
     }
   }
 
@@ -634,42 +664,42 @@
                                   </div>
 
                                   <!-- Modal Body -->
-                                  <div class="modal-body px-3 py-2">
+                                  <div class="modal-body px-2 py-1">
                                     {# Use pre-calculated totals from route #}
                                     {% set total_quantity = order.total_quantity %}
                                     {% set total_price = order.total_price %}
 
                                     <!-- Order Summary Section -->
-                                    <div class="row mb-3">
+                                    <div class="row mb-2">
                                       <div class="col-12">
                                         <div class="card border-primary">
-                                          <div class="card-header bg-light py-2">
-                                            <h6 class="mb-0" style="font-size: 14px;">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
                                               <i class="fas fa-info-circle text-primary"></i> Thông Tin Đơn Hàng
                                             </h6>
                                           </div>
-                                          <div class="card-body p-3">
+                                          <div class="card-body p-2">
                                             <div class="row">
                                               <div class="col-md-6">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                  <span class="text-muted" style="font-size: 12px;">Trạng Thái:</span>
+                                                  <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
                                                   <span class="badge badge-{{'success' if order.status == 'Đã giao' else 'warning' if order.status == 'Đang giao' else 'info' if order.status == 'Đang xác nhận' else 'danger'}} badge-sm">
                                                     <i class="fas fa-{{'check-circle' if order.status == 'Đã giao' else 'truck' if order.status == 'Đang giao' else 'clock' if order.status == 'Đang xác nhận' else 'times-circle'}} mr-1"></i>
                                                     {{order.status}}
                                                   </span>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                  <span class="text-muted" style="font-size: 12px;">Ngày Đặt:</span>
-                                                  <span style="font-size: 12px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                  <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
+                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
                                                 </div>
                                               </div>
                                               <div class="col-md-6">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                                  <span class="text-muted" style="font-size: 12px;">Sản Phẩm:</span>
+                                                  <span class="text-muted" style="font-size: 14px;">Sản Phẩm:</span>
                                                   <span class="badge badge-primary badge-sm">{{total_quantity or 0}}</span>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                  <span class="text-muted" style="font-size: 12px;">Giá Trị:</span>
+                                                  <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
                                                   <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
                                                 </div>
                                               </div>
@@ -680,24 +710,24 @@
                                     </div>
 
                                     <!-- Customer Info Section -->
-                                    <div class="row mb-3">
+                                    <div class="row mb-2">
                                       <div class="col-12">
                                         <div class="card">
-                                          <div class="card-header bg-light py-2">
-                                            <h6 class="mb-0" style="font-size: 14px;">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
                                               <i class="fas fa-user text-info"></i> Thông Tin Khách Hàng
                                             </h6>
                                           </div>
-                                          <div class="card-body p-3">
+                                          <div class="card-body p-2">
                                             {%for customer in customers%} {% if customer.id == order.customer_id %}
                                             <div class="row">
                                               <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 12px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
-                                                <div style="font-size: 12px;"><strong>Email:</strong> {{customer.email}}</div>
+                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
                                               </div>
                                               <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 12px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 12px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
                                               </div>
                                             </div>
                                             {% endif %} {%endfor%}
@@ -707,19 +737,19 @@
                                     </div>
 
                                     <!-- Products Section -->
-                                    <div class="row mb-3">
+                                    <div class="row mb-2">
                                       <div class="col-12">
                                         <div class="card">
-                                          <div class="card-header bg-light py-2">
-                                            <h6 class="mb-0" style="font-size: 14px;">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
                                               <i class="fas fa-shopping-cart text-success"></i> Chi Tiết Sản Phẩm
                                               <span class="badge badge-secondary badge-sm ml-2">{{order.product_details|length if order.product_details else 0}} sản phẩm</span>
                                             </h6>
                                           </div>
-                                          <div class="card-body p-3">
+                                          <div class="card-body p-2">
                                             {% if order.product_details %}
                                               {% for key, product in order.product_details.items() %}
-                                              <div class="product-item mb-2 p-2 border rounded" style="margin-bottom: 8px;">
+                                              <div class="product-item mb-1 p-2 border rounded">
                                                 <div class="row align-items-center">
                                                   <!-- Product Image -->
                                                   <div class="col-md-1 text-center pr-2">
@@ -741,15 +771,15 @@
 
                                                   <!-- Product Details -->
                                                   <div class="col-md-5">
-                                                    <div class="font-weight-bold text-primary mb-1" style="font-size: 14px;">{{product.get('name', 'N/A')}}</div>
+                                                    <div class="font-weight-bold text-primary mb-1" style="font-size: 16px;">{{product.get('name', 'N/A')}}</div>
                                                     <div class="d-flex flex-wrap">
-                                                      <small class="text-muted mr-3" style="font-size: 11px;">
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
                                                         <i class="fas fa-tag"></i> {{product.get('brand', 'N/A')}}
                                                       </small>
-                                                      <small class="text-muted mr-3" style="font-size: 11px;">
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
                                                         <i class="fas fa-palette"></i> {{product.get('color', 'N/A')}}
                                                       </small>
-                                                      <span class="badge badge-info badge-sm">SL: {{product.get('quantity', 0)}}</span>
+                                                      <span class="badge badge-info badge-sm" style="font-size: 12px;">SL: {{product.get('quantity', 0)}}</span>
                                                     </div>
                                                   </div>
 
@@ -759,26 +789,26 @@
                                                       <div class="d-flex justify-content-between align-items-center">
                                                         <div class="text-left">
                                                           <div class="mb-0">
-                                                            <small class="text-muted" style="font-size: 11px;">Giá gốc:</small>
-                                                            <span class="text-decoration-line-through text-muted" style="font-size: 12px;">{{product.get('original_price', 0) | vnd}}</span>
+                                                          <small class="text-muted" style="font-size: 13px;">Giá gốc:</small>
+                                                          <span class="text-decoration-line-through text-muted" style="font-size: 14px;">{{product.get('original_price', 0) | vnd}}</span>
                                                           </div>
                                                           <div class="mb-0">
-                                                            <small class="text-success" style="font-size: 11px;">Sau giảm:</small>
-                                                            <span class="font-weight-bold text-success" style="font-size: 13px;">{{product.get('discounted_price', 0) | vnd}}</span>
+                                                            <small class="text-success" style="font-size: 13px;">Sau giảm:</small>
+                                                            <span class="font-weight-bold text-success" style="font-size: 15px;">{{product.get('discounted_price', 0) | vnd}}</span>
                                                           </div>
                                                         </div>
                                                         <div class="text-right">
-                                                          <span class="badge badge-warning badge-sm mb-1" style="font-size: 10px;">Tiết kiệm {{product.get('discount', 0)}}%</span>
-                                                          <div class="font-weight-bold text-primary" style="font-size: 14px;">{{product.get('discounted_total', 0) | vnd}}</div>
+                                                          <span class="badge badge-warning badge-sm mb-1" style="font-size: 12px;">Tiết kiệm {{product.get('discount', 0)}}%</span>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('discounted_total', 0) | vnd}}</div>
                                                         </div>
                                                       </div>
                                                     {% else %}
                                                       <div class="d-flex justify-content-end align-items-center">
                                                         <div class="text-right">
-                                                          <small class="text-muted" style="font-size: 11px;">Giá:</small>
-                                                          <div class="font-weight-bold" style="font-size: 13px;">{{product.get('price', 0) | vnd}}</div>
-                                                          <small class="text-primary" style="font-size: 11px;">Thành tiền:</small>
-                                                          <div class="font-weight-bold text-primary" style="font-size: 14px;">{{product.get('original_total', 0) | vnd}}</div>
+                                                          <small class="text-muted" style="font-size: 13px;">Giá:</small>
+                                                          <div class="font-weight-bold" style="font-size: 15px;">{{product.get('price', 0) | vnd}}</div>
+                                                          <small class="text-primary" style="font-size: 13px;">Thành tiền:</small>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('original_total', 0) | vnd}}</div>
                                                         </div>
                                                       </div>
                                                     {% endif %}
@@ -798,15 +828,15 @@
                                     </div>
 
                                     <!-- Order Summary Section -->
-                                    <div class="row mb-3">
+                                    <div class="row mb-2">
                                       <div class="col-12">
                                         <div class="card border-success">
                                           <div class="card-header bg-success text-white py-2">
-                                            <h6 class="mb-0" style="font-size: 14px;">
+                                            <h6 class="mb-0" style="font-size: 16px;">
                                               <i class="fas fa-calculator"></i> Tóm Tắt Đơn Hàng
                                             </h6>
                                           </div>
-                                          <div class="card-body p-3">
+                                          <div class="card-body p-2">
                                             <div class="row">
                                               <div class="col-md-8">
                                                 <div class="d-flex flex-wrap gap-2">
@@ -814,7 +844,7 @@
                                                        style="min-height: 60px;">
                                                     <div class="text-center">
                                                       <i class="fas fa-shopping-bag text-info d-block mb-1" style="font-size: 16px;"></i>
-                                                      <small class="text-muted d-block" style="font-size: 10px;">Sản phẩm</small>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Sản phẩm</small>
                                                       <span class="font-weight-bold d-block">{{total_quantity}}</span>
                                                     </div>
                                                   </div>
@@ -824,7 +854,7 @@
                                                        style="min-height: 60px;">
                                                     <div class="text-center">
                                                       <i class="fas fa-coins text-warning d-block mb-1" style="font-size: 16px;"></i>
-                                                      <small class="text-muted d-block" style="font-size: 10px;">Tiền gốc</small>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Tiền gốc</small>
                                                       <span class="font-weight-bold d-block">{{order.total_original_price | vnd}}</span>
                                                     </div>
                                                   </div>
@@ -833,7 +863,7 @@
                                                        style="min-height: 60px;">
                                                     <div class="text-center">
                                                       <i class="fas fa-percentage text-white d-block mb-1" style="font-size: 16px;"></i>
-                                                      <small class="text-white d-block" style="font-size: 10px;">Tiết kiệm</small>
+                                                      <small class="text-white d-block" style="font-size: 12px;">Tiết kiệm</small>
                                                       <span class="text-white font-weight-bold d-block">{{order.total_discount_amount | vnd}}</span>
                                                     </div>
                                                   </div>
@@ -846,8 +876,8 @@
                                                      style="min-height: 60px;">
                                                   <div class="text-center">
                                                     <i class="fas fa-money-bill-wave fa-lg mb-1"></i>
-                                                    <div style="font-size: 10px; opacity: 0.9;">Thành tiền</div>
-                                                    <div class="font-weight-bold" style="font-size: 14px;">{{total_price | vnd}}</div>
+                                                    <div style="font-size: 12px; opacity: 0.9;">Thành tiền</div>
+                                                    <div class="font-weight-bold" style="font-size: 16px;">{{total_price | vnd}}</div>
                                                   </div>
                                                 </div>
                                               </div>
@@ -859,7 +889,7 @@
                                   </div>
 
                                   <!-- Modal Footer -->
-                                  <div class="modal-footer py-2">
+                                  <div class="modal-footer py-1">
                                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                                       <i class="fas fa-times"></i> Đóng
                                     </button>
