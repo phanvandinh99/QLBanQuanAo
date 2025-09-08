@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+{%block content%}
+
+<div style="background-image: url('../../static/images/background.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 100% 100%;">
+    <div class="container" style="padding-top: 25px; padding-bottom: 40px;">
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="box">
+                    <div class="box-head">
+                        <h3 class="head-title">Tất cả bài viết</h3>
+                        <p class="text-muted">Khám phá tất cả các bài viết về công nghệ và sản phẩm của chúng tôi</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if articles.items %}
+        <div class="row">
+            {% for article in articles.items %}
+            <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12" style="margin-bottom: 30px;">
+                <div class="card h-100" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <div class="card-image" style="height: 200px; overflow: hidden;">
+                        {% if article.cover_image and article.cover_image != 'article-default.jpg' %}
+                        <img src="{{ url_for('static', filename='images/articles/' + article.cover_image) }}"
+                             alt="{{ article.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/article-default.jpg') }}"
+                             alt="{{ article.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <div class="card-content" style="padding: 20px;">
+                        <h5 class="card-title" style="font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #333;">
+                            <a href="{{ url_for('article_detail', slug=article.slug) }}" style="text-decoration: none; color: #333;">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text" style="color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">
+                            {{ article.content | truncate(150) | safe }}
+                        </p>
+                        <div class="article-meta" style="display: flex; justify-content: space-between; align-items: center;">
+                            <small class="text-muted">
+                                <i class="fa fa-calendar"></i> {{ article.created_at.strftime('%d/%m/%Y') }}
+                                <span style="margin-left: 10px;">
+                                    <i class="fa fa-user"></i> {{ article.admin.name if article.admin else 'Admin' }}
+                                </span>
+                            </small>
+                            <a href="{{ url_for('article_detail', slug=article.slug) }}"
+                               class="btn btn-primary btn-sm" style="background-color: #007bff; border-color: #007bff;">
+                                Đọc thêm <i class="fa fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if articles.pages > 1 %}
+        <div class="row">
+            <div class="col text-center">
+                <div class="st-pagination">
+                    <ul class="pagination">
+                        {% if articles.has_prev %}
+                        <li><a href="{{url_for('articles_list', page=articles.prev_num)}}"
+                               aria-label="previous"><span aria-hidden="true">Previous</span></a>
+                        </li>
+                        {% endif %}
+                        {% for page_num in articles.iter_pages(left_edge=1, right_edge=2,
+                        left_current=1,right_current=2) %}
+                        {% if page_num %}
+                        {% if articles.page == page_num %}
+                        <li class="active"><a href="{{url_for('articles_list', page=page_num)}}">{{page_num}}</a>
+                        </li>
+                        {% else %}
+                        <li><a href="{{url_for('articles_list', page=page_num)}}">{{page_num}}</a></li>
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                        {% if articles.has_next %}
+                        <li><a href="{{url_for('articles_list', page=articles.next_num)}}"
+                               aria-label="Next"><span
+                                aria-hidden="true">Next</span></a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="row">
+            <div class="col text-center" style="padding: 50px 0;">
+                <i class="fa fa-newspaper-o" style="font-size: 64px; color: #ccc; margin-bottom: 20px;"></i>
+                <h4 style="color: #666;">Chưa có bài viết nào</h4>
+                <p class="text-muted">Chúng tôi đang cập nhật nội dung. Vui lòng quay lại sau!</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content%}

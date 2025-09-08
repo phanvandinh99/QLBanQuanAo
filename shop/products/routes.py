@@ -4,14 +4,18 @@ import secrets
 from flask import render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import current_user
 from shop import app, db, photos
-from shop.models import Brand, Category, Addproduct, Rate, Register, Admin
+from shop.models import Brand, Category, Addproduct, Rate, Register, Admin, Article
 from .forms import Rates, Addproducts
 
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
     products = Addproduct.query.filter(Addproduct.stock > 0).paginate(page=page, per_page=8)
-    return render_template('products/index.html', products=products, categories=categories(), brands=brands())
+
+    # Get published articles for the articles section
+    articles = Article.query.filter_by(status='published').order_by(Article.created_at.desc()).limit(3).all()
+
+    return render_template('products/index.html', products=products, articles=articles, categories=categories(), brands=brands())
 
 
 @app.route('/category')
@@ -591,6 +595,31 @@ def test_db():
         return f"Connected to database successfully! Found {len(brands)} brands."
     except Exception as e:
         return f"Database connection failed: {str(e)}"
+
+
+# ============= ARTICLE ROUTES =============
+
+@app.route('/articles')
+def articles_list():
+    """Display list of all published articles"""
+    page = request.args.get('page', 1, type=int)
+    articles = Article.query.filter_by(status='published').order_by(Article.created_at.desc()).paginate(page=page, per_page=9)
+    return render_template('articles/list.html', articles=articles, brands=brands(), categories=categories())
+
+
+@app.route('/article/<string:slug>')
+def article_detail(slug):
+    """Display individual article"""
+    article = Article.query.filter_by(slug=slug, status='published').first_or_404()
+
+    # Get related articles (other published articles, excluding current one)
+    related_articles = Article.query.filter(
+        Article.status == 'published',
+        Article.id != article.id
+    ).order_by(Article.created_at.desc()).limit(3).all()
+
+    return render_template('articles/detail.html', article=article, related_articles=related_articles,
+                         brands=brands(), categories=categories())
 
 
 def brands():

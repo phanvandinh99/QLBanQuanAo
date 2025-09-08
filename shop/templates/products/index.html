@@ -3,6 +3,276 @@
   href="{{ url_for('static', filename='css/products.css') }}"
   rel="stylesheet"
 />
+<style>
+/* Articles Section Custom Styles */
+.articles-section {
+  min-height: 600px;
+  padding: 60px 0;
+}
+
+.articles-section .section-title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: -1px;
+  color: #333 !important;
+  font-weight: 700 !important;
+  font-size: 2.5rem !important;
+}
+
+.articles-section .section-subtitle {
+  color: #666 !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  max-width: 600px !important;
+  margin: auto !important;
+}
+
+.articles-section .card {
+  position: relative;
+}
+
+.articles-section .card {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: all 0.3s ease !important;
+  background: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.articles-section .card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #0cafe5);
+  border-radius: 8px 8px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.articles-section .card:hover::before {
+  opacity: 0.3;
+}
+
+.articles-section .card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.articles-section .badge {
+  font-size: 11px;
+}
+
+.articles-section .card-title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.articles-section .card-text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.articles-section .card-image {
+  height: 220px !important;
+  overflow: hidden !important;
+}
+
+.articles-section .card-image img {
+  object-fit: cover !important;
+  transition: transform 0.4s ease !important;
+}
+
+.articles-section .card-image .position-absolute {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(12, 175, 229, 0.3) 100%) !important;
+}
+
+.articles-section .card-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+  transition: all 0.3s ease !important;
+}
+
+.articles-section .badge {
+  background: #f8f9fa !important;
+  color: #0cafe5 !important;
+  font-weight: 500 !important;
+  padding: 4px 8px !important;
+  border: 1px solid #e0e0e0 !important;
+  font-size: 11px !important;
+}
+
+.articles-section .card-body {
+  padding: 20px !important;
+}
+
+.articles-section .card-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  margin-bottom: 12px !important;
+  line-height: 1.4 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  line-clamp: 2 !important;
+}
+
+.articles-section .card-title a {
+  color: #2d3748 !important;
+  transition: color 0.3s ease !important;
+}
+
+.articles-section .card-title a:hover {
+  color: #0cafe5 !important;
+  text-decoration: none !important;
+}
+
+.articles-section .card-text {
+  color: #718096 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  margin-bottom: 20px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  line-clamp: 3 !important;
+}
+
+.articles-section .btn {
+  background: #0cafe5 !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 8px rgba(12, 175, 229, 0.3) !important;
+}
+
+.articles-section .btn:hover {
+  background: #0894c1 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(12, 175, 229, 0.4) !important;
+}
+
+.articles-section .btn-light {
+  background: #ffffff !important;
+  color: #0cafe5 !important;
+  border: 2px solid #0cafe5 !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  padding: 5px 10px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.articles-section .btn-light:hover {
+  background: #0cafe5 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(12, 175, 229, 0.3) !important;
+}
+
+.articles-section .btn-lg {
+  font-size: 14px !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #667eea 0%, #0cafe5 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 500 !important;
+  box-shadow: 0 3px 10px rgba(12, 175, 229, 0.3) !important;
+}
+
+.articles-section .btn-lg:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(12, 175, 229, 0.4) !important;
+}
+
+.articles-section .text-center a {
+  text-decoration: none !important;
+}
+
+.articles-section .text-center.mt-5 {
+  margin-top: 3rem !important;
+}
+
+.articles-section .card-body .d-flex small {
+  color: #a0aec0 !important;
+  font-weight: 500 !important;
+}
+
+.articles-section .card-body .d-flex .rounded-circle {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #0cafe5 !important;
+  margin-right: 8px !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .articles-section .section-title {
+    font-size: 2rem !important;
+  }
+
+  .articles-section .section-subtitle {
+    font-size: 16px !important;
+  }
+
+  .articles-section .card-image {
+    height: 180px !important;
+  }
+
+  .articles-section .card-title {
+    font-size: 16px !important;
+  }
+
+  .articles-section .card-body {
+    padding: 15px !important;
+  }
+
+  .articles-section .btn {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+  }
+
+  .articles-section .btn-lg {
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+  }
+
+  .articles-section .btn-light {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+
+  .articles-section .badge {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .articles-section {
+    padding: 40px 0 !important;
+  }
+
+  .articles-section .section-title {
+    font-size: 1.8rem !important;
+  }
+
+  .articles-section .card {
+    margin-bottom: 20px !important;
+  }
+}
+
+/* Smooth animations */
+.articles-section * {
+  transition: all 0.3s ease;
+}
+</style>
 {% endblock %} {% block content %}
 
 <!-- Products Section -->
@@ -150,6 +420,82 @@
   </div>
 </section>
 
+<!-- Articles Section -->
+{% if articles %}
+<section id="articles" class="articles-section py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%); position: relative;">
+
+  <div class="container position-relative">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title" style="color: #333; font-weight: 700; font-size: 2.5rem;">
+        📝 Bài Viết Mới
+      </h2>
+      <p class="section-subtitle" style="color: #666; font-size: 16px; margin: auto;">
+        Cập nhật những tin tức và bài viết mới nhất về công nghệ và sản phẩm
+      </p>
+    </div>
+
+    <div class="row">
+      {% for article in articles %}
+      <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+        <div class="card h-100 border-0 shadow-lg">
+          <div class="card-image position-relative">
+            {% if article.cover_image and article.cover_image != 'article-default.jpg' %}
+            <img src="{{ url_for('static', filename='images/articles/' + article.cover_image) }}"
+                 alt="{{ article.title }}" class="w-100 h-100">
+            {% else %}
+            <img src="{{ url_for('static', filename='images/article-default.jpg') }}"
+                 alt="{{ article.title }}" class="w-100 h-100">
+            {% endif %}
+            <!-- Gradient overlay -->
+            <div class="position-absolute top-0 start-0 w-100 h-100"></div>
+            <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0">
+              <a href="{{ url_for('article_detail', slug=article.slug) }}" class="btn btn-light rounded-pill px-3 py-2">
+                <i class="fa fa-eye me-2"></i>Đọc ngay
+              </a>
+            </div>
+            <!-- Date badge -->
+            <div class="position-absolute top-0 end-0 m-3">
+              <span class="badge rounded-pill">
+                <i class="fa fa-calendar me-1"></i>{{ article.created_at.strftime('%d/%m') }}
+              </span>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <h5 class="card-title">
+              <a href="{{ url_for('article_detail', slug=article.slug) }}" class="text-decoration-none">
+                {{ article.title }}
+              </a>
+            </h5>
+            <p class="card-text">
+              {{ article.content | truncate(120) | safe }}
+            </p>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle"></div>
+                <small>
+                  {{ article.created_at.strftime('%d/%m/%Y') }}
+                </small>
+              </div>
+              <a href="{{ url_for('article_detail', slug=article.slug) }}" class="btn rounded-pill">
+                Đọc thêm <i class="fa fa-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-center mt-5">
+      <a href="{{ url_for('articles_list') }}" class="btn btn-lg rounded-pill">
+        <i class="fa fa-newspaper-o me-2"></i>Xem tất cả bài viết
+        <i class="fa fa-arrow-right ms-2"></i>
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- Features Section -->
 <section class="features-section">
   <div class="container">
@@ -206,6 +552,61 @@
           block: "start",
         });
       }
+    });
+  });
+
+  // Article card hover effects
+  document.addEventListener('DOMContentLoaded', function() {
+    const articleCards = document.querySelectorAll('.articles-section .card');
+
+    articleCards.forEach(card => {
+      const image = card.querySelector('img');
+      const overlay = card.querySelector('.card-overlay');
+      const title = card.querySelector('.card-title a');
+
+      card.addEventListener('mouseenter', function() {
+        // Simple hover effect
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+
+        // Image zoom effect
+        if (image) {
+          image.style.transform = 'scale(1.05)';
+        }
+
+        // Overlay fade in
+        if (overlay) {
+          overlay.style.opacity = '1';
+        }
+      });
+
+      card.addEventListener('mouseleave', function() {
+        // Reset transform
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '';
+
+        // Reset image zoom
+        if (image) {
+          image.style.transform = 'scale(1)';
+        }
+
+        // Overlay fade out
+        if (overlay) {
+          overlay.style.opacity = '0';
+        }
+      });
+    });
+
+    // Button hover effects
+    const buttons = document.querySelectorAll('.articles-section .btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-1px)';
+      });
+
+      btn.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+      });
     });
   });
 </script>
