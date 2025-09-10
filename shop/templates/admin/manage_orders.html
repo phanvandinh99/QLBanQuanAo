@@ -890,6 +890,9 @@
 
                                   <!-- Modal Footer -->
                                   <div class="modal-footer py-1">
+                                    <button type="button" class="btn btn-success btn-sm mr-2" onclick="exportInvoice({{order.id}})">
+                                      <i class="fas fa-file-invoice-dollar"></i> Xuất hóa đơn
+                                    </button>
                                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                                       <i class="fas fa-times"></i> Đóng
                                     </button>
@@ -1151,6 +1154,83 @@
       </div>
     </div>
   </section>
+
+  <!-- Invoice Export JavaScript -->
+  <script>
+    function exportInvoice(orderId) {
+      // Hiển thị loading
+      const btn = event.target.closest('button');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xuất...';
+      btn.disabled = true;
+
+      // Gửi request để xuất hóa đơn
+      fetch(`/admin/orders/${orderId}/export-invoice`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.blob();
+        } else {
+          throw new Error('Không thể xuất hóa đơn');
+        }
+      })
+      .then(blob => {
+        // Tạo URL để download file
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `hoa-don-${orderId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        // Khôi phục button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        // Hiển thị thông báo thành công
+        showToast('Hóa đơn đã được xuất thành công!', 'success');
+      })
+      .catch(error => {
+        console.error('Error:', error);
+
+        // Khôi phục button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        // Hiển thị thông báo lỗi
+        showToast('Có lỗi xảy ra khi xuất hóa đơn!', 'error');
+      });
+    }
+
+    function showToast(message, type) {
+      // Tạo toast notification
+      const toast = document.createElement('div');
+      toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+      toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+        ${message}
+        <button type="button" class="close" data-dismiss="alert">
+          <span>&times;</span>
+        </button>
+      `;
+
+      document.body.appendChild(toast);
+
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3000);
+    }
+  </script>
 
   <!-- /.content -->
 </div>

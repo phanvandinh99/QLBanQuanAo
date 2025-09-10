@@ -4,10 +4,23 @@ from itertools import product
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
 
-from flask import render_template, session, request, redirect, url_for, flash, current_app
+from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
 import json
 from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate, Article
+
+# Import reportlab modules at module level to avoid import errors
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    print("Warning: ReportLab not available. Invoice export will not work.")
 from .forms import LoginForm, RegistrationForm
 from shop.customers.forms import CustomerRegisterForm
 
@@ -638,3 +651,275 @@ def toggle_article_status(id):
         flash(f'Lỗi khi cập nhật trạng thái: {str(e)}', 'danger')
 
     return redirect(url_for('articles_manager'))
+
+
+# Route xuất hóa đơn
+@app.route('/admin/orders/<int:order_id>/export-invoice')
+def export_invoice(order_id):
+    try:
+        from shop.models import CustomerOrder, Addproduct, Register
+        from flask import make_response, send_file, jsonify
+        import io
+        import json
+
+        # Check if ReportLab is available
+        if not REPORTLAB_AVAILABLE:
+            return jsonify({'error': 'ReportLab library is not available. Please install it to export invoices.'}), 500
+
+        # Lấy thông tin đơn hàng
+        order = CustomerOrder.query.get_or_404(order_id)
+
+        # Lấy thông tin khách hàng
+        customer = Register.query.get(order.customer_id)
+
+        if not customer:
+            return jsonify({'error': 'Không tìm thấy thông tin khách hàng'}), 404
+
+        # Parse dữ liệu sản phẩm
+        order_data = get_order_data(order)
+        products = []
+
+        if order_data and isinstance(order_data, dict):
+            for key, product in order_data.items():
+                if product and isinstance(product, dict):
+                    quantity = product.get('quantity', 0)
+                    price = product.get('price', 0)
+                    discount = product.get('discount', 0)
+
+                    try:
+                        quantity = int(quantity) if quantity else 0
+                        price = int(price) if price else 0
+                        discount = int(discount) if discount else 0
+                    except (ValueError, TypeError):
+                        quantity = 0
+                        price = 0
+                        discount = 0
+
+                    if quantity > 0:
+                        discount_amount = int(price * discount / 100) if discount > 0 else 0
+                        final_price = price - discount_amount
+                        total = final_price * quantity
+
+                        # Lấy thông tin sản phẩm từ database nếu có
+                        product_info = None
+                        try:
+                            if 'id' in product or str(key).isdigit():
+                                product_id = product.get('id', key if str(key).isdigit() else None)
+                                if product_id:
+                                    product_info = Addproduct.query.get(int(product_id))
+                        except:
+                            pass
+
+                        products.append({
+                            'name': product.get('name', 'N/A'),
+                            'brand': product_info.brand if product_info else product.get('brand', 'N/A'),
+                            'color': product_info.colors if product_info else product.get('color', 'N/A'),
+                            'quantity': quantity,
+                            'original_price': price,
+                            'discount': discount,
+                            'final_price': final_price,
+                            'total': total
+                        })
+
+        # Tạo PDF với encoding UTF-8
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # Hàm để đảm bảo text được encode đúng
+        def ensure_unicode(text):
+            if isinstance(text, str):
+                return text
+            try:
+                return str(text)
+            except:
+                return "N/A"
+
+        # Cập nhật font mặc định cho tất cả styles với font hỗ trợ Unicode tốt
+        try:
+            # Thử sử dụng font có hỗ trợ Unicode tốt hơn
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+
+            # Đăng ký font Arial từ Windows Fonts để hỗ trợ tiếng Việt
+            try:
+                arial_font_path = r"C:\Windows\Fonts\arial.ttf"
+                arial_bold_path = r"C:\Windows\Fonts\arialbd.ttf"
+
+                pdfmetrics.registerFont(TTFont('ArialUnicode', arial_font_path))
+                pdfmetrics.registerFont(TTFont('ArialUnicode-Bold', arial_bold_path))
+
+                default_font = 'ArialUnicode'
+                print(f"Successfully registered Arial font for Vietnamese support")
+            except Exception as e:
+                print(f"Failed to register Arial font: {e}")
+                # Fallback về font có sẵn
+                default_font = 'Helvetica'
+
+        except Exception as e:
+            print(f"Error setting up fonts: {e}")
+            default_font = 'Helvetica'
+
+        # Cập nhật font mặc định cho các styles chính
+        try:
+            styles['Heading1'].fontName = default_font
+            styles['Normal'].fontName = default_font
+        except KeyError:
+            # Bỏ qua nếu style không tồn tại
+            pass
+
+        # Tạo Heading2 style nếu chưa có
+        try:
+            styles['Heading2'].fontName = default_font + '-Bold'
+        except KeyError:
+            # Tạo style Heading2 mới nếu không tồn tại
+            heading2_base = ParagraphStyle(
+                'Heading2',
+                parent=styles['Normal'],
+                fontName=default_font + '-Bold' if default_font != 'Helvetica' else default_font,
+                fontSize=16,
+                spaceAfter=15,
+                alignment=0
+            )
+            # Thêm vào stylesheet nếu có thể
+            try:
+                styles.add(heading2_base)
+            except:
+                # Nếu không thể add, chỉ sử dụng local style
+                pass
+
+        # Style cho title với font Unicode
+        title_style = ParagraphStyle(
+            'Title',
+            parent=styles['Heading1'],
+            fontSize=20,
+            alignment=1,  # Center alignment
+            spaceAfter=20,
+            fontName=default_font  # Sử dụng font đã chọn
+        )
+
+        # Style cho thông tin với font Unicode
+        info_style = ParagraphStyle(
+            'Info',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=10,
+            fontName=default_font  # Sử dụng font đã chọn
+        )
+
+        # Tiêu đề
+        elements.append(Paragraph(ensure_unicode("HÓA ĐƠN BÁN HÀNG"), title_style))
+        elements.append(Spacer(1, 0.5*inch))
+
+        # Thông tin cửa hàng
+        elements.append(Paragraph(ensure_unicode("<b>CỬA HÀNG MOBILE STORE</b>"), info_style))
+        elements.append(Paragraph(ensure_unicode("Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM"), info_style))
+        elements.append(Paragraph(ensure_unicode("Điện thoại: 0123 456 789"), info_style))
+        elements.append(Paragraph(ensure_unicode("Email: info@mobilestore.com"), info_style))
+        elements.append(Spacer(1, 0.3*inch))
+
+        # Thông tin đơn hàng
+        elements.append(Paragraph(ensure_unicode(f"<b>Mã đơn hàng:</b> #{order_id}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Ngày đặt:</b> {order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Trạng thái:</b> {order.status}"), info_style))
+        elements.append(Spacer(1, 0.2*inch))
+
+        # Thông tin khách hàng
+        try:
+            heading2_style = styles['Heading2']
+        except KeyError:
+            heading2_style = heading2_base  # Sử dụng style đã tạo
+        elements.append(Paragraph(ensure_unicode("<b>THÔNG TIN KHÁCH HÀNG</b>"), heading2_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Họ tên:</b> {customer.first_name} {customer.last_name}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Email:</b> {customer.email}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>SĐT:</b> {customer.phone_number}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Địa chỉ:</b> {order.address}"), info_style))
+        elements.append(Spacer(1, 0.3*inch))
+
+        # Bảng sản phẩm
+        elements.append(Paragraph(ensure_unicode("<b>CHI TIẾT SẢN PHẨM</b>"), heading2_style))
+
+        # Tạo dữ liệu cho bảng
+        table_data = [[ensure_unicode('STT'), ensure_unicode('Tên sản phẩm'), ensure_unicode('SL'),
+                       ensure_unicode('Đơn giá'), ensure_unicode('Giảm giá'), ensure_unicode('Thành tiền')]]
+
+        total_amount = 0
+        total_discount = 0
+
+        for i, product in enumerate(products, 1):
+            discount_text = f"{product['discount']}%" if product['discount'] > 0 else '-'
+            discount_amount = product['original_price'] * product['quantity'] * product['discount'] / 100
+
+            table_data.append([
+                ensure_unicode(str(i)),
+                ensure_unicode(f"{product['name']}\n({product['brand']} - {product['color']})"),
+                ensure_unicode(str(product['quantity'])),
+                ensure_unicode(f"{product['original_price']:,}₫"),
+                ensure_unicode(discount_text),
+                ensure_unicode(f"{product['total']:,}₫")
+            ])
+
+            total_amount += product['original_price'] * product['quantity']
+            total_discount += discount_amount
+
+        # Tạo bảng với font Unicode
+        table = Table(table_data, colWidths=[0.5*inch, 2.5*inch, 0.5*inch, 1*inch, 0.8*inch, 1.2*inch])
+
+        # Tạo table style với font đã chọn
+        bold_font = default_font + '-Bold' if default_font != 'Helvetica' else default_font
+
+        table_styles = [
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), bold_font),
+            ('FONTNAME', (0, 1), (-1, -1), default_font),  # Font cho data rows
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),  # Font size cho data
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')  # Canh giữa dọc
+        ]
+
+        table.setStyle(TableStyle(table_styles))
+
+        elements.append(table)
+        elements.append(Spacer(1, 0.3*inch))
+
+        # Tóm tắt
+        final_total = total_amount - total_discount
+        elements.append(Paragraph(ensure_unicode(f"<b>Tổng tiền gốc:</b> {total_amount:,.0f}₫"), info_style))
+        if total_discount > 0:
+            elements.append(Paragraph(ensure_unicode(f"<b>Tổng tiền giảm:</b> {total_discount:,.0f}₫"), info_style))
+        total_style = ParagraphStyle('Total', parent=info_style, fontSize=14, textColor=colors.red, fontName=default_font)
+        elements.append(Paragraph(ensure_unicode(f"<b>Tổng thanh toán:</b> {final_total:,.0f}₫"), total_style))
+
+        elements.append(Spacer(1, 0.5*inch))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=11,
+            fontName=default_font if default_font != 'Helvetica' else 'Helvetica',
+            alignment=1,
+            textColor=colors.grey
+        )
+        elements.append(Paragraph(ensure_unicode("<i>Cảm ơn quý khách đã mua hàng tại Belluni!</i>"), footer_style))
+
+        # Tạo PDF
+        doc.build(elements)
+
+        buffer.seek(0)
+
+        # Trả về file PDF
+        return send_file(
+            buffer,
+            as_attachment=True,
+            attachment_filename=f'hoa-don-{order_id}.pdf',
+            mimetype='application/pdf'
+        )
+
+    except Exception as e:
+        print(f"Error generating invoice: {str(e)}")
+        return jsonify({'error': 'Có lỗi xảy ra khi tạo hóa đơn'}), 500
