@@ -977,6 +977,10 @@
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
                               <td>
+                                <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                                  data-target="#details-delivering-{{order.id}}" title="Xem chi tiết đơn hàng" style="margin-right: 5px;">
+                                  <i class="fas fa-eye mr-1"></i> Chi tiết
+                                </button>
                                 <button type="button" class="btn btn-primary" data-toggle="modal"
                                   data-target="#delivered-{{order.id}}" style="margin-right: 5px;">
                                   Đã giao
@@ -1018,6 +1022,260 @@
                                 </div>
                               </div>
                             </div>
+                            <!-- Modal for order details (delivering) -->
+                            <div class="modal fade" id="details-delivering-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
+                              <div class="modal-dialog modal-lg" style="max-width: 85%;">
+                                <div class="modal-content">
+                                  <!-- Modal Header -->
+                                  <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-receipt"></i> Chi Tiết Đơn Hàng #{{order.invoice}}
+                                    </h5>
+                                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+
+                                  <!-- Modal Body -->
+                                  <div class="modal-body px-2 py-1">
+                                    {# Use pre-calculated totals from route #}
+                                    {% set total_quantity = order.total_quantity %}
+                                    {% set total_price = order.total_price %}
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-primary">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-info-circle text-primary"></i> Thông Tin Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
+                                                  <span class="badge badge-{{'success' if order.status == 'Đã giao' else 'warning' if order.status == 'Đang giao' else 'info' if order.status == 'Đang xác nhận' else 'danger'}} badge-sm">
+                                                    <i class="fas fa-{{'check-circle' if order.status == 'Đã giao' else 'truck' if order.status == 'Đang giao' else 'clock' if order.status == 'Đang xác nhận' else 'times-circle'}} mr-1"></i>
+                                                    {{order.status}}
+                                                  </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
+                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Sản Phẩm:</span>
+                                                  <span class="badge badge-primary badge-sm">{{total_quantity or 0}}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Customer Info Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-user text-info"></i> Thông Tin Khách Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                              </div>
+                                            </div>
+                                            {% endif %} {%endfor%}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Products Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-shopping-cart text-success"></i> Chi Tiết Sản Phẩm
+                                              <span class="badge badge-secondary badge-sm ml-2">{{order.product_details|length if order.product_details else 0}} sản phẩm</span>
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {% if order.product_details %}
+                                              {% for key, product in order.product_details.items() %}
+                                              <div class="product-item mb-1 p-2 border rounded">
+                                                <div class="row align-items-center">
+                                                  <!-- Product Image -->
+                                                  <div class="col-md-1 text-center pr-2">
+                                                    {% if product.get('image_1') %}
+                                                      <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                                           alt="{{product.get('name', 'Product Image')}}"
+                                                           class="product-image rounded"
+                                                           style="width: 45px; height: 45px; object-fit: cover; border: 1px solid #ddd; cursor: zoom-in;"
+                                                           data-toggle="modal"
+                                                           data-target="#imageModal-delivering-{{order.id}}-{{key}}"
+                                                           title="Click để xem ảnh lớn">
+                                                    {% else %}
+                                                      <div class="product-image-placeholder rounded d-flex align-items-center justify-content-center"
+                                                           style="width: 45px; height: 45px; background-color: #f8f9fa; border: 1px solid #ddd;">
+                                                        <i class="fas fa-image text-muted" style="font-size: 16px;"></i>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+
+                                                  <!-- Product Details -->
+                                                  <div class="col-md-5">
+                                                    <div class="font-weight-bold text-primary mb-1" style="font-size: 16px;">{{product.get('name', 'N/A')}}</div>
+                                                    <div class="d-flex flex-wrap">
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-tag"></i> {{product.get('brand', 'N/A')}}
+                                                      </small>
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-palette"></i> {{product.get('color', 'N/A')}}
+                                                      </small>
+                                                      <span class="badge badge-info badge-sm" style="font-size: 12px;">SL: {{product.get('quantity', 0)}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <!-- Product Pricing -->
+                                                  <div class="col-md-6 text-right">
+                                                    {% if product.get('discount', 0) > 0 %}
+                                                      <div class="d-flex justify-content-between align-items-center">
+                                                        <div class="text-left">
+                                                          <div class="mb-0">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá gốc:</small>
+                                                          <span class="text-decoration-line-through text-muted" style="font-size: 14px;">{{product.get('original_price', 0) | vnd}}</span>
+                                                          </div>
+                                                          <div class="mb-0">
+                                                            <small class="text-success" style="font-size: 13px;">Sau giảm:</small>
+                                                            <span class="font-weight-bold text-success" style="font-size: 15px;">{{product.get('discounted_price', 0) | vnd}}</span>
+                                                          </div>
+                                                        </div>
+                                                        <div class="text-right">
+                                                          <span class="badge badge-warning badge-sm mb-1" style="font-size: 12px;">Tiết kiệm {{product.get('discount', 0)}}%</span>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('discounted_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% else %}
+                                                      <div class="d-flex justify-content-end align-items-center">
+                                                        <div class="text-right">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá:</small>
+                                                          <div class="font-weight-bold" style="font-size: 15px;">{{product.get('price', 0) | vnd}}</div>
+                                                          <small class="text-primary" style="font-size: 13px;">Thành tiền:</small>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('original_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            {% endfor %}
+                                            {% else %}
+                                              <div class="text-center py-4">
+                                                <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                                                <p class="text-muted">Không có thông tin chi tiết sản phẩm</p>
+                                              </div>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-success">
+                                          <div class="card-header bg-success text-white py-2">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-calculator"></i> Tóm Tắt Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-8">
+                                                <div class="d-flex flex-wrap gap-2">
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-shopping-bag text-info d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Sản phẩm</small>
+                                                      <span class="font-weight-bold d-block">{{total_quantity}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  {% if order.total_original_price and order.total_discount_amount %}
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-coins text-warning d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Tiền gốc</small>
+                                                      <span class="font-weight-bold d-block">{{order.total_original_price | vnd}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="summary-item p-2 bg-warning rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-percentage text-white d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-white d-block" style="font-size: 12px;">Tiết kiệm</small>
+                                                      <span class="text-white font-weight-bold d-block">{{order.total_discount_amount | vnd}}</span>
+                                                    </div>
+                                                  </div>
+                                                  {% endif %}
+                                                </div>
+                                              </div>
+
+                                              <div class="col-md-4">
+                                                <div class="summary-item p-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
+                                                     style="min-height: 60px;">
+                                                  <div class="text-center">
+                                                    <i class="fas fa-money-bill-wave fa-lg mb-1"></i>
+                                                    <div style="font-size: 12px; opacity: 0.9;">Thành tiền</div>
+                                                    <div class="font-weight-bold" style="font-size: 16px;">{{total_price | vnd}}</div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Modal Footer -->
+                                  <div class="modal-footer py-1">
+                                    <button type="button" class="btn btn-success btn-sm mr-2" onclick="exportInvoice({{order.id}})">
+                                      <i class="fas fa-file-invoice-dollar"></i> Xuất hóa đơn
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
                             <!-- Modal for cancel delivering order -->
                             <div class="modal fade" id="cancel-delivering-{{order.id}}" data-backdrop="static"
                               data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
@@ -1049,6 +1307,37 @@
                                 </div>
                               </div>
                             </div>
+
+                            <!-- Image Modal for delivering products -->
+                            {% for key, product in order.product_details.items() %}
+                            {% if product.get('image_1') %}
+                            <div class="modal fade" id="imageModal-delivering-{{order.id}}-{{key}}" tabindex="-1" role="dialog">
+                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-image"></i> {{product.get('name', 'Product Image')}}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal">
+                                      <span>&times;</span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body text-center">
+                                    <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                         alt="{{product.get('name', 'Product Image')}}"
+                                         class="img-fluid rounded"
+                                         style="max-width: 100%; max-height: 500px;">
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                             {% endif %} {%endfor%}
                           </tbody>
                         </table>
@@ -1074,6 +1363,7 @@
                               <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
+                              <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1092,7 +1382,298 @@
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
+                              <td>
+                                <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                                  data-target="#details-delivered-{{order.id}}" title="Xem chi tiết đơn hàng">
+                                  <i class="fas fa-eye mr-1"></i> Chi tiết
+                                </button>
+                              </td>
                             </tr>
+
+                            <!-- Modal for order details (delivered) -->
+                            <div class="modal fade" id="details-delivered-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
+                              <div class="modal-dialog modal-lg" style="max-width: 85%;">
+                                <div class="modal-content">
+                                  <!-- Modal Header -->
+                                  <div class="modal-header bg-success text-white">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-receipt"></i> Chi Tiết Đơn Hàng #{{order.invoice}}
+                                    </h5>
+                                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+
+                                  <!-- Modal Body -->
+                                  <div class="modal-body px-2 py-1">
+                                    {# Use pre-calculated totals from route #}
+                                    {% set total_quantity = order.total_quantity %}
+                                    {% set total_price = order.total_price %}
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-primary">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-info-circle text-primary"></i> Thông Tin Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
+                                                  <span class="badge badge-success badge-sm">
+                                                    <i class="fas fa-check-circle mr-1"></i>
+                                                    {{order.status}}
+                                                  </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
+                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Sản Phẩm:</span>
+                                                  <span class="badge badge-primary badge-sm">{{total_quantity or 0}}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Customer Info Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-user text-info"></i> Thông Tin Khách Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                              </div>
+                                            </div>
+                                            {% endif %} {%endfor%}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Products Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-shopping-cart text-success"></i> Chi Tiết Sản Phẩm
+                                              <span class="badge badge-secondary badge-sm ml-2">{{order.product_details|length if order.product_details else 0}} sản phẩm</span>
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {% if order.product_details %}
+                                              {% for key, product in order.product_details.items() %}
+                                              <div class="product-item mb-1 p-2 border rounded">
+                                                <div class="row align-items-center">
+                                                  <!-- Product Image -->
+                                                  <div class="col-md-1 text-center pr-2">
+                                                    {% if product.get('image_1') %}
+                                                      <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                                           alt="{{product.get('name', 'Product Image')}}"
+                                                           class="product-image rounded"
+                                                           style="width: 45px; height: 45px; object-fit: cover; border: 1px solid #ddd; cursor: zoom-in;"
+                                                           data-toggle="modal"
+                                                           data-target="#imageModal-delivered-{{order.id}}-{{key}}"
+                                                           title="Click để xem ảnh lớn">
+                                                    {% else %}
+                                                      <div class="product-image-placeholder rounded d-flex align-items-center justify-content-center"
+                                                           style="width: 45px; height: 45px; background-color: #f8f9fa; border: 1px solid #ddd;">
+                                                        <i class="fas fa-image text-muted" style="font-size: 16px;"></i>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+
+                                                  <!-- Product Details -->
+                                                  <div class="col-md-5">
+                                                    <div class="font-weight-bold text-primary mb-1" style="font-size: 16px;">{{product.get('name', 'N/A')}}</div>
+                                                    <div class="d-flex flex-wrap">
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-tag"></i> {{product.get('brand', 'N/A')}}
+                                                      </small>
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-palette"></i> {{product.get('color', 'N/A')}}
+                                                      </small>
+                                                      <span class="badge badge-info badge-sm" style="font-size: 12px;">SL: {{product.get('quantity', 0)}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <!-- Product Pricing -->
+                                                  <div class="col-md-6 text-right">
+                                                    {% if product.get('discount', 0) > 0 %}
+                                                      <div class="d-flex justify-content-between align-items-center">
+                                                        <div class="text-left">
+                                                          <div class="mb-0">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá gốc:</small>
+                                                          <span class="text-decoration-line-through text-muted" style="font-size: 14px;">{{product.get('original_price', 0) | vnd}}</span>
+                                                          </div>
+                                                          <div class="mb-0">
+                                                            <small class="text-success" style="font-size: 13px;">Sau giảm:</small>
+                                                            <span class="font-weight-bold text-success" style="font-size: 15px;">{{product.get('discounted_price', 0) | vnd}}</span>
+                                                          </div>
+                                                        </div>
+                                                        <div class="text-right">
+                                                          <span class="badge badge-warning badge-sm mb-1" style="font-size: 12px;">Tiết kiệm {{product.get('discount', 0)}}%</span>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('discounted_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% else %}
+                                                      <div class="d-flex justify-content-end align-items-center">
+                                                        <div class="text-right">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá:</small>
+                                                          <div class="font-weight-bold" style="font-size: 15px;">{{product.get('price', 0) | vnd}}</div>
+                                                          <small class="text-primary" style="font-size: 13px;">Thành tiền:</small>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('original_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            {% endfor %}
+                                            {% else %}
+                                              <div class="text-center py-4">
+                                                <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                                                <p class="text-muted">Không có thông tin chi tiết sản phẩm</p>
+                                              </div>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-success">
+                                          <div class="card-header bg-success text-white py-2">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-calculator"></i> Tóm Tắt Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-8">
+                                                <div class="d-flex flex-wrap gap-2">
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-shopping-bag text-info d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Sản phẩm</small>
+                                                      <span class="font-weight-bold d-block">{{total_quantity}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  {% if order.total_original_price and order.total_discount_amount %}
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-coins text-warning d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Tiền gốc</small>
+                                                      <span class="font-weight-bold d-block">{{order.total_original_price | vnd}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="summary-item p-2 bg-warning rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-percentage text-white d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-white d-block" style="font-size: 12px;">Tiết kiệm</small>
+                                                      <span class="text-white font-weight-bold d-block">{{order.total_discount_amount | vnd}}</span>
+                                                    </div>
+                                                  </div>
+                                                  {% endif %}
+                                                </div>
+                                              </div>
+
+                                              <div class="col-md-4">
+                                                <div class="summary-item p-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
+                                                     style="min-height: 60px;">
+                                                  <div class="text-center">
+                                                    <i class="fas fa-money-bill-wave fa-lg mb-1"></i>
+                                                    <div style="font-size: 12px; opacity: 0.9;">Thành tiền</div>
+                                                    <div class="font-weight-bold" style="font-size: 16px;">{{total_price | vnd}}</div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Modal Footer -->
+                                  <div class="modal-footer py-1">
+                                    <button type="button" class="btn btn-success btn-sm mr-2" onclick="exportInvoice({{order.id}})">
+                                      <i class="fas fa-file-invoice-dollar"></i> Xuất hóa đơn
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Image Modal for delivered products -->
+                            {% for key, product in order.product_details.items() %}
+                            {% if product.get('image_1') %}
+                            <div class="modal fade" id="imageModal-delivered-{{order.id}}-{{key}}" tabindex="-1" role="dialog">
+                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-image"></i> {{product.get('name', 'Product Image')}}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal">
+                                      <span>&times;</span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body text-center">
+                                    <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                         alt="{{product.get('name', 'Product Image')}}"
+                                         class="img-fluid rounded"
+                                         style="max-width: 100%; max-height: 500px;">
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                             {% endif %} {%endfor%}
                           </tbody>
                         </table>
@@ -1118,6 +1699,7 @@
                               <th>Tổng giá tiền</th>
                               <th>Trạng thái</th>
                               <th>Ngày mua</th>
+                              <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1136,7 +1718,295 @@
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>{{order.date_created}}</td>
+                              <td>
+                                <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                                  data-target="#details-cancelled-{{order.id}}" title="Xem chi tiết đơn hàng">
+                                  <i class="fas fa-eye mr-1"></i> Chi tiết
+                                </button>
+                              </td>
                             </tr>
+
+                            <!-- Modal for order details (cancelled) -->
+                            <div class="modal fade" id="details-cancelled-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
+                              <div class="modal-dialog modal-lg" style="max-width: 85%;">
+                                <div class="modal-content">
+                                  <!-- Modal Header -->
+                                  <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-receipt"></i> Chi Tiết Đơn Hàng #{{order.invoice}}
+                                    </h5>
+                                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+
+                                  <!-- Modal Body -->
+                                  <div class="modal-body px-2 py-1">
+                                    {# Use pre-calculated totals from route #}
+                                    {% set total_quantity = order.total_quantity %}
+                                    {% set total_price = order.total_price %}
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-primary">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-info-circle text-primary"></i> Thông Tin Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
+                                                  <span class="badge badge-danger badge-sm">
+                                                    <i class="fas fa-times-circle mr-1"></i>
+                                                    {{order.status}}
+                                                  </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
+                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                </div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                  <span class="text-muted" style="font-size: 14px;">Sản Phẩm:</span>
+                                                  <span class="badge badge-primary badge-sm">{{total_quantity or 0}}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                  <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Customer Info Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-user text-info"></i> Thông Tin Khách Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
+                                            <div class="row">
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                              </div>
+                                              <div class="col-md-6">
+                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                              </div>
+                                            </div>
+                                            {% endif %} {%endfor%}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Products Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card">
+                                          <div class="card-header bg-light py-1">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-shopping-cart text-success"></i> Chi Tiết Sản Phẩm
+                                              <span class="badge badge-secondary badge-sm ml-2">{{order.product_details|length if order.product_details else 0}} sản phẩm</span>
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            {% if order.product_details %}
+                                              {% for key, product in order.product_details.items() %}
+                                              <div class="product-item mb-1 p-2 border rounded">
+                                                <div class="row align-items-center">
+                                                  <!-- Product Image -->
+                                                  <div class="col-md-1 text-center pr-2">
+                                                    {% if product.get('image_1') %}
+                                                      <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                                           alt="{{product.get('name', 'Product Image')}}"
+                                                           class="product-image rounded"
+                                                           style="width: 45px; height: 45px; object-fit: cover; border: 1px solid #ddd; cursor: zoom-in;"
+                                                           data-toggle="modal"
+                                                           data-target="#imageModal-cancelled-{{order.id}}-{{key}}"
+                                                           title="Click để xem ảnh lớn">
+                                                    {% else %}
+                                                      <div class="product-image-placeholder rounded d-flex align-items-center justify-content-center"
+                                                           style="width: 45px; height: 45px; background-color: #f8f9fa; border: 1px solid #ddd;">
+                                                        <i class="fas fa-image text-muted" style="font-size: 16px;"></i>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+
+                                                  <!-- Product Details -->
+                                                  <div class="col-md-5">
+                                                    <div class="font-weight-bold text-primary mb-1" style="font-size: 16px;">{{product.get('name', 'N/A')}}</div>
+                                                    <div class="d-flex flex-wrap">
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-tag"></i> {{product.get('brand', 'N/A')}}
+                                                      </small>
+                                                      <small class="text-muted mr-3" style="font-size: 13px;">
+                                                        <i class="fas fa-palette"></i> {{product.get('color', 'N/A')}}
+                                                      </small>
+                                                      <span class="badge badge-info badge-sm" style="font-size: 12px;">SL: {{product.get('quantity', 0)}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <!-- Product Pricing -->
+                                                  <div class="col-md-6 text-right">
+                                                    {% if product.get('discount', 0) > 0 %}
+                                                      <div class="d-flex justify-content-between align-items-center">
+                                                        <div class="text-left">
+                                                          <div class="mb-0">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá gốc:</small>
+                                                          <span class="text-decoration-line-through text-muted" style="font-size: 14px;">{{product.get('original_price', 0) | vnd}}</span>
+                                                          </div>
+                                                          <div class="mb-0">
+                                                            <small class="text-success" style="font-size: 13px;">Sau giảm:</small>
+                                                            <span class="font-weight-bold text-success" style="font-size: 15px;">{{product.get('discounted_price', 0) | vnd}}</span>
+                                                          </div>
+                                                        </div>
+                                                        <div class="text-right">
+                                                          <span class="badge badge-warning badge-sm mb-1" style="font-size: 12px;">Tiết kiệm {{product.get('discount', 0)}}%</span>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('discounted_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% else %}
+                                                      <div class="d-flex justify-content-end align-items-center">
+                                                        <div class="text-right">
+                                                          <small class="text-muted" style="font-size: 13px;">Giá:</small>
+                                                          <div class="font-weight-bold" style="font-size: 15px;">{{product.get('price', 0) | vnd}}</div>
+                                                          <small class="text-primary" style="font-size: 13px;">Thành tiền:</small>
+                                                          <div class="font-weight-bold text-primary" style="font-size: 16px;">{{product.get('original_total', 0) | vnd}}</div>
+                                                        </div>
+                                                      </div>
+                                                    {% endif %}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            {% endfor %}
+                                            {% else %}
+                                              <div class="text-center py-4">
+                                                <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                                                <p class="text-muted">Không có thông tin chi tiết sản phẩm</p>
+                                              </div>
+                                            {% endif %}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <!-- Order Summary Section -->
+                                    <div class="row mb-2">
+                                      <div class="col-12">
+                                        <div class="card border-success">
+                                          <div class="card-header bg-success text-white py-2">
+                                            <h6 class="mb-0" style="font-size: 16px;">
+                                              <i class="fas fa-calculator"></i> Tóm Tắt Đơn Hàng
+                                            </h6>
+                                          </div>
+                                          <div class="card-body p-2">
+                                            <div class="row">
+                                              <div class="col-md-8">
+                                                <div class="d-flex flex-wrap gap-2">
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-shopping-bag text-info d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Sản phẩm</small>
+                                                      <span class="font-weight-bold d-block">{{total_quantity}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  {% if order.total_original_price and order.total_discount_amount %}
+                                                  <div class="summary-item p-2 bg-light rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-coins text-warning d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-muted d-block" style="font-size: 12px;">Tiền gốc</small>
+                                                      <span class="font-weight-bold d-block">{{order.total_original_price | vnd}}</span>
+                                                    </div>
+                                                  </div>
+
+                                                  <div class="summary-item p-2 bg-warning rounded flex-fill d-flex align-items-center justify-content-center"
+                                                       style="min-height: 60px;">
+                                                    <div class="text-center">
+                                                      <i class="fas fa-percentage text-white d-block mb-1" style="font-size: 16px;"></i>
+                                                      <small class="text-white d-block" style="font-size: 12px;">Tiết kiệm</small>
+                                                      <span class="text-white font-weight-bold d-block">{{order.total_discount_amount | vnd}}</span>
+                                                    </div>
+                                                  </div>
+                                                  {% endif %}
+                                                </div>
+                                              </div>
+
+                                              <div class="col-md-4">
+                                                <div class="summary-item p-2 bg-success text-white rounded d-flex align-items-center justify-content-center"
+                                                     style="min-height: 60px;">
+                                                  <div class="text-center">
+                                                    <i class="fas fa-money-bill-wave fa-lg mb-1"></i>
+                                                    <div style="font-size: 12px; opacity: 0.9;">Thành tiền</div>
+                                                    <div class="font-weight-bold" style="font-size: 16px;">{{total_price | vnd}}</div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Modal Footer -->
+                                  <div class="modal-footer py-1">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Image Modal for cancelled products -->
+                            {% for key, product in order.product_details.items() %}
+                            {% if product.get('image_1') %}
+                            <div class="modal fade" id="imageModal-cancelled-{{order.id}}-{{key}}" tabindex="-1" role="dialog">
+                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">
+                                      <i class="fas fa-image"></i> {{product.get('name', 'Product Image')}}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal">
+                                      <span>&times;</span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body text-center">
+                                    <img src="{{url_for('static', filename='images/' + product.get('image_1'))}}"
+                                         alt="{{product.get('name', 'Product Image')}}"
+                                         class="img-fluid rounded"
+                                         style="max-width: 100%; max-height: 500px;">
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                      <i class="fas fa-times"></i> Đóng
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                             {% endif %} {%endfor%}
                           </tbody>
                         </table>
