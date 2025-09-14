@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 10, 2025 at 12:09 PM
+-- Generation Time: Sep 14, 2025 at 07:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -173,19 +173,14 @@ CREATE TABLE `customer_order` (
   `address` varchar(200) DEFAULT NULL,
   `customer_id` int(11) NOT NULL,
   `orders` text DEFAULT NULL,
-  `date_created` datetime DEFAULT NULL
+  `date_created` datetime DEFAULT NULL,
+  `payment_method` varchar(20) DEFAULT 'cod',
+  `payment_status` varchar(20) DEFAULT 'pending',
+  `total_price` decimal(10,2) DEFAULT 0.00,
+  `vnpay_transaction_id` varchar(50) DEFAULT NULL,
+  `vnpay_transaction_no` varchar(50) DEFAULT NULL,
+  `amount` decimal(10,2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
-
---
--- Dumping data for table `customer_order`
---
-
-INSERT INTO `customer_order` (`id`, `invoice`, `status`, `address`, `customer_id`, `orders`, `date_created`) VALUES
-(24, '1a87c3f21d', 'Đang giao', '123 abc', 4, '{\"19\": {\"brand\": \"\\u00c1o Tr\\u1ebb Em\", \"color\": \"Cam\", \"colors\": \"Cam, \\u0110en, \\u0110\\u1ecf\", \"discount\": 5, \"image\": \"cf147d1dcbfa817b90e7.webp\", \"name\": \"\\u00c1o Ph\\u00f4ng B\\u00e9 Trai T\\u00fai H\\u1ed9p\", \"price\": 100000.0, \"quantity\": 1}}', '2025-09-05 08:19:25'),
-(25, '6a69e4344f', 'Đang giao', '234 abc', 4, '{\"20\": {\"brand\": \"\\u00c1o Kho\\u00e1c Nam\", \"color\": \"Ghi \\u0110\\u1eadm\", \"colors\": \"Ghi \\u0110\\u1eadm, \\u0110en\", \"discount\": 10, \"image\": \"b8cdab1235885a900230.webp\", \"name\": \"\\u00c1o Kho\\u00e1c Nam Bomber Da\", \"price\": 1000000.0, \"quantity\": 1}}', '2025-09-05 08:19:25'),
-(26, '1ff02c6293', 'Đang giao', '123 Le Loi, Ha Noi', 4, '{\"19\": {\"brand\": \"\\u00c1o Tr\\u1ebb Em\", \"color\": \"Cam\", \"colors\": \"Cam, \\u0110en, \\u0110\\u1ecf\", \"discount\": 5, \"image\": \"cf147d1dcbfa817b90e7.webp\", \"name\": \"\\u00c1o Ph\\u00f4ng B\\u00e9 Trai T\\u00fai H\\u1ed9p\", \"price\": 100000.0, \"quantity\": 1}, \"20\": {\"brand\": \"\\u00c1o Kho\\u00e1c Nam\", \"color\": \"Ghi \\u0110\\u1eadm\", \"colors\": \"Ghi \\u0110\\u1eadm, \\u0110en\", \"discount\": 10, \"image\": \"b8cdab1235885a900230.webp\", \"name\": \"\\u00c1o Kho\\u00e1c Nam Bomber Da\", \"price\": 1000000.0, \"quantity\": 1}}', '2025-09-05 08:19:44'),
-(27, 'a579456fae', 'Đang giao', '789 test', 5, '{\"20\": {\"brand\": \"\\u00c1o Kho\\u00e1c Nam\", \"color\": \"Ghi \\u0110\\u1eadm\", \"colors\": \"Ghi \\u0110\\u1eadm, \\u0110en\", \"discount\": 10, \"image\": \"b8cdab1235885a900230.webp\", \"name\": \"\\u00c1o Kho\\u00e1c Nam Bomber Da\", \"price\": 1000000.0, \"quantity\": 1}}', '2025-09-08 02:08:08'),
-(28, '5a069650a8', 'Đang giao', '123 Trần Cao Vân, Hà Nội', 5, '{\"19\": {\"brand\": \"\\u00c1o Tr\\u1ebb Em\", \"color\": \"Cam\", \"colors\": \"Cam, \\u0110en, \\u0110\\u1ecf\", \"discount\": 5, \"image\": \"cf147d1dcbfa817b90e7.webp\", \"name\": \"\\u00c1o Ph\\u00f4ng B\\u00e9 Trai T\\u00fai H\\u1ed9p\", \"price\": 100000.0, \"quantity\": 1}, \"20\": {\"brand\": \"\\u00c1o Kho\\u00e1c Nam\", \"color\": \"Ghi \\u0110\\u1eadm\", \"colors\": \"Ghi \\u0110\\u1eadm, \\u0110en\", \"discount\": 10, \"image\": \"b8cdab1235885a900230.webp\", \"name\": \"\\u00c1o Kho\\u00e1c Nam Bomber Da\", \"price\": 1000000.0, \"quantity\": 1}, \"25\": {\"brand\": \"\\u00c1o Nam\", \"color\": \"Be\", \"colors\": \"Be, X\\u00e1m, Xanh\", \"discount\": 2, \"image\": \"271ea0d5b2a5c7c1c408.webp\", \"name\": \"B\\u1ed9 \\u0110\\u1ed3 V\\u1ea3i Hi\\u1ec7u \\u1ee8ng\", \"price\": 200000.0, \"quantity\": 1}}', '2025-09-08 04:21:50');
 
 -- --------------------------------------------------------
 
@@ -365,7 +360,7 @@ ALTER TABLE `category`
 -- AUTO_INCREMENT for table `customer_order`
 --
 ALTER TABLE `customer_order`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
 
 --
 -- AUTO_INCREMENT for table `product`

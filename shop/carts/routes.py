@@ -81,25 +81,52 @@ def AddCart():
 
 @app.route('/carts')
 def getCart():
+    # Auto-clear cart if there's a successful VNPAY payment
+    if 'last_vnpay_order' in session and 'Shoppingcart' in session:
+        print("=" * 50)
+        print("AUTO CLEARING CART ON CART PAGE VISIT")
+        print("=" * 50)
+
+        try:
+            last_order = session['last_vnpay_order']
+            query_filters = {'id': last_order['order_id']}
+            if current_user.is_authenticated:
+                query_filters['customer_id'] = current_user.id
+
+            order = CustomerOrder.query.filter_by(**query_filters).first()
+
+            if order and order.payment_status == 'Đã thanh toán':
+                print(f"✅ Found paid VNPAY order {order.id}, auto-clearing cart")
+                print(f"Cart before clearing: {session['Shoppingcart']}")
+                session.pop('Shoppingcart', None)
+                session.pop('last_vnpay_order', None)
+                session.modified = True
+                print("✅ Cart auto-cleared successfully")
+                flash('Giỏ hàng đã được xóa tự động sau thanh toán VNPAY thành công!', 'success')
+            else:
+                print("Order not found or not paid")
+        except Exception as e:
+            print(f"Error auto-clearing cart: {e}")
+
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return render_template('products/carts.html', empty=True, brands=brands(),
                                categories=categories())
-    
+
     # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
         discounttotal += (product.get('discount', 0) / 100) * float(product['price']) * int(product['quantity'])
         subtotals += float(product['price']) * int(product['quantity'])
-    
+
     # Get customer info if authenticated
     customer = None
     if current_user.is_authenticated:
         customer = current_user
-    
-    return render_template('products/carts.html', 
-                         discounttotal=discounttotal, 
-                         subtotals=subtotals, 
+
+    return render_template('products/carts.html',
+                         discounttotal=discounttotal,
+                         subtotals=subtotals,
                          customer=customer,
                          brands=brands(),
                          categories=categories())
@@ -212,7 +239,8 @@ def vnpay_payment():
                 invoice=invoice,
                 customer_id=customer_id,
                 orders=json.dumps(session['Shoppingcart']),
-                status="Đã thanh toán",  # Tạo luôn với status "Đã thanh toán" cho VNPAY
+                status="Đang xác nhận",  # Order status: pending confirmation
+                payment_status="Đã thanh toán",  # Payment status: already paid online
                 address=customer_address,
                 amount=final_amount,
                 payment_method='vnpay'
@@ -476,15 +504,12 @@ def vnpay_ipn():
         vnp_pay_date = vnp_response.get('vnp_PayDate', '')
 
         if response_code == '00':
-            # Payment successful
-            if order.status != 'Đã thanh toán':
-                order.status = 'Đã thanh toán'
-                db.session.commit()
-
+            # Payment was already marked as successful when order was created
             return jsonify({'RspCode': '00', 'Message': 'Confirm Success'})
         else:
-            if order.status == 'Chờ thanh toán':
-                order.status = 'Thanh toán thất bại'
+            # Payment failed - update payment status
+            if order.payment_status == 'Đã thanh toán':
+                order.payment_status = 'Thanh toán thất bại'
                 db.session.commit()
 
             response_desc = vnpay.get_response_description(response_code)
@@ -589,10 +614,6 @@ def force_clear_cart():
 @app.route('/clear_cart_after_payment', methods=['GET'])
 def clear_cart_after_payment():
     """Clear cart after successful VNPAY payment (manual fallback)"""
-    if not current_user.is_authenticated:
-        flash('Vui lòng đăng nhập trước!', 'danger')
-        return redirect(url_for('customer_login'))
-
     print("=" * 50)
     print("MANUAL CART CLEARING AFTER VNPAY PAYMENT")
     print("=" * 50)
@@ -602,18 +623,20 @@ def clear_cart_after_payment():
     if last_order:
         print(f"Found last VNPAY order: {last_order}")
 
-        # Verify the order belongs to current user
+        # Verify the order belongs to current user (if logged in)
         try:
-            order = CustomerOrder.query.filter_by(
-                id=last_order['order_id'],
-                customer_id=current_user.id
-            ).first()
+            query_filters = {'id': last_order['order_id']}
+            if current_user.is_authenticated:
+                query_filters['customer_id'] = current_user.id
 
-            if order and order.status == 'Đã thanh toán':
+            order = CustomerOrder.query.filter_by(**query_filters).first()
+
+            if order and order.payment_status == 'Đã thanh toán':
                 print("✅ Order verified as paid, clearing cart")
 
                 # Clear cart
                 if 'Shoppingcart' in session:
+                    print(f"Cart before clearing: {session['Shoppingcart']}")
                     session.pop('Shoppingcart', None)
                     session.modified = True
                     print("✅ Shopping cart cleared")
@@ -626,20 +649,26 @@ def clear_cart_after_payment():
                 return redirect(url_for('getCart'))
             else:
                 print("❌ Order not found or not paid")
+                if order:
+                    print(f"Order status: {order.status}, Customer: {order.customer_id}")
                 flash('Không tìm thấy đơn hàng đã thanh toán!', 'warning')
         except Exception as e:
             print(f"❌ Error checking order: {e}")
+            import traceback
+            traceback.print_exc()
             flash('Có lỗi xảy ra khi kiểm tra đơn hàng!', 'danger')
     else:
         print("⚠️ No recent VNPAY order found")
 
         # Fallback: just clear cart anyway
         if 'Shoppingcart' in session:
+            print(f"Cart before clearing: {session['Shoppingcart']}")
             session.pop('Shoppingcart', None)
             session.modified = True
             print("✅ Shopping cart cleared as fallback")
             flash('Giỏ hàng đã được xóa!', 'success')
         else:
+            print("No cart in session")
             flash('Giỏ hàng đã trống!', 'info')
 
     return redirect(url_for('getCart'))
@@ -713,7 +742,8 @@ def test_vnpay_success():
             invoice=test_invoice,
             customer_id=current_user.id,
             orders=json.dumps(session['Shoppingcart']),
-            status="Đã thanh toán",  # Test với status đã thanh toán
+            status="Đang xác nhận",  # Order status
+            payment_status="Đã thanh toán",  # Payment status for VNPAY test
             address='123 Test Address, Hanoi',
             amount=90000,  # 100000 - 10% discount
             payment_method='vnpay_test'

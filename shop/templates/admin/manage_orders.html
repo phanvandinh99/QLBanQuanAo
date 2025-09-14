@@ -545,7 +545,8 @@
                               <th>Tên khách hàng</th>
                               <th>Tổng sản phẩm</th>
                               <th>Tổng giá tiền</th>
-                              <th>Trạng thái</th>
+                              <th>Trạng thái đơn hàng</th>
+                              <th>Trạng thái thanh toán</th>
                               <th>Ngày mua</th>
                               <th>Chi Tiết</th>
                               <th>Xác nhận</th>
@@ -567,6 +568,15 @@
                               <td><strong>{{total_quantity or 0}}</strong></td>
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
+                              <td>
+                                {% if order.display_payment_status == 'Đã thanh toán' %}
+                                  <span class="badge badge-success">{{order.display_payment_status}}</span>
+                                {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                  <span class="badge badge-warning">{{order.display_payment_status}}</span>
+                                {% else %}
+                                  <span class="badge badge-secondary">{{order.display_payment_status}}</span>
+                                {% endif %}
+                              </td>
                               <td>{{order.date_created}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
@@ -975,6 +985,15 @@
                               <td><strong>{{total_quantity or 0}}</strong></td>
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
+                              <td>
+                                {% if order.display_payment_status == 'Đã thanh toán' %}
+                                  <span class="badge badge-success">{{order.display_payment_status}}</span>
+                                {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                  <span class="badge badge-warning">{{order.display_payment_status}}</span>
+                                {% else %}
+                                  <span class="badge badge-secondary">{{order.display_payment_status}}</span>
+                                {% endif %}
+                              </td>
                               <td>{{order.date_created}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
@@ -1381,6 +1400,15 @@
                               <td><strong>{{total_quantity or 0}}</strong></td>
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
+                              <td>
+                                {% if order.display_payment_status == 'Đã thanh toán' %}
+                                  <span class="badge badge-success">{{order.display_payment_status}}</span>
+                                {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                  <span class="badge badge-warning">{{order.display_payment_status}}</span>
+                                {% else %}
+                                  <span class="badge badge-secondary">{{order.display_payment_status}}</span>
+                                {% endif %}
+                              </td>
                               <td>{{order.date_created}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
@@ -1717,6 +1745,15 @@
                               <td><strong>{{total_quantity or 0}}</strong></td>
                               <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
                               <td>{{order.status}}</td>
+                              <td>
+                                {% if order.display_payment_status == 'Đã thanh toán' %}
+                                  <span class="badge badge-success">{{order.display_payment_status}}</span>
+                                {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                  <span class="badge badge-warning">{{order.display_payment_status}}</span>
+                                {% else %}
+                                  <span class="badge badge-secondary">{{order.display_payment_status}}</span>
+                                {% endif %}
+                              </td>
                               <td>{{order.date_created}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"

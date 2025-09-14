@@ -246,6 +246,13 @@
             >
               <i class="fa fa-info-circle me-2"></i> Kiểm tra Session
             </a>
+            <a
+              href="{{url_for('force_clear_cart')}}"
+              class="btn btn-outline-secondary"
+              onclick="return confirm('Buộc xóa toàn bộ giỏ hàng?')"
+            >
+              <i class="fa fa-bolt me-2"></i> Force Clear
+            </a>
           </div>
         </div>
       </div>

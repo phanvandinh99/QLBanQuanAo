@@ -147,12 +147,26 @@ def orders_manager():
 
     # Update old statuses to new ones in memory (for display)
     for order in orders:
+        # Update order status
         if order.status == 'Pending':
             order.status = 'Đang xác nhận'
         elif order.status == 'Accepted':
             order.status = 'Đã giao'
         elif order.status == 'Cancelled':
             order.status = 'Hủy đơn'
+
+        # Add payment status display
+        if hasattr(order, 'payment_status'):
+            # For COD orders, payment status should be "Chưa thanh toán"
+            # For VNPAY orders, payment status should be "Đã thanh toán"
+            if order.payment_method == 'cod':
+                order.display_payment_status = 'Chưa thanh toán'
+            elif order.payment_method == 'vnpay':
+                order.display_payment_status = 'Đã thanh toán'
+            else:
+                order.display_payment_status = order.payment_status or 'N/A'
+        else:
+            order.display_payment_status = 'N/A'
 
         # Calculate totals for each order
         order_data = get_order_data(order)

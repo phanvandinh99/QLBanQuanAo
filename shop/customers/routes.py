@@ -257,7 +257,8 @@ def submit_order():
                 invoice = secrets.token_hex(5)
                 order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                                       orders=json.dumps(session['Shoppingcart']),
-                                      status="Đang xác nhận", address=address)
+                                      status="Đang xác nhận", address=address,
+                                      payment_status="Chưa thanh toán", payment_method="cod")
                 db.session.add(order)
                 db.session.commit()
                 

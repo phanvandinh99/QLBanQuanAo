@@ -69,7 +69,8 @@ class CustomerOrder(db.Model):
     __tablename__ = 'customer_order'
     id = db.Column(db.Integer, primary_key=True)
     invoice = db.Column(db.String(20), unique=True, nullable=False)
-    status = db.Column(db.String(20))
+    status = db.Column(db.String(20), default='Đang xác nhận')  # Order status: Đang xác nhận, Đang giao, Đã giao, Hủy đơn
+    payment_status = db.Column(db.String(20), default='Chưa thanh toán')  # Payment status: Chưa thanh toán (COD), Đã thanh toán (VNPAY)
     customer_id = db.Column(db.Integer, nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     orders = db.Column(db.Text)
