@@ -1,39 +1,37 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
-from flask_uploads import UploadSet, IMAGES, configure_uploads
-import pymysql
+try:
+    from flask_uploads import UploadSet, IMAGES, configure_uploads
+    FLASK_UPLOADS_AVAILABLE = True
+except ImportError:
+    FLASK_UPLOADS_AVAILABLE = False
+    print("⚠️ Flask-Uploads not available, using fallback")
 
+import pymysql
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
+
+# Initialize SQLAlchemy after app creation
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy(app)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/myshop'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
 
-# VNPAY Configuration
 app.config['VNPAY_URL'] = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
-app.config['VNPAY_TMN_CODE'] = 'QV4AJ3NO'
-app.config['VNPAY_HASH_SECRET'] = '3CP0V5HCDJ6VFE1YPVYL85YUHK1SGLLP'
-
-# IMPORTANT: For development, use ngrok to expose localhost to internet
-# Install ngrok: https://ngrok.com/download
-# Run: ngrok http 5000
-# Then update these URLs with your ngrok URL, e.g.:
-# app.config['VNPAY_RETURN_URL'] = 'https://abcd1234.ngrok.io/vnpay_return'
-# app.config['VNPAY_IPN_URL'] = 'https://abcd1234.ngrok.io/vnpay_ipn'
-
-app.config['VNPAY_RETURN_URL'] = 'http://localhost:5000/vnpay_return'
-app.config['VNPAY_IPN_URL'] = 'http://localhost:5000/vnpay_ipn'
+app.config['VNPAY_TMN_CODE'] = 'WSGZMU68'
+app.config['VNPAY_HASH_SECRET'] = 'HM60DQ1QI6AKYMZUXT7Z2M9SHZWL4P0I'
+app.config['VNPAY_RETURN_URL'] = 'https://6ae8838e988e.ngrok-free.app/vnpay_return'
+app.config['VNPAY_IPN_URL'] = 'https://6ae8838e988e.ngrok-free.app/vnpay_ipn'
 
 # Upload configuration
 app.config['UPLOADED_PHOTOS_DEST'] = 'shop/static/images'
 
-# Initialize extensions
-db = SQLAlchemy(app)
+# Initialize extensions (SQLAlchemy already initialized above)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -45,8 +43,11 @@ ALLOWED_EXTENSIONS = (
     'JPG', 'JPEG', 'PNG', 'GIF', 'WEBP', 'BMP', 'SVG', 'ICO'
 )
 
-photos = UploadSet('photos', ALLOWED_EXTENSIONS)
-configure_uploads(app, photos)
+if FLASK_UPLOADS_AVAILABLE:
+    photos = UploadSet('photos', ALLOWED_EXTENSIONS)
+    configure_uploads(app, photos)
+else:
+    photos = None
 
 # Custom filter for VND currency format
 @app.template_filter('vnd')
