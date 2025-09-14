@@ -14,6 +14,21 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/myshop'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
 
+# VNPAY Configuration
+app.config['VNPAY_URL'] = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
+app.config['VNPAY_TMN_CODE'] = 'QV4AJ3NO'
+app.config['VNPAY_HASH_SECRET'] = '3CP0V5HCDJ6VFE1YPVYL85YUHK1SGLLP'
+
+# IMPORTANT: For development, use ngrok to expose localhost to internet
+# Install ngrok: https://ngrok.com/download
+# Run: ngrok http 5000
+# Then update these URLs with your ngrok URL, e.g.:
+# app.config['VNPAY_RETURN_URL'] = 'https://abcd1234.ngrok.io/vnpay_return'
+# app.config['VNPAY_IPN_URL'] = 'https://abcd1234.ngrok.io/vnpay_ipn'
+
+app.config['VNPAY_RETURN_URL'] = 'http://localhost:5000/vnpay_return'
+app.config['VNPAY_IPN_URL'] = 'http://localhost:5000/vnpay_ipn'
+
 # Upload configuration
 app.config['UPLOADED_PHOTOS_DEST'] = 'shop/static/images'
 
