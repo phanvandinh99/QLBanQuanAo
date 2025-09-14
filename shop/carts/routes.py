@@ -353,12 +353,10 @@ def vnpay_return():
 
         else:
             print(f"PAYMENT FAILED - Response code: {response_code}")
-            # Payment failed - DO NOT create order, just clean up
+            # Payment failed - DO NOT create order, keep cart for retry
 
-            # Clear cart on payment failure
-            if 'Shoppingcart' in session:
-                print("Clearing shopping cart due to payment failure")
-                session.pop('Shoppingcart', None)
+            # DON'T clear cart on payment failure - keep it for user to retry
+            print("Keeping shopping cart for user to retry payment")
 
             # Clear pending order data (don't create the order)
             if 'pending_order_data' in session:
@@ -367,7 +365,7 @@ def vnpay_return():
 
             response_desc = vnpay.get_response_description(response_code)
             print(f"Response description: {response_desc}")
-            flash(f'Thanh toán thất bại: {response_desc}. Giỏ hàng đã được làm trống.', 'danger')
+            flash(f'Thanh toán thất bại: {response_desc}. Bạn có thể thử thanh toán lại.', 'danger')
 
         print("=" * 50)
         print("VNPAY RETURN PROCESSING - SUCCESS")
