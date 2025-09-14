@@ -222,15 +222,31 @@
           </div>
         </div>
 
-        <!-- Clear Cart Button -->
+        <!-- Clear Cart Buttons -->
         <div class="text-end mb-4">
-          <a
-            href="{{url_for('clearcart')}}"
-            class="btn btn-outline-danger"
-            onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')"
-          >
-            <i class="fa fa-trash me-2"></i> Xóa tất cả
-          </a>
+          <div class="btn-group" role="group">
+            <a
+              href="{{url_for('clearcart')}}"
+              class="btn btn-outline-danger"
+              onclick="return confirm('Bạn có chắc muốn xóa tất cả sản phẩm?')"
+            >
+              <i class="fa fa-trash me-2"></i> Xóa tất cả
+            </a>
+            <a
+              href="{{url_for('clear_cart_after_payment')}}"
+              class="btn btn-outline-warning"
+              onclick="return confirm('Chỉ sử dụng nếu bạn đã thanh toán VNPAY thành công nhưng giỏ hàng chưa được xóa tự động!')"
+            >
+              <i class="fa fa-check-circle me-2"></i> Xóa sau thanh toán VNPAY
+            </a>
+            <a
+              href="{{url_for('check_session')}}"
+              class="btn btn-outline-info"
+              target="_blank"
+            >
+              <i class="fa fa-info-circle me-2"></i> Kiểm tra Session
+            </a>
+          </div>
         </div>
       </div>
 

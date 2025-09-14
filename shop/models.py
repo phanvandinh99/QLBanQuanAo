@@ -74,6 +74,8 @@ class CustomerOrder(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     orders = db.Column(db.Text)
     address = db.Column(db.String(200))
+    amount = db.Column(db.Numeric(10,2), default=0)
+    payment_method = db.Column(db.String(20), default='cod')
 
 class Article(db.Model):
     __tablename__ = 'articles'
