@@ -12,9 +12,9 @@ class VNPay:
         self.ipn_url = ipn_url
 
     def create_payment_url(self, order_info, order_id, amount, order_type='billpayment',
-                          language='vn', bank_code='', expire_date=None):
+                          language='vn', bank_code='', expire_date=None, ip_addr=''):
         vnp_params = {
-            'vnp_Version': '2.1.0',
+            'vnp_Version': '2.0.0',  # Thay đổi từ 2.1.0 thành 2.0.0 như C#
             'vnp_Command': 'pay',
             'vnp_TmnCode': self.tmn_code,
             'vnp_Amount': str(amount * 100),
@@ -24,9 +24,12 @@ class VNPay:
             'vnp_OrderType': order_type,
             'vnp_Locale': language,
             'vnp_ReturnUrl': self.return_url,
-            'vnp_IpnUrl': self.ipn_url,
             'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S')
         }
+
+        # Thêm IP address nếu có
+        if ip_addr:
+            vnp_params['vnp_IpAddr'] = ip_addr
 
         if bank_code:
             vnp_params['vnp_BankCode'] = bank_code
@@ -34,7 +37,8 @@ class VNPay:
         if expire_date:
             vnp_params['vnp_ExpireDate'] = expire_date
 
-        sorted_params = sorted(vnp_params.items())
+        # Sắp xếp theo key như trong code C#
+        sorted_params = sorted(vnp_params.items(), key=lambda x: x[0])
         hash_data = '&'.join([f"{key}={str(value)}" for key, value in sorted_params])
 
         secure_hash = hmac.new(

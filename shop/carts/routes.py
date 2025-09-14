@@ -218,10 +218,14 @@ def vnpay_payment():
             flash('Số tiền thanh toán không hợp lệ!', 'danger')
             return redirect(url_for('getCart'))
 
+        # Lấy IP address của client
+        client_ip = request.remote_addr or request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+
         payment_url = vnpay.create_payment_url(
             order_info=order_info,
             order_id=invoice,
-            amount=final_amount
+            amount=final_amount,
+            ip_addr=client_ip
         )
 
         # Store order info in session for return processing

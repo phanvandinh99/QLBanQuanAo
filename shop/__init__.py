@@ -25,8 +25,8 @@ db = SQLAlchemy(app)
 app.config['VNPAY_URL'] = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
 app.config['VNPAY_TMN_CODE'] = 'WSGZMU68'
 app.config['VNPAY_HASH_SECRET'] = 'HM60DQ1QI6AKYMZUXT7Z2M9SHZWL4P0I'
-app.config['VNPAY_RETURN_URL'] = 'https://6ae8838e988e.ngrok-free.app/vnpay_return'
-app.config['VNPAY_IPN_URL'] = 'https://6ae8838e988e.ngrok-free.app/vnpay_ipn'
+app.config['VNPAY_RETURN_URL'] = 'http://localhost:5000/vnpay_return'
+app.config['VNPAY_IPN_URL'] = 'http://localhost:5000/vnpay_ipn'
 
 # Upload configuration
 app.config['UPLOADED_PHOTOS_DEST'] = 'shop/static/images'
