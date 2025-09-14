@@ -13,14 +13,14 @@ pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
 
-# Initialize SQLAlchemy after app creation
-from flask_sqlalchemy import SQLAlchemy
-db = SQLAlchemy(app)
-
-# Database configuration
+# Database configuration - set BEFORE initializing SQLAlchemy
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/myshop'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'
+
+# Initialize SQLAlchemy after app creation
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy(app)
 
 app.config['VNPAY_URL'] = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
 app.config['VNPAY_TMN_CODE'] = 'WSGZMU68'
