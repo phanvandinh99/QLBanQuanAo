@@ -236,7 +236,7 @@ def get_order():
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
-        discounttotal += float(product['discount'] / 100) * float(product['price']) * int(product['quantity'])
+        discounttotal += float(product.get('discount', 0) / 100) * float(product['price']) * int(product['quantity'])
         subtotals += float(product['price']) * int(product['quantity'])
     subtotals -= discounttotal
     
@@ -300,7 +300,9 @@ def payment_history():
         if order_data:
             for key, product in order_data.items():
                 product_total = float(product['price']) * int(product['quantity'])
-                product_discount = (float(product['discount']) / 100) * product_total
+                # Safely get discount, default to 0 if not found
+                product_discount_percent = float(product.get('discount', 0))
+                product_discount = (product_discount_percent / 100) * product_total
                 total_quantity += int(product['quantity'])
                 total_amount += (product_total - product_discount)
         
@@ -340,7 +342,7 @@ def order_detail(invoice):
     if order_data:
         for key, product in order_data.items():
             product_total = float(product['price']) * int(product['quantity'])
-            product_discount = (float(product['discount']) / 100) * product_total
+            product_discount = (float(product.get('discount', 0)) / 100) * product_total
             total_before_discount += product_total
             total_discount += product_discount
     
@@ -425,7 +427,7 @@ def debug_order_data(invoice):
     if order_data:
         for key, product in order_data.items():
             product_total = float(product['price']) * int(product['quantity'])
-            product_discount = (float(product['discount']) / 100) * product_total
+            product_discount = (float(product.get('discount', 0)) / 100) * product_total
             total_before_discount += product_total
             total_discount += product_discount
     

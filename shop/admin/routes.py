@@ -848,8 +848,8 @@ def export_invoice(order_id):
         total_discount = 0
 
         for i, product in enumerate(products, 1):
-            discount_text = f"{product['discount']}%" if product['discount'] > 0 else '-'
-            discount_amount = product['original_price'] * product['quantity'] * product['discount'] / 100
+            discount_text = f"{product.get('discount', 0)}%" if product.get('discount', 0) > 0 else '-'
+            discount_amount = product['original_price'] * product['quantity'] * product.get('discount', 0) / 100
 
             table_data.append([
                 ensure_unicode(str(i)),

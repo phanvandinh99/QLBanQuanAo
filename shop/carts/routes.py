@@ -88,7 +88,7 @@ def getCart():
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
-        discounttotal += (product['discount'] / 100) * float(product['price']) * int(product['quantity'])
+        discounttotal += (product.get('discount', 0) / 100) * float(product['price']) * int(product['quantity'])
         subtotals += float(product['price']) * int(product['quantity'])
     
     # Get customer info if authenticated
@@ -177,7 +177,7 @@ def vnpay_payment():
         subtotals = 0
         discounttotal = 0
         for key, product in session['Shoppingcart'].items():
-            product_discount = (product['discount'] / 100) * float(product['price']) * int(product['quantity'])
+            product_discount = (product.get('discount', 0) / 100) * float(product['price']) * int(product['quantity'])
             discounttotal += product_discount
             product_subtotal = float(product['price']) * int(product['quantity'])
             subtotals += product_subtotal
@@ -206,6 +206,7 @@ def vnpay_payment():
             'subtotals': subtotals,
             'discounttotal': discounttotal
         }
+        session.modified = True  # Ensure session is saved
 
         from shop.vnpay_utils import create_vnpay_instance
         vnpay = create_vnpay_instance()
@@ -302,40 +303,69 @@ def vnpay_return():
             else:
                 print(f"No order found for invoice: {order_id}")
 
+        # Check authentication - user must be logged in to process payment
+        if not current_user.is_authenticated:
+            print("ERROR: User not authenticated for payment processing")
+            flash('Vui lòng đăng nhập để xử lý thanh toán!', 'danger')
+            return redirect(url_for('customer_login'))
+
         # Check if order belongs to current user (if logged in and order exists)
-        if order and current_user.is_authenticated:
-            if order.customer_id != current_user.id:
-                print(f"ERROR: Order {order_id} belongs to customer {order.customer_id}, but current user is {current_user.id}")
-                flash('Bạn không có quyền truy cập đơn hàng này!', 'danger')
-                return redirect(url_for('payment_history'))
+        if order and order.customer_id != current_user.id:
+            print(f"ERROR: Order {order_id} belongs to customer {order.customer_id}, but current user is {current_user.id}")
+            flash('Bạn không có quyền truy cập đơn hàng này!', 'danger')
+            return redirect(url_for('payment_history'))
 
         # Process payment result
         print(f"Processing payment result with response_code: {response_code}")
         if response_code == '00':
             print("PAYMENT SUCCESSFUL - Creating order and updating status")
 
+            # Debug session data
+            print(f"Session keys: {list(session.keys())}")
+            print(f"Current user authenticated: {current_user.is_authenticated}")
+            if current_user.is_authenticated:
+                print(f"Current user ID: {current_user.id}")
+
             # Payment successful - create order from pending data
             if pending_order_data:
-                # Create new order from pending data
-                new_order = CustomerOrder(
-                    invoice=pending_order_data['invoice'],
-                    customer_id=pending_order_data['customer_id'],
-                    orders=pending_order_data['orders'],
-                    status="Đã thanh toán",
-                    address=pending_order_data['address']
-                )
-                db.session.add(new_order)
-                db.session.commit()
-                order = new_order
-                print(f"New order created successfully with ID: {new_order.id}, Invoice: {new_order.invoice}")
+                print(f"Creating order from pending data: {pending_order_data}")
+                try:
+                    # Create new order from pending data
+                    new_order = CustomerOrder(
+                        invoice=pending_order_data['invoice'],
+                        customer_id=pending_order_data['customer_id'],
+                        orders=pending_order_data['orders'],
+                        status="Đã thanh toán",
+                        address=pending_order_data['address']
+                    )
+                    db.session.add(new_order)
+                    db.session.commit()
+                    order = new_order
+                    print(f"✅ New order created successfully with ID: {new_order.id}, Invoice: {new_order.invoice}")
+                except Exception as e:
+                    print(f"❌ ERROR creating order: {e}")
+                    db.session.rollback()
+                    flash('Có lỗi xảy ra khi tạo đơn hàng!', 'danger')
+                    return redirect(url_for('payment_history'))
             elif order:
                 # Update existing order status
-                order.status = 'Đã thanh toán'
-                db.session.commit()
-                print(f"Existing order {order_id} status updated to 'Đã thanh toán'")
+                print(f"Updating existing order {order_id} status")
+                try:
+                    order.status = 'Đã thanh toán'
+                    db.session.commit()
+                    print(f"✅ Existing order {order_id} status updated to 'Đã thanh toán'")
+                except Exception as e:
+                    print(f"❌ ERROR updating order: {e}")
+                    db.session.rollback()
+                    flash('Có lỗi xảy ra khi cập nhật đơn hàng!', 'danger')
+                    return redirect(url_for('payment_history'))
             else:
-                print("ERROR: No order data found for successful payment!")
-                flash('Có lỗi xảy ra khi xử lý đơn hàng!', 'danger')
+                print("❌ ERROR: No order data found for successful payment!")
+                print("Available session data:")
+                for key, value in session.items():
+                    if 'order' in key.lower() or 'pending' in key.lower():
+                        print(f"  {key}: {value}")
+                flash('Không tìm thấy dữ liệu đơn hàng để xử lý!', 'danger')
                 return redirect(url_for('payment_history'))
 
             # Clear cart if payment was successful
@@ -457,6 +487,37 @@ def vnpay_ipn():
         traceback.print_exc()
         print("=" * 50)
         return 'INTERNAL_ERROR', 500
+
+
+@app.route('/test_vnpay_success', methods=['GET'])
+def test_vnpay_success():
+    """Test route to simulate successful VNPAY payment"""
+    if not current_user.is_authenticated:
+        flash('Vui lòng đăng nhập trước!', 'danger')
+        return redirect(url_for('customer_login'))
+
+    # Create test pending order data
+    test_invoice = f'TEST_SUCCESS_{secrets.token_hex(4)}'
+    session['pending_order_data'] = {
+        'invoice': test_invoice,
+        'customer_id': current_user.id,
+        'orders': json.dumps(session.get('Shoppingcart', {})),
+        'address': '123 Test Address, Hanoi',
+        'amount': 100000,
+        'subtotals': 100000,
+        'discounttotal': 0
+    }
+    session.modified = True
+
+    # Simulate successful VNPAY return
+    print("=" * 50)
+    print("TESTING VNPAY SUCCESS SIMULATION")
+    print("=" * 50)
+    print(f"Test invoice: {test_invoice}")
+    print(f"User: {current_user.id}")
+
+    # Redirect to vnpay_return with simulated success response
+    return redirect(url_for('vnpay_return', vnp_ResponseCode='00', vnp_TxnRef=test_invoice, vnp_Amount='10000000'))
 
 
 @app.route('/debug_vnpay', methods=['GET'])
