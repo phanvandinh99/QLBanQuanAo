@@ -232,27 +232,6 @@
             >
               <i class="fa fa-trash me-2"></i> Xóa tất cả
             </a>
-            <a
-              href="{{url_for('clear_cart_after_payment')}}"
-              class="btn btn-outline-warning"
-              onclick="return confirm('Chỉ sử dụng nếu bạn đã thanh toán VNPAY thành công nhưng giỏ hàng chưa được xóa tự động!')"
-            >
-              <i class="fa fa-check-circle me-2"></i> Xóa sau thanh toán VNPAY
-            </a>
-            <a
-              href="{{url_for('check_session')}}"
-              class="btn btn-outline-info"
-              target="_blank"
-            >
-              <i class="fa fa-info-circle me-2"></i> Kiểm tra Session
-            </a>
-            <a
-              href="{{url_for('force_clear_cart')}}"
-              class="btn btn-outline-secondary"
-              onclick="return confirm('Buộc xóa toàn bộ giỏ hàng?')"
-            >
-              <i class="fa fa-bolt me-2"></i> Force Clear
-            </a>
           </div>
         </div>
       </div>
