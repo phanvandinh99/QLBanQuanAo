@@ -1,363 +1,118 @@
 
-# Lập trình web bán hàng điện thoại sử dụng Flask!
-Link website: 
-- Giao diện người dùng: [https://thuctapcongnhan2020.herokuapp.com/](https://thuctapcongnhan2020.herokuapp.com/)
-- Giao diện admin: [https://thuctapcongnhan2020.herokuapp.com/admin](https://thuctapcongnhan2020.herokuapp.com/admin)
+# 🛒 Website Bán Hàng Điện Thoại
 
-- Tên đề tài : **Website bán hàng điện thoại.**
-- Ngôn ngữ backend: [Flask-Python](https://flask.palletsprojects.com/en/1.1.x/)
-- Cơ sở dữ liệu: MySQL.
+Dự án website bán hàng điện thoại sử dụng **Flask** và **MySQL** với tích hợp thanh toán **VNPAY**.
 
-## Mục lục:
-1.[Hướng dẫn cài đặt](#p1)
+## 📋 Chức năng chính
 
-2.[Các chức năng chính của chương trình](#p2)
+### 👤 Khách hàng
+- ✅ Đăng ký/Đăng nhập tài khoản
+- ✅ Duyệt sản phẩm theo danh mục
+- ✅ Thêm sản phẩm vào giỏ hàng
+- ✅ Thanh toán online với VNPAY
+- ✅ Theo dõi đơn hàng
 
-3.[Cấu trúc thư mục chương trình](#p3)
+### 🛍️ Sản phẩm
+- ✅ Hiển thị danh sách sản phẩm
+- ✅ Tìm kiếm và lọc sản phẩm
+- ✅ Chi tiết sản phẩm với ảnh
+- ✅ Quản lý kho hàng
 
-4.[Tài liệu tham khảo](#p4)
+### 🛠️ Quản trị viên
+- ✅ Quản lý sản phẩm (thêm/sửa/xóa)
+- ✅ Quản lý danh mục sản phẩm
+- ✅ Quản lý đơn hàng
+- ✅ Quản lý khách hàng
+- ✅ Thống kê báo cáo
 
-<a id="p1"></a> 
-# Hướng dẫn cài đặt:
-1. Tải source code:
+### 💳 Thanh toán
+- ✅ Tích hợp VNPAY Payment Gateway
+- ✅ Thanh toán an toàn và bảo mật
+- ✅ Xử lý callback và IPN tự động
 
-2. Cài đặt python : [Python 3.8](https://www.python.org/downloads/release/python-380/)
+## 📁 Cấu trúc thư mục
 
-3. Download database: [here](database/myshop.sql)
+```
+MobileStore/
+├── shop/                    # Thư mục chính ứng dụng
+│   ├── __init__.py         # File khởi tạo Flask app
+│   ├── models.py           # Models database
+│   ├── vnpay_utils.py      # Utilities cho VNPAY
+│   ├── admin/              # Quản lý admin
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── carts/              # Giỏ hàng
+│   │   └── routes.py
+│   ├── customers/          # Khách hàng
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── products/           # Sản phẩm
+│   │   ├── routes.py
+│   │   └── forms.py
+│   ├── static/             # Static files (CSS, JS, images)
+│   └── templates/          # HTML templates
+├── databse/                # Database files
+│   └── myshop.sql
+├── images/                 # Hình ảnh demo
+├── venv/                   # Virtual environment (không commit)
+├── .gitignore             # Git ignore rules
+├── requirements.txt       # Dependencies
+├── run.py                 # File chạy ứng dụng
+└── README.md              # Tài liệu này
+```
 
-3.1
-```shell
+## 🚀 Hướng dẫn chạy dự án
+
+### 1. 📥 Clone dự án
+```bash
+Giải né dự án
+```
+
+### 2. 🐍 Cài đặt Python
+Đảm bảo **Python 3.8+** được cài đặt.
+
+### 3. 📦 Tạo môi trường ảo
+```bash
+# Windows
 python -m venv venv
-```
-
-```shell
 venv\Scripts\activate
-    => cmd "Set-ExecutionPolicy RemoteSigned"
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-4. Cài đặt môi trường thư viện tự động sử dụng tệp requirements.txt
-
-```shell
+### 4. 📚 Cài đặt dependencies
+```bash
 pip install -r requirements.txt
 ```
 
-5. Khởi chạy chương trình:
-```shell
+### 5. 🗄️ Thiết lập database
+- Import file `databse/myshop.sql` vào MySQL
+- Cập nhật thông tin database trong `shop/__init__.py`
+
+### 6. ▶️ Chạy ứng dụng
+```bash
 python run.py
 ```
-7. Truy cập trang admin: thêm **/admin** sau tên miền.
-6. Tài khoản đăng nhập trang admin:  Tai khoan admin: [viethoang@gmail.com](viethoang123@gmail.com) ,password: viethoang123
 
-<a id="p2"></a> 
-# Các chức năng chính của chương trình.
-Được đặc tả qua tài liệu Usecase tổng quát:
-<div align='center'>
-  <img src='images/use_case.png'>
-</div>
+### 7. 🌐 Truy cập
+- **Website khách hàng:** http://localhost:5000
+- **Trang admin:** http://localhost:5000/admin
+- **Tài khoản admin:** viethoang@gmail.com / Abc123
 
-- Giao diện chính:
+## 📝 Lưu ý
 
-![alt tag](images/GUIUser.png)
+- Đảm bảo MySQL đang chạy
+- Cập nhật cấu hình VNPAY trong `shop/__init__.py` (VNPAY_TMN_CODE, VNPAY_HASH_SECRET...)
+- Sử dụng virtual environment để tránh xung đột dependencies
 
-![alt tag](images/GUIAdmin.png)
+## 🎯 Công nghệ sử dụng
 
-<a id="p3"></a> 
-# Cấu trúc thư mục chương trình
-```
-$ Cấu trúc thư mục
-.
-├── shop
-│   ├── admin
-│   └── carts
-│   └── customers
-│   └── products
-│   └── static
-│   └── template
-│   └── __init__.py
-├── images
-│   ├── use_case.png
-│   ├── GUIAdmin.png
-│   ├── GUIUser.png
-├── database
-│   ├── myshop.sql
-└── requirements.txt
-└── README.md
-└── run.py
+- **Backend:** Flask (Python)
+- **Database:** MySQL
+- **Frontend:** HTML, CSS, JavaScript
+- **Payment:** VNPAY Gateway
+- **Template Engine:** Jinja2
 
-```
-
-<a id="p4"></a> 
-# VNPAY Payment Integration
-
-## Overview
-This project now includes VNPAY payment gateway integration for secure online payments.
-
-## Configuration
-The VNPAY integration is configured in `shop/__init__.py`:
-
-```python
-# VNPAY Configuration
-app.config['VNPAY_URL'] = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'
-app.config['VNPAY_TMN_CODE'] = 'QV4AJ3NO'
-app.config['VNPAY_HASH_SECRET'] = '3CP0V5HCDJ6VFE1YPVYL85YUHK1SGLLP'
-app.config['VNPAY_RETURN_URL'] = 'http://localhost:5000/vnpay_return'
-app.config['VNPAY_IPN_URL'] = 'http://localhost:5000/vnpay_ipn'
-```
-
-## How It Works
-
-### 1. Payment Initiation
-- User selects VNPAY payment method in the cart
-- System creates an order with "Chờ thanh toán" status
-- VNPAY payment URL is generated and user is redirected
-
-### 2. Payment Processing
-- User completes payment on VNPAY's secure platform
-- VNPAY redirects user back to `/vnpay_return` endpoint
-- System validates payment and updates order status
-
-### 3. Payment Confirmation
-- IPN (Instant Payment Notification) is sent to `/vnpay_ipn` for server-side confirmation
-- Order status is updated to "Đã thanh toán" upon successful payment
-
-## Usage
-
-1. Add products to cart
-2. Go to checkout page
-3. Select "Thanh toán VNPAY" payment method
-4. Enter shipping address
-5. Click "Đặt hàng" to proceed to VNPAY payment
-6. Complete payment on VNPAY platform
-7. System will redirect back and confirm payment
-
-## API Endpoints
-
-- `POST /vnpay_payment` - Initiates VNPAY payment
-- `GET /vnpay_return` - Handles payment completion redirect
-- `POST /vnpay_ipn` - Handles payment status notifications
-
-## Order Status Flow
-
-1. **Chờ thanh toán** - Order created, waiting for payment
-2. **Đã thanh toán** - Payment successful
-3. **Thanh toán thất bại** - Payment failed or cancelled
-
-## Security Features
-
-- HMAC-SHA512 signature validation
-- Secure hash verification for all transactions
-- Server-side payment confirmation via IPN
-- Order status validation
-
-## Testing
-
-Use VNPAY sandbox environment for testing:
-- URL: https://sandbox.vnpayment.vn
-- Test cards and instructions available in VNPAY documentation
-
-## VNPAY Debug Tools
-
-## Debug Endpoint
-Access the debug endpoint to test VNPAY integration: `http://localhost:5000/debug_vnpay`
-
-This endpoint will:
-- Test URL generation
-- Test hash validation
-- Show current configuration
-- Help identify configuration issues
-
-## Logging
-The application now includes comprehensive logging for all VNPAY operations:
-
-### Payment Initiation Logs:
-```
-VNPAY PAYMENT INITIATION - START
-- Customer info, cart contents, calculated totals
-- Order creation details
-- Generated payment URL
-```
-
-### Return Processing Logs:
-```
-VNPAY RETURN PROCESSING - START
-- All VNPAY response parameters
-- Validation results
-- Order lookup and status updates
-```
-
-### IPN Processing Logs:
-```
-VNPAY IPN PROCESSING - START
-- IPN request parameters
-- Validation and processing results
-```
-
-### Utility Function Logs:
-```
-VNPAY URL CREATION - START
-- Parameter details and hash generation
-VNPAY RESPONSE VALIDATION - START
-- Hash validation process and results
-```
-
-## Common Issues & Solutions
-
-### 1. "Invalid VNPAY signature" Error
-**Possible causes:**
-- Wrong `VNPAY_HASH_SECRET` in configuration
-- Network transmission errors
-- Response data tampering
-
-**Solution:**
-1. Check `VNPAY_HASH_SECRET` matches your VNPAY dashboard
-2. Verify no extra spaces or characters in the secret
-3. Check debug endpoint for validation results
-
-### 2. "Order not found" Error
-**Possible causes:**
-- Order ID mismatch between creation and return
-- Database connection issues
-- Order was not created successfully
-
-**Solution:**
-1. Check console logs for order creation
-2. Verify database connectivity
-3. Check if order exists in database
-
-### 3. Generic VNPAY Error
-**Solution:**
-1. Check all console logs for detailed error information
-2. Use debug endpoint to test basic functionality
-3. Verify VNPAY credentials and configuration
-
-## Testing Steps
-
-### **Phase 1: Local Testing (Debug Mode)**
-
-1. **Start the application:**
-```bash
-python app.py
-```
-
-2. **Test debug endpoint:**
-```
-http://localhost:5000/debug_vnpay
-```
-
-3. **Test VNPAY setup:**
-```bash
-# Run the test script
-python test_vnpay_setup.py
-
-# Or use the batch file (Windows)
-test_vnpay.bat
-```
-
-### **Phase 2: Full Payment Testing (Requires ngrok)**
-
-#### **Step 1: Install ngrok**
-```bash
-# Download from: https://ngrok.com/download
-# Install and add to PATH
-```
-
-#### **Step 2: Expose localhost to internet**
-```bash
-# In a new terminal/command prompt
-ngrok http 5000
-```
-
-#### **Step 3: Update VNPAY URLs**
-After running ngrok, you'll get a URL like: `https://abcd1234.ngrok.io`
-
-Update `shop/__init__.py`:
-```python
-app.config['VNPAY_RETURN_URL'] = 'https://abcd1234.ngrok.io/vnpay_return'
-app.config['VNPAY_IPN_URL'] = 'https://abcd1234.ngrok.io/vnpay_ipn'
-```
-
-#### **Step 4: Restart Flask app**
-```bash
-# Stop Flask app (Ctrl+C)
-python app.py
-```
-
-#### **Step 5: Test full payment flow**
-- Add items to cart
-- Select VNPAY payment
-- Complete payment on VNPAY sandbox
-- Check console logs for detailed processing info
-
-### **Phase 3: Monitor and Debug**
-
-4. **Monitor logs:**
-   - All VNPAY operations are logged with detailed information
-   - Look for `VNPAY` prefixed log messages
-   - Check for validation failures or order issues
-
-**⚠️ IMPORTANT:** Without ngrok, VNPAY cannot access your localhost URLs, causing error code 99!
-
-## Production Usage Guide
-
-### 1. **Basic Payment Flow:**
-```python
-# User adds items to cart
-# User selects VNPAY payment method
-# User fills shipping address
-# User clicks "Đặt hàng"
-
-# System automatically:
-# 1. Calculates total amount
-# 2. Creates order with status "Chờ thanh toán"
-# 3. Generates VNPAY payment URL
-# 4. Redirects user to VNPAY
-
-# User completes payment on VNPAY
-# VNPAY redirects back to your site
-# System validates payment and updates order status
-```
-
-### 2. **Integration Points:**
-
-**Frontend (carts.html):**
-- Payment method selection radio buttons (already implemented)
-- Address input form (already implemented)
-- JavaScript for form submission (already implemented)
-
-**Backend Routes:**
-- `/vnpay_payment` - Initiates payment (POST)
-- `/vnpay_return` - Handles payment return (GET)
-- `/vnpay_ipn` - Handles payment notifications (POST)
-
-### 3. **Order Status Flow:**
-```
-1. User clicks "Đặt hàng" → Order status: "Chờ thanh toán"
-2. Redirect to VNPAY → User completes payment
-3. VNPAY returns → System validates → Order status: "Đã thanh toán"
-4. Alternative: Payment failed → Order status: "Thanh toán thất bại"
-```
-
-### 4. **Error Handling:**
-- All errors are logged with detailed information
-- User-friendly error messages are displayed
-- System gracefully handles payment failures
-- Cart is cleared only on successful payment
-
-### 5. **Security Features:**
-- HMAC-SHA512 signature validation
-- Secure hash verification for all transactions
-- Order ownership validation
-- Input sanitization and validation
-
-# Production Deployment
-
-For production, update the configuration:
-1. Change VNPAY_URL to production endpoint
-2. Update TMN_CODE and HASH_SECRET with production credentials
-3. Update RETURN_URL and IPN_URL to your production domain
-4. Ensure HTTPS is enabled for all payment endpoints
-
-# Tài liệu tham khảo
-
- 1. Template : [https://easetemplate.com/downloads/online-mobile-store-shopping-website-template/](https://easetemplate.com/downloads/online-mobile-store-shopping-website-template/)
-2. Youtube: [https://www.youtube.com/watch?v=o9TwipumGoU&list=PLYPlvTh05MsxJja9bzQCSTDu4hnEv5N](https://www.youtube.com/watch?v=o9TwipumGoU&list=PLYPlvTh05MsxJja9bzQCSTDu4hnEv5N_u&index=1)
+---
