@@ -65,7 +65,7 @@ MobileStore/
 
 ### 1. 📥 Clone dự án
 ```bash
-Giải né dự án
+Giải nén dự án
 ```
 
 ### 2. 🐍 Cài đặt Python

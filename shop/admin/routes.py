@@ -8,6 +8,7 @@ from flask import render_template, session, request, redirect, url_for, flash, c
 from shop import app, db, bcrypt
 import json
 from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate, Article
+from shop.email_utils import send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
 try:
@@ -261,6 +262,12 @@ def accept_order(id):
                 else:
                     flash('Quantity in stock has been exhausted', 'danger')
                     return redirect(url_for('orders_manager'))
+
+            # Send email notification to customer
+            customer = Register.query.get(customer_order.customer_id)
+            if customer:
+                send_order_status_update_email(customer, customer_order, action_by="admin")
+
         return redirect(url_for('orders_manager'))
     
     return redirect(url_for('orders_manager'))
@@ -276,6 +283,12 @@ def delivered_order(id):
         customer_order = CustomerOrder.query.get_or_404(id)
         customer_order.status = 'Đã giao'
         db.session.commit()
+
+        # Send email notification to customer
+        customer = Register.query.get(customer_order.customer_id)
+        if customer:
+            send_order_status_update_email(customer, customer_order, action_by="admin")
+
         flash('Đơn hàng đã được cập nhật thành "Đã giao"', 'success')
         return redirect(url_for('orders_manager'))
     
@@ -291,6 +304,12 @@ def delete_order(id):
     if request.method == "POST":
         customer.status = "Hủy đơn"
         db.session.commit()
+
+        # Send email notification to customer
+        customer_info = Register.query.get(customer.customer_id)
+        if customer_info:
+            send_order_status_update_email(customer_info, customer, action_by="admin")
+
         flash('Đơn hàng đã được hủy thành công', 'success')
         return redirect(url_for('orders_manager'))
     return redirect(url_for('orders_manager'))
@@ -827,10 +846,10 @@ def export_invoice(order_id):
         elements.append(Spacer(1, 0.5*inch))
 
         # Thông tin cửa hàng
-        elements.append(Paragraph(ensure_unicode("<b>CỬA HÀNG MOBILE STORE</b>"), info_style))
-        elements.append(Paragraph(ensure_unicode("Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM"), info_style))
-        elements.append(Paragraph(ensure_unicode("Điện thoại: 0123 456 789"), info_style))
-        elements.append(Paragraph(ensure_unicode("Email: info@mobilestore.com"), info_style))
+        elements.append(Paragraph(ensure_unicode("<b>CỬA HÀNG Belluni</b>"), info_style))
+        elements.append(Paragraph(ensure_unicode("Địa chỉ: Số 298 Đ. Cầu Diễn, Minh Khai, Bắc Từ Liêm, Hà Nội"), info_style))
+        elements.append(Paragraph(ensure_unicode("Điện thoại: 0033.219.4677"), info_style))
+        elements.append(Paragraph(ensure_unicode("Email: VietHoang@gmail.com"), info_style))
         elements.append(Spacer(1, 0.3*inch))
 
         # Thông tin đơn hàng

@@ -7,6 +7,7 @@ from flask import render_template, session, request, redirect, url_for, flash, j
 from flask_login import current_user
 from shop import app, db
 from shop.models import CustomerOrder, Category, Brand, Addproduct, Register
+from shop.email_utils import send_order_confirmation_email
 
 
 def brands():
@@ -224,6 +225,15 @@ def vnpay_payment():
             db.session.commit()
             print(f"✅ Order created successfully with ID: {new_order.id}, Invoice: {invoice}")
             print("=" * 60)
+
+            # Gửi email xác nhận đơn hàng
+            customer = Register.query.get(customer_id)
+            if customer and customer.email:
+                email_sent = send_order_confirmation_email(customer, new_order)
+                if email_sent:
+                    print(f"Email xác nhận đã gửi đến {customer.email}")
+                else:
+                    print(f"Không thể gửi email xác nhận đến {customer.email}")
         except Exception as e:
             print(f"❌ ERROR creating order: {e}")
             print(f"Error type: {type(e).__name__}")

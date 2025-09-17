@@ -5,6 +5,7 @@ from shop.models import Register, Admin, CustomerOrder
 from .forms import CustomerRegisterForm, CustomerLoginFrom
 from shop.models import Category, Brand, Addproduct
 from shop.carts.routes import clearcart, MagerDicts
+from shop.email_utils import send_order_confirmation_email, send_order_status_update_email
 from flask import Markup
 import secrets
 import os
@@ -248,7 +249,7 @@ def get_order():
 @login_required
 def submit_order():
     address = request.form.get('CustomerAddress')
-    
+
     if request.method == "POST":
         try:
             # Create new order from session cart
@@ -261,17 +262,26 @@ def submit_order():
                                       payment_status="Chưa thanh toán", payment_method="cod")
                 db.session.add(order)
                 db.session.commit()
-                
+
+                # Gửi email xác nhận đơn hàng
+                customer = Register.query.get(customer_id)
+                if customer and customer.email:
+                    email_sent = send_order_confirmation_email(customer, order)
+                    if email_sent:
+                        print(f"Email xác nhận đã gửi đến {customer.email}")
+                    else:
+                        print(f"Không thể gửi email xác nhận đến {customer.email}")
+
                 # Clear cart
                 session.pop('Shoppingcart', None)
-                flash('Đơn hàng đã được đặt thành công!', 'success')
+                flash('Đơn hàng đã được đặt thành công! Email xác nhận đã được gửi đến địa chỉ email của bạn.', 'success')
             else:
                 flash('Giỏ hàng trống!', 'danger')
-            
+
         except Exception as e:
             print("Submit Order Error:", e)
             flash('Có lỗi xảy ra khi đặt hàng', 'danger')
-    
+
     return redirect(url_for('payment_history'))
 
 
@@ -399,6 +409,10 @@ def cancel_order(invoice):
         # Update order status to cancelled
         order.status = 'Hủy đơn'
         db.session.commit()
+
+        # Send email notification to customer
+        send_order_status_update_email(current_user, order, action_by="customer")
+
         flash('Đơn hàng đã được hủy thành công!', 'success')
     except Exception as e:
         print("Cancel Order Error:", e)
@@ -450,18 +464,93 @@ def debug_order_data(invoice):
     return f"""
     <h2>Debug Order Info</h2>
     <pre>{debug_info}</pre>
-    
+
     <h3>Raw Orders Data:</h3>
     <pre>{order.orders}</pre>
-    
+
     <h3>Parsed Orders:</h3>
     <pre>{order_data}</pre>
-    
+
     <h3>Calculations:</h3>
     <p>Total before discount: {total_before_discount}</p>
     <p>Total discount: {total_discount}</p>
     <p>Final total: {final_total}</p>
     """
+
+
+@app.route('/test_email/<invoice>')
+@login_required
+def test_email(invoice):
+    """Test route để gửi email xác nhận đơn hàng"""
+    if not current_user.is_authenticated:
+        return "Vui lòng đăng nhập trước"
+
+    # Tìm đơn hàng
+    order = CustomerOrder.query.filter_by(
+        invoice=invoice,
+        customer_id=current_user.id
+    ).first()
+
+    if not order:
+        return f"Không tìm thấy đơn hàng với mã {invoice}"
+
+    # Gửi email test
+    email_sent = send_order_confirmation_email(current_user, order)
+
+    if email_sent:
+        return f"""
+        <h2>✅ Email đã gửi thành công!</h2>
+        <p>Đã gửi email xác nhận đến: {current_user.email}</p>
+        <p>Mã đơn hàng: {invoice}</p>
+        <a href="{url_for('payment_history')}">Quay lại lịch sử đơn hàng</a>
+        """
+    else:
+        return f"""
+        <h2>❌ Gửi email thất bại!</h2>
+        <p>Không thể gửi email đến: {current_user.email}</p>
+        <p>Mã đơn hàng: {invoice}</p>
+        <a href="{url_for('payment_history')}">Quay lại lịch sử đơn hàng</a>
+        """
+
+
+@app.route('/test_email_config')
+def test_email_config():
+    """Test route để kiểm tra cấu hình email"""
+    from shop import mail
+
+    try:
+        # Kiểm tra cấu hình mail
+        config_info = {
+            'MAIL_SERVER': app.config.get('MAIL_SERVER'),
+            'MAIL_PORT': app.config.get('MAIL_PORT'),
+            'MAIL_USE_TLS': app.config.get('MAIL_USE_TLS'),
+            'MAIL_USE_SSL': app.config.get('MAIL_USE_SSL'),
+            'MAIL_USERNAME': app.config.get('MAIL_USERNAME'),
+            'MAIL_DEFAULT_SENDER': app.config.get('MAIL_DEFAULT_SENDER'),
+            'HAS_MAIL_PASSWORD': bool(app.config.get('MAIL_PASSWORD'))
+        }
+
+        return f"""
+        <h2>Mail Configuration Test</h2>
+        <pre>{config_info}</pre>
+
+        <h3>Test Results:</h3>
+        <p>Mail object initialized: {'✅' if mail else '❌'}</p>
+        <p>Mail server configured: {'✅' if config_info['MAIL_SERVER'] else '❌'}</p>
+        <p>Mail credentials: {'✅' if config_info['HAS_MAIL_PASSWORD'] else '❌'}</p>
+
+        <div style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 5px;">
+            <h4>⚠️ Lưu ý cấu hình:</h4>
+            <p>Để gửi email thực sự, bạn cần:</p>
+            <ol>
+                <li>Thay 'your-email@gmail.com' bằng email thật của bạn</li>
+                <li>Thay 'your-app-password' bằng App Password từ Gmail</li>
+                <li>Kiểm tra file shop/__init__.py</li>
+            </ol>
+        </div>
+        """
+    except Exception as e:
+        return f"<h2>Error testing mail config:</h2><p>{e}</p>"
 
 
 

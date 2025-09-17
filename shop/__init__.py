@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
+from flask_mail import Mail
 try:
     from flask_uploads import UploadSet, IMAGES, configure_uploads
     FLASK_UPLOADS_AVAILABLE = True
@@ -28,6 +29,15 @@ app.config['VNPAY_HASH_SECRET'] = 'HM60DQ1QI6AKYMZUXT7Z2M9SHZWL4P0I'
 app.config['VNPAY_RETURN_URL'] = 'http://localhost:5000/vnpay_return'
 app.config['VNPAY_IPN_URL'] = 'http://localhost:5000/vnpay_ipn'
 
+# Email configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'vonhanh271@gmail.com'  # Thay bằng email của bạn
+app.config['MAIL_PASSWORD'] = 'aonkmuvovinnkabz'    # Thay bằng app password
+app.config['MAIL_DEFAULT_SENDER'] = 'vonhanh271@gmail.com'  # Thay bằng email của bạn
+
 # Upload configuration
 app.config['UPLOADED_PHOTOS_DEST'] = 'shop/static/images'
 
@@ -36,6 +46,7 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'customer_login'
+mail = Mail(app)
 
 # Custom image extensions including webp, bmp, svg, ico
 ALLOWED_EXTENSIONS = (
