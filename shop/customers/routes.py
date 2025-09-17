@@ -12,31 +12,21 @@ import os
 import json
 from datetime import datetime
 
-# import pdfkit
-# import stripe
 def brands():
-    # brands = Brand.query.join(Addproduct, (Brand.id == Addproduct.brand_id)).all()
-    brands = Brand.query.all()
-    return brands
+    return Brand.query.all()
 
 
 def categories():
-    # categories = Category.query.join(Addproduct, (Category.id == Addproduct.category_id)).all()
-    categories = Category.query.order_by(Category.name.desc()).all()
-    return categories
+    return Category.query.order_by(Category.name.desc()).all()
 
 
 def get_order_data(order):
     """Helper function to parse order data from JSON"""
     if order.orders:
         try:
-            parsed_data = json.loads(order.orders)
-            print(f"DEBUG: Parsed order data for order {order.invoice}: {len(parsed_data)} products")
-            return parsed_data
-        except Exception as e:
-            print(f"DEBUG: Error parsing order data for order {order.invoice}: {e}")
+            return json.loads(order.orders)
+        except Exception:
             return {}
-    print(f"DEBUG: No orders data for order {order.invoice}")
     return {}
 
 
@@ -148,7 +138,6 @@ def customer_login():
         return redirect(url_for('home'))
     form = CustomerLoginFrom()
     if form.validate_on_submit():
-        # Register.query.filter_by(lock=False).first()
         user = Register.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             if user.lock == True:
@@ -323,9 +312,7 @@ def checkout():
                 # COD - Send confirmation email and redirect to payment history
                 customer = Register.query.get(current_user.id)
                 if customer and customer.email:
-                    email_sent = send_order_confirmation_email(customer, order)
-                    if not email_sent:
-                        print(f"Không thể gửi email xác nhận đến {customer.email}")
+                    send_order_confirmation_email(customer, order)
 
                 # Clear cart
                 session.pop('Shoppingcart', None)
@@ -333,9 +320,8 @@ def checkout():
                 flash('Đơn hàng đã được đặt thành công! Email xác nhận đã được gửi đến địa chỉ email của bạn.', 'success')
                 return redirect(url_for('payment_history'))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            print(f"Lỗi tạo đơn hàng: {e}")
             flash('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.', 'danger')
 
     return render_template('customers/checkout.html', form=form, subtotal=subtotal, discount=discount, total=total)
@@ -388,8 +374,7 @@ def submit_order():
             else:
                 flash('Giỏ hàng trống!', 'danger')
 
-        except Exception as e:
-            print("Submit Order Error:", e)
+        except Exception:
             flash('Có lỗi xảy ra khi đặt hàng', 'danger')
 
     return redirect(url_for('payment_history'))
@@ -452,24 +437,19 @@ def order_detail(invoice):
         flash('Không tìm thấy đơn hàng!', 'danger')
         return redirect(url_for('payment_history'))
     
-    # Debug: Print order data
-    print(f"DEBUG: Order {order.invoice} - Raw orders data: {order.orders}")
-    
     # Calculate totals in Python
     order_data = get_order_data(order)
     total_before_discount = 0
     total_discount = 0
-    
+
     if order_data:
         for key, product in order_data.items():
             product_total = float(product['price']) * int(product['quantity'])
             product_discount = (float(product.get('discount', 0)) / 100) * product_total
             total_before_discount += product_total
             total_discount += product_discount
-    
+
     final_total = total_before_discount - total_discount
-    
-    print(f"DEBUG: Calculated totals - Before: {total_before_discount}, Discount: {total_discount}, Final: {final_total}")
     
     # Update old statuses to new ones in memory (for display)
     if order.status == 'Pending':
@@ -524,143 +504,16 @@ def cancel_order(invoice):
         send_order_status_update_email(current_user, order, action_by="customer")
 
         flash('Đơn hàng đã được hủy thành công!', 'success')
-    except Exception as e:
-        print("Cancel Order Error:", e)
-        flash('Có lỗi xảy ra khi hủy đơn hàng', 'danger')
+        except Exception:
+            flash('Có lỗi xảy ra khi hủy đơn hàng', 'danger')
     
     return redirect(url_for('order_detail', invoice=invoice))
 
 
-@app.route('/debug_order_data/<invoice>')
-@login_required
-def debug_order_data(invoice):
-    """Debug route to check order data"""
-    order = CustomerOrder.query.filter_by(
-        invoice=invoice, 
-        customer_id=current_user.id
-    ).first()
-    
-    if not order:
-        return "Order not found"
-    
-    order_data = get_order_data(order)
-    
-    # Calculate totals manually
-    total_before_discount = 0
-    total_discount = 0
-    
-    if order_data:
-        for key, product in order_data.items():
-            product_total = float(product['price']) * int(product['quantity'])
-            product_discount = (float(product.get('discount', 0)) / 100) * product_total
-            total_before_discount += product_total
-            total_discount += product_discount
-    
-    final_total = total_before_discount - total_discount
-    
-    debug_info = {
-        'order_id': order.id,
-        'invoice': order.invoice,
-        'status': order.status,
-        'address': order.address,
-        'raw_orders': order.orders,
-        'parsed_orders': order_data,
-        'order_count': len(order_data) if order_data else 0,
-        'total_before_discount': total_before_discount,
-        'total_discount': total_discount,
-        'final_total': final_total
-    }
-    
-    return f"""
-    <h2>Debug Order Info</h2>
-    <pre>{debug_info}</pre>
-
-    <h3>Raw Orders Data:</h3>
-    <pre>{order.orders}</pre>
-
-    <h3>Parsed Orders:</h3>
-    <pre>{order_data}</pre>
-
-    <h3>Calculations:</h3>
-    <p>Total before discount: {total_before_discount}</p>
-    <p>Total discount: {total_discount}</p>
-    <p>Final total: {final_total}</p>
-    """
 
 
-@app.route('/test_email/<invoice>')
-@login_required
-def test_email(invoice):
-    """Test route để gửi email xác nhận đơn hàng"""
-    if not current_user.is_authenticated:
-        return "Vui lòng đăng nhập trước"
-
-    # Tìm đơn hàng
-    order = CustomerOrder.query.filter_by(
-        invoice=invoice,
-        customer_id=current_user.id
-    ).first()
-
-    if not order:
-        return f"Không tìm thấy đơn hàng với mã {invoice}"
-
-    # Gửi email test
-    email_sent = send_order_confirmation_email(current_user, order)
-
-    if email_sent:
-        return f"""
-        <h2>✅ Email đã gửi thành công!</h2>
-        <p>Đã gửi email xác nhận đến: {current_user.email}</p>
-        <p>Mã đơn hàng: {invoice}</p>
-        <a href="{url_for('payment_history')}">Quay lại lịch sử đơn hàng</a>
-        """
-    else:
-        return f"""
-        <h2>❌ Gửi email thất bại!</h2>
-        <p>Không thể gửi email đến: {current_user.email}</p>
-        <p>Mã đơn hàng: {invoice}</p>
-        <a href="{url_for('payment_history')}">Quay lại lịch sử đơn hàng</a>
-        """
 
 
-@app.route('/test_email_config')
-def test_email_config():
-    """Test route để kiểm tra cấu hình email"""
-    from shop import mail
-
-    try:
-        # Kiểm tra cấu hình mail
-        config_info = {
-            'MAIL_SERVER': app.config.get('MAIL_SERVER'),
-            'MAIL_PORT': app.config.get('MAIL_PORT'),
-            'MAIL_USE_TLS': app.config.get('MAIL_USE_TLS'),
-            'MAIL_USE_SSL': app.config.get('MAIL_USE_SSL'),
-            'MAIL_USERNAME': app.config.get('MAIL_USERNAME'),
-            'MAIL_DEFAULT_SENDER': app.config.get('MAIL_DEFAULT_SENDER'),
-            'HAS_MAIL_PASSWORD': bool(app.config.get('MAIL_PASSWORD'))
-        }
-
-        return f"""
-        <h2>Mail Configuration Test</h2>
-        <pre>{config_info}</pre>
-
-        <h3>Test Results:</h3>
-        <p>Mail object initialized: {'✅' if mail else '❌'}</p>
-        <p>Mail server configured: {'✅' if config_info['MAIL_SERVER'] else '❌'}</p>
-        <p>Mail credentials: {'✅' if config_info['HAS_MAIL_PASSWORD'] else '❌'}</p>
-
-        <div style="margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 5px;">
-            <h4>⚠️ Lưu ý cấu hình:</h4>
-            <p>Để gửi email thực sự, bạn cần:</p>
-            <ol>
-                <li>Thay 'your-email@gmail.com' bằng email thật của bạn</li>
-                <li>Thay 'your-app-password' bằng App Password từ Gmail</li>
-                <li>Kiểm tra file shop/__init__.py</li>
-            </ol>
-        </div>
-        """
-    except Exception as e:
-        return f"<h2>Error testing mail config:</h2><p>{e}</p>"
 
 
 

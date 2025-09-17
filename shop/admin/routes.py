@@ -26,41 +26,6 @@ from .forms import LoginForm, RegistrationForm
 from shop.customers.forms import CustomerRegisterForm
 
 
-# def synchronization():
-#     try:
-#         urllib.request.urlopen("https://console.firebase.google.com/")  # Python 3.x
-#         ls = ['background.png', 'Assets.png', 'bg.jpg', 'AdminLTELogo.png']
-#         for i in ls:
-#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + i)):
-#                 storage.child("images/" + i).download(
-#                     os.path.join(current_app.root_path, "static/images/" + i))
-#         products = Addproduct.query.all();
-#         for product in products:
-#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_1)):
-#                 storage.child("images/" + product.image_1).download(
-#                     os.path.join(current_app.root_path, "static/images/" + product.image_1))
-#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_2)):
-#                 storage.child("images/" + product.image_2).download(
-#                     os.path.join(current_app.root_path, "static/images/" + product.image_2))
-#             if not os.path.isfile(os.path.join(current_app.root_path, "static/images/" + product.image_3)):
-#                 storage.child("images/" + product.image_3).download(
-#                     os.path.join(current_app.root_path, "static/images/" + product.image_3))
-#         return True
-#     except:
-#         return False
-
-
-# @app.route('/synchronization')
-# def data_syn():
-#     if 'email' not in session:
-#         flash(f'Yêu cầu đăng nhập', 'danger')
-#         return redirect(url_for('login'))
-#     if synchronization():
-#         flash(f'Synchronization Data Success', 'success')
-#         return redirect(url_for('admin_manager'))
-#     else:
-#         flash(f'Synchronization Data Failure, Please Reconnect Internet', 'danger')
-#         return redirect(url_for('admin_manager'))
 
 
 @app.route('/admin/customer_register', methods=['GET', 'POST'])
@@ -136,12 +101,8 @@ def orders_manager():
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    # page = request.args.get('page', 1, type=int)
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Register.query.all()
-    # products = Addproduct.query.order_by(Addproduct.id.desc())
-    # orders = CustomerOrder.query.filter(CustomerOrder.status != None).filter(
-    #     CustomerOrder.status != "Cancelled").order_by(CustomerOrder.id.desc()).paginate(page=page, per_page=10)\
 
     # Get all orders and update old statuses to new ones
     orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
@@ -419,9 +380,6 @@ def product():
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    # products = Addproduct.query.all()
-    # page = request.args.get('page', 1, type=int)
-    # products = Addproduct.query.order_by(Addproduct.id.desc()).paginate(page=page, per_page=10)
     products = Addproduct.query.all()
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('admin/index.html', title='Product page', products=products, user=user[0])
@@ -514,50 +472,14 @@ def logout():
 
 def get_order_data(order):
     """Helper function to parse order data from JSON"""
-    print(f"DEBUG: Order ID {order.id}")
-    print(f"DEBUG: Raw orders field: {order.orders}")
-    print(f"DEBUG: Orders field type: {type(order.orders)}")
-    print(f"DEBUG: Orders field is None: {order.orders is None}")
-
     if order.orders:
         try:
-            parsed_data = json.loads(order.orders)
-            print(f"DEBUG: Successfully parsed: {parsed_data}")
-            print(f"DEBUG: Parsed type: {type(parsed_data)}")
-            print(f"DEBUG: Parsed length: {len(parsed_data) if isinstance(parsed_data, dict) else 'N/A'}")
-            return parsed_data
-        except Exception as e:
-            print(f"DEBUG: JSON parse error: {e}")
+            return json.loads(order.orders)
+        except Exception:
             return {}
-    print("DEBUG: No orders data found")
     return {}
 
 
-# ============= TEST ROUTE FOR DEBUGGING =============
-@app.route('/admin/test_orders')
-def test_orders():
-    """Test route to check order data structure"""
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
-
-    # Get all orders
-    orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).limit(5).all()
-
-    test_results = []
-    for order in orders:
-        result = {
-            'order_id': order.id,
-            'invoice': order.invoice,
-            'status': order.status,
-            'raw_orders': order.orders,
-            'orders_type': str(type(order.orders)),
-            'orders_is_none': order.orders is None,
-            'parsed_data': get_order_data(order)
-        }
-        test_results.append(result)
-
-    return render_template('admin/test_orders.html', test_results=test_results)
 
 
 # ============= ARTICLE MANAGEMENT ROUTES =============
