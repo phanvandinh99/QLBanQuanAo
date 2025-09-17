@@ -504,8 +504,9 @@ def cancel_order(invoice):
         send_order_status_update_email(current_user, order, action_by="customer")
 
         flash('Đơn hàng đã được hủy thành công!', 'success')
-        except Exception:
-            flash('Có lỗi xảy ra khi hủy đơn hàng', 'danger')
+    except Exception:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi hủy đơn hàng', 'danger')
     
     return redirect(url_for('order_detail', invoice=invoice))
 
