@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content%}
+{% include 'header.html' %}
+
+<div class="container" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div class="card shadow" style="max-width: 500px;">
+        <div class="card-body text-center p-5">
+            <div class="mb-4">
+                <i class="fas fa-credit-card fa-3x text-primary"></i>
+            </div>
+            <h4 class="mb-3">Đang chuyển hướng đến VNPAY...</h4>
+            <p class="text-muted mb-4">
+                Vui lòng đợi trong giây lát. Bạn sẽ được chuyển đến cổng thanh toán VNPAY an toàn.
+            </p>
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="vnpayForm" action="{{ url_for('vnpay_payment') }}" method="POST" style="display: none;">
+    <input type="hidden" name="CustomerName" value="{{ customer_name }}">
+    <input type="hidden" name="CustomerEmail" value="{{ customer_email }}">
+    <input type="hidden" name="CustomerPhone" value="{{ customer_phone }}">
+    <input type="hidden" name="CustomerAddress" value="{{ customer_address }}">
+    <input type="hidden" name="amount" value="0"> <!-- Will be calculated in vnpay_payment -->
+    <input type="hidden" name="order_invoice" value="{{ invoice }}">
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit the form after a short delay
+    setTimeout(function() {
+        document.getElementById('vnpayForm').submit();
+    }, 2000); // 2 second delay to show the message
+});
+</script>
+
+{% include 'footer.html' %}
+{% endblock %}

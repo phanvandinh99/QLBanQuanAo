@@ -167,12 +167,33 @@ def vnpay_payment():
         flash('Vui lòng đăng nhập để thanh toán', 'danger')
         return redirect(url_for('customer_login'))
 
-    # Check if cart is empty
-    if 'Shoppingcart' not in session or not session['Shoppingcart']:
-        flash('Giỏ hàng trống!', 'danger')
-        return redirect(url_for('getCart'))
+    # Check for pending order from checkout
+    pending_invoice = session.get('vnpay_pending_order')
+    if pending_invoice:
+        # Get order from database
+        order = CustomerOrder.query.filter_by(invoice=pending_invoice, customer_id=current_user.id).first()
+        if not order:
+            print("ERROR: Order not found")
+            flash('Không tìm thấy đơn hàng!', 'danger')
+            return redirect(url_for('payment_history'))
 
-    try:
+        # Clear pending order from session
+        session.pop('vnpay_pending_order', None)
+
+        # Use order data
+        customer_address = order.address or ''
+        final_amount = int(order.amount)
+        invoice = pending_invoice
+
+        print(f"Using existing order: {pending_invoice}, amount: {final_amount}")
+
+        # For pending order, we don't need to store last_vnpay_order since order already exists
+    else:
+        # Legacy method - calculate from cart (for backward compatibility)
+        if 'Shoppingcart' not in session or not session['Shoppingcart']:
+            flash('Giỏ hàng trống!', 'danger')
+            return redirect(url_for('getCart'))
+
         customer_address = request.form.get('CustomerAddress', '')
 
         # Calculate total amount from cart
@@ -214,7 +235,7 @@ def vnpay_payment():
                 customer_id=customer_id,
                 orders=json.dumps(session['Shoppingcart']),
                 status="Đang xác nhận",  # Order status: pending confirmation
-                payment_status="Đã thanh toán",  # Payment status: already paid online
+                payment_status="Đang xử lý",  # Payment status: processing
                 address=customer_address,
                 amount=final_amount,
                 payment_method='vnpay'
@@ -253,54 +274,41 @@ def vnpay_payment():
         }
         session.modified = True
 
-        from shop.vnpay_utils import create_vnpay_instance
-        vnpay = create_vnpay_instance()
+    # Create VNPAY payment for both pending order and legacy cart
+    from shop.vnpay_utils import create_vnpay_instance
+    vnpay = create_vnpay_instance()
 
-        order_info = f'Thanh toan don hang {invoice}'
-        if len(order_info) > 255:
-            order_info = order_info[:255]
+    order_info = f'Thanh toan don hang {invoice}'
+    if len(order_info) > 255:
+        order_info = order_info[:255]
 
-        if final_amount <= 0 or final_amount > 100000000:
-            flash('Số tiền thanh toán không hợp lệ!', 'danger')
-            return redirect(url_for('getCart'))
-
-        # Lấy IP address của client
-        client_ip = request.remote_addr or request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
-
-        payment_url = vnpay.create_payment_url(
-            order_info=order_info,
-            order_id=invoice,
-            amount=final_amount,
-            ip_addr=client_ip
-        )
-
-        # Store order info in session for return processing
-        session['pending_order'] = {
-            'invoice': invoice,
-            'amount': final_amount
-        }
-        print(f"Session pending_order stored: {session['pending_order']}")
-
-        flash('Đang chuyển hướng đến trang thanh toán VNPAY...', 'info')
-        print("=" * 50)
-        print("VNPAY PAYMENT INITIATION - SUCCESS")
-        print("=" * 50)
-        return redirect(payment_url)
-
-    except Exception as e:
-        print("=" * 50)
-        print("VNPAY PAYMENT INITIATION - ERROR")
-        print("=" * 50)
-        print(f"Error type: {type(e).__name__}")
-        print(f"Error message: {str(e)}")
-        import traceback
-        print("Full traceback:")
-        traceback.print_exc()
-        print("=" * 50)
-
-        db.session.rollback()
-        flash('Có lỗi xảy ra khi xử lý thanh toán VNPAY', 'danger')
+    if final_amount <= 0 or final_amount > 100000000:
+        flash('Số tiền thanh toán không hợp lệ!', 'danger')
         return redirect(url_for('getCart'))
+
+    # Lấy IP address của client
+    client_ip = request.remote_addr or request.environ.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+
+    payment_url = vnpay.create_payment_url(
+        order_info=order_info,
+        order_id=invoice,
+        amount=final_amount,
+        ip_addr=client_ip
+    )
+
+    # Store order info in session for return processing
+    session['pending_order'] = {
+        'invoice': invoice,
+        'amount': final_amount
+    }
+    print(f"Session pending_order stored: {session['pending_order']}")
+
+    flash('Đang chuyển hướng đến trang thanh toán VNPAY...', 'info')
+    print("=" * 50)
+    print("VNPAY PAYMENT INITIATION - SUCCESS")
+    print("=" * 50)
+    return redirect(payment_url)
+
 
 
 @app.route('/vnpay_return', methods=['GET', 'POST', 'HEAD'])

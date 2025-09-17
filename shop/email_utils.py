@@ -66,8 +66,11 @@ def send_order_confirmation_email(customer, order):
                     <p><strong>Mã đơn hàng:</strong> {order.invoice}</p>
                     <p><strong>Ngày đặt:</strong> {order.date_created.strftime('%d/%m/%Y %H:%M')}</p>
                     <p><strong>Trạng thái:</strong> {order.status}</p>
-                    <p><strong>Phương thức thanh toán:</strong> {order.payment_method.upper()}</p>
+                    <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
+                    <p><strong>Phương thức nhận hàng:</strong> {"🏠 Giao tận nhà" if order.delivery_method == "home_delivery" else "🏪 Nhận tại cửa hàng"}</p>
+                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.address + "</p>" if order.delivery_method == "home_delivery" and order.address else ""}
+                    {"<p><strong>Cửa hàng nhận hàng:</strong> " + order.pickup_store.replace('_', ' ').title() + "</p>" if order.delivery_method == "instore_pickup" and order.pickup_store else ""}
                 </div>
 
                 <div class="order-info">
@@ -126,9 +129,9 @@ def send_order_confirmation_email(customer, order):
 
                 <div class="footer">
                     <p>Cảm ơn quý khách đã mua hàng tại Belluni!</p>
-                    <p>Chúng tôi sẽ liên hệ với quý khách trong thời gian sớm nhất để xác nhận và giao hàng.</p>
+                    {"<p>Đơn hàng của quý khách sẽ được giao đến địa chỉ đã cung cấp trong vòng 2-3 ngày làm việc.</p>" if order.delivery_method == "home_delivery" else "<p>Đơn hàng của quý khách đã sẵn sàng để nhận tại cửa hàng. Vui lòng đến cửa hàng trong giờ mở cửa để nhận hàng.</p>"}
                     <p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hoặc hotline.</p>
-                    <p><strong>Email:</strong> VietHoang@gmail.com | <strong>Hotline:</strong> 1900-xxxx</p>
+                    <p><strong>Email:</strong> VietHoang@gmail.com | <strong>Hotline:</strong> 0033.219.4677</p>
                 </div>
             </div>
         </body>
@@ -187,6 +190,14 @@ def send_order_status_update_email(customer, order, action_by="system"):
             status_border = "#99d6ff"
             status_text_color = "#004085"
             icon = "🚚"
+
+        elif order.status == 'Sẵn sàng nhận tại cửa hàng':
+            status_title = "Đơn hàng sẵn sàng nhận tại cửa hàng"
+            status_message = "Đơn hàng của quý khách đã được chuẩn bị sẵn sàng. Vui lòng đến cửa hàng Belluni để nhận hàng trong giờ mở cửa."
+            status_color = "#cce5ff"  # xanh dương nhạt
+            status_border = "#99d6ff"
+            status_text_color = "#004085"
+            icon = "🏪"
 
         elif order.status == 'Đã giao':
             status_title = "Đơn hàng đã giao thành công"
@@ -253,9 +264,11 @@ def send_order_status_update_email(customer, order, action_by="system"):
                 <div class="order-info">
                     <h4>Thông tin đơn hàng</h4>
                     <p><strong>Ngày đặt hàng:</strong> {order.date_created.strftime('%d/%m/%Y %H:%M')}</p>
-                    <p><strong>Phương thức thanh toán:</strong> {order.payment_method.upper()}</p>
+                    <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
-                    <p><strong>Địa chỉ giao hàng:</strong> {order.address}</p>
+                    <p><strong>Phương thức nhận hàng:</strong> {"🏠 Giao tận nhà" if order.delivery_method == "home_delivery" else "🏪 Nhận tại cửa hàng"}</p>
+                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.address + "</p>" if order.delivery_method == "home_delivery" and order.address else ""}
+                    {"<p><strong>Cửa hàng nhận hàng:</strong> " + order.pickup_store.replace('_', ' ').title() + "</p>" if order.delivery_method == "instore_pickup" and order.pickup_store else ""}
                 </div>
 
                 <p>Kính chào <strong>{customer.first_name} {customer.last_name}</strong>,</p>

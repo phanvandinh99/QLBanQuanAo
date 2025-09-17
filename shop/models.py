@@ -69,7 +69,7 @@ class CustomerOrder(db.Model):
     __tablename__ = 'customer_order'
     id = db.Column(db.Integer, primary_key=True)
     invoice = db.Column(db.String(20), unique=True, nullable=False)
-    status = db.Column(db.String(20), default='Đang xác nhận')  # Order status: Đang xác nhận, Đang giao, Đã giao, Hủy đơn
+    status = db.Column(db.String(20), default='Đang xác nhận')  # Order status: Đang xác nhận, Đang giao, Đã giao, Hủy đơn, Sẵn sàng nhận tại cửa hàng
     payment_status = db.Column(db.String(20), default='Chưa thanh toán')  # Payment status: Chưa thanh toán (COD), Đã thanh toán (VNPAY)
     customer_id = db.Column(db.Integer, nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
@@ -77,6 +77,8 @@ class CustomerOrder(db.Model):
     address = db.Column(db.String(200))
     amount = db.Column(db.Numeric(10,2), default=0)
     payment_method = db.Column(db.String(20), default='cod')
+    delivery_method = db.Column(db.String(20), default='home_delivery')  # home_delivery or instore_pickup
+    pickup_store = db.Column(db.String(200), default='')  # Store location for pickup
 
 class Article(db.Model):
     __tablename__ = 'articles'

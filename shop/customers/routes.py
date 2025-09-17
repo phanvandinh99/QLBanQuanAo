@@ -245,21 +245,131 @@ def get_order():
                            brands=brands(), categories=categories(), get_order_data=get_order_data)
 
 
+@app.route('/checkout', methods=['GET', 'POST'])
+@login_required
+def checkout():
+    from shop.customers.forms import CheckoutForm
+    form = CheckoutForm()
+
+    # Calculate cart totals
+    if 'Shoppingcart' in session:
+        subtotal = 0
+        for key, item in session['Shoppingcart'].items():
+            subtotal += float(item['price']) * int(item['quantity'])
+
+        # Apply discount if any
+        discount = 0
+        for key, item in session['Shoppingcart'].items():
+            if 'discount' in item:
+                discount += (float(item['discount']) / 100) * (float(item['price']) * int(item['quantity']))
+
+        total = subtotal - discount
+    else:
+        subtotal = 0
+        discount = 0
+        total = 0
+
+    if form.validate_on_submit():
+        # Check if cart exists
+        if 'Shoppingcart' not in session or not session['Shoppingcart']:
+            flash('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng trước khi đặt hàng.', 'warning')
+            return redirect(url_for('carts'))
+
+        delivery_method = form.delivery_method.data
+        payment_method = form.payment_method.data
+        customer_address = form.customer_address.data.strip() if delivery_method == 'home_delivery' and form.customer_address.data else ''
+        pickup_store = form.pickup_store.data if delivery_method == 'instore_pickup' else ''
+
+        # Calculate total amount
+        total_amount = 0
+        for key, item in session['Shoppingcart'].items():
+            price = float(item.get('price', 0))
+            quantity = int(item.get('quantity', 0))
+            discount = float(item.get('discount', 0))
+            item_total = price * quantity * (1 - discount / 100)
+            total_amount += item_total
+
+        # Create order
+        invoice = secrets.token_hex(5)
+        order = CustomerOrder(
+            invoice=invoice,
+            customer_id=current_user.id,
+            orders=json.dumps(session['Shoppingcart']),
+            status="Đang xác nhận",
+            address=customer_address,
+            amount=total_amount,
+            payment_status="Chưa thanh toán" if payment_method == "cod" else "Đang xử lý",
+            payment_method=payment_method,
+            delivery_method=delivery_method,
+            pickup_store=pickup_store
+        )
+
+        try:
+            db.session.add(order)
+            db.session.commit()
+
+            # Handle payment method
+            if payment_method == 'vnpay':
+                # For VNPAY, create a temporary form submission to vnpay_payment
+                # We need to redirect to a page that will auto-submit the form
+                session['vnpay_pending_order'] = invoice
+                return render_template('customers/vnpay_redirect.html',
+                                     invoice=invoice,
+                                     customer_address=customer_address or '',
+                                     customer_email=current_user.email,
+                                     customer_name=f"{current_user.first_name} {current_user.last_name}",
+                                     customer_phone=current_user.phone_number)
+            else:
+                # COD - Send confirmation email and redirect to payment history
+                customer = Register.query.get(current_user.id)
+                if customer and customer.email:
+                    email_sent = send_order_confirmation_email(customer, order)
+                    if not email_sent:
+                        print(f"Không thể gửi email xác nhận đến {customer.email}")
+
+                # Clear cart
+                session.pop('Shoppingcart', None)
+
+                flash('Đơn hàng đã được đặt thành công! Email xác nhận đã được gửi đến địa chỉ email của bạn.', 'success')
+                return redirect(url_for('payment_history'))
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Lỗi tạo đơn hàng: {e}")
+            flash('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.', 'danger')
+
+    return render_template('customers/checkout.html', form=form, subtotal=subtotal, discount=discount, total=total)
+
+
 @app.route('/submit_order', methods=['POST'])
 @login_required
 def submit_order():
-    address = request.form.get('CustomerAddress')
+    # Legacy route for backward compatibility
+    address = request.form.get('CustomerAddress', '')
+    delivery_method = request.form.get('delivery_method', 'home_delivery')
+    pickup_store = request.form.get('pickup_store', '')
 
     if request.method == "POST":
         try:
             # Create new order from session cart
             if 'Shoppingcart' in session and session['Shoppingcart']:
+                # Calculate total amount
+                total_amount = 0
+                for key, item in session['Shoppingcart'].items():
+                    price = float(item.get('price', 0))
+                    quantity = int(item.get('quantity', 0))
+                    discount = float(item.get('discount', 0))
+                    item_total = price * quantity * (1 - discount / 100)
+                    total_amount += item_total
+
                 customer_id = current_user.id
                 invoice = secrets.token_hex(5)
                 order = CustomerOrder(invoice=invoice, customer_id=customer_id,
                                       orders=json.dumps(session['Shoppingcart']),
                                       status="Đang xác nhận", address=address,
-                                      payment_status="Chưa thanh toán", payment_method="cod")
+                                      amount=total_amount,
+                                      payment_status="Chưa thanh toán", payment_method="cod",
+                                      delivery_method=delivery_method, pickup_store=pickup_store)
                 db.session.add(order)
                 db.session.commit()
 

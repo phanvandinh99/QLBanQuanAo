@@ -547,10 +547,10 @@
                               <th>Tổng giá tiền</th>
                               <th>Trạng thái đơn hàng</th>
                               <th>Trạng thái thanh toán</th>
+                              <th>Phương thức giao hàng</th>
                               <th>Ngày mua</th>
                               <th>Chi Tiết</th>
-                              <th>Xác nhận</th>
-                              <th>Hủy</th>
+                              <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -577,6 +577,15 @@
                                   <span class="badge badge-secondary">{{order.display_payment_status}}</span>
                                 {% endif %}
                               </td>
+                              <td>
+                                {% if order.delivery_method == 'instore_pickup' %}
+                                  <span class="badge badge-primary">🏪 Nhận tại cửa hàng</span>
+                                {% elif order.delivery_method == 'home_delivery' %}
+                                  <span class="badge badge-info">🚚 Giao tận nhà</span>
+                                {% else %}
+                                  <span class="badge badge-secondary">N/A</span>
+                                {% endif %}
+                              </td>
                               <td>{{order.date_created}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
@@ -585,16 +594,24 @@
                                 </button>
                               </td>
                               <td>
-                                <button type="button" class="btn btn-success" data-toggle="modal"
-                                  data-target="#accept-{{order.id}}" style="margin-left: -5px">
-                                  Xác nhận
-                                </button>
-                              </td>
-                              <td>
-                                <button type="button" class="btn btn-danger" data-toggle="modal"
-                                  data-target="#delete-{{order.id}}">
-                                  Hủy
-                                </button>
+                                <div class="btn-group-vertical btn-group-sm">
+                                  {% if order.delivery_method == 'instore_pickup' and order.status == 'Đang xác nhận' %}
+                                    <button type="button" class="btn btn-warning btn-sm mb-1" data-toggle="modal"
+                                      data-target="#ready-{{order.id}}" title="Đánh dấu sẵn sàng nhận tại cửa hàng">
+                                      <i class="fas fa-store"></i> Sẵn sàng nhận
+                                    </button>
+                                  {% elif order.status == 'Đang xác nhận' %}
+                                    <button type="button" class="btn btn-success btn-sm mb-1" data-toggle="modal"
+                                      data-target="#accept-{{order.id}}" title="Xác nhận giao hàng">
+                                      <i class="fas fa-truck"></i> Xác nhận giao
+                                    </button>
+                                  {% endif %}
+
+                                  <button type="button" class="btn btn-danger btn-sm" data-toggle="modal"
+                                    data-target="#delete-{{order.id}}" title="Hủy đơn hàng">
+                                    <i class="fas fa-times"></i> Hủy đơn
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                             {% endif %}
@@ -629,6 +646,44 @@
                                 </div>
                               </div>
                             </div>
+
+                            <!-- Ready for Pickup Modal -->
+                            {% if order.delivery_method == 'instore_pickup' and order.status == 'Đang xác nhận' %}
+                            <div class="modal fade" id="ready-{{order.id}}" data-backdrop="static"
+                              data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
+                              aria-hidden="true">
+                              <div class="modal-dialog">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="staticBackdropLabel">
+                                      {{'Mã đơn ' + order.invoice}}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+                                  <div class="modal-body">
+                                    <div class="alert alert-info">
+                                      <strong>🏪 Đơn hàng nhận tại cửa hàng</strong><br>
+                                      Cửa hàng: {{ order.pickup_store.replace('_', ' ').title() if order.pickup_store else 'Chưa xác định' }}
+                                    </div>
+                                    <span class="text-primary">Bạn có muốn đánh dấu đơn hàng này đã sẵn sàng để khách hàng nhận tại cửa hàng không?</span>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-warning btn-secondary" data-dismiss="modal">
+                                      Hủy
+                                    </button>
+                                    <form action="{{url_for('ready_for_pickup', id=order.id)}}" method="POST">
+                                      <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-store"></i> Sẵn sàng nhận
+                                      </button>
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {% endif %}
+
                             <div class="modal fade" id="delete-{{order.id}}" data-backdrop="static"
                               data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
                               aria-hidden="true">

@@ -295,6 +295,34 @@ def delivered_order(id):
     return redirect(url_for('orders_manager'))
 
 
+@app.route('/ready_for_pickup/<int:id>', methods=['GET', 'POST'])
+def ready_for_pickup(id):
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    if request.method == "POST":
+        customer_order = CustomerOrder.query.get_or_404(id)
+
+        # Only allow for instore pickup orders
+        if customer_order.delivery_method != 'instore_pickup':
+            flash('Chỉ áp dụng cho đơn hàng nhận tại cửa hàng!', 'warning')
+            return redirect(url_for('orders_manager'))
+
+        customer_order.status = 'Sẵn sàng nhận tại cửa hàng'
+        db.session.commit()
+
+        # Send email notification to customer
+        customer = Register.query.get(customer_order.customer_id)
+        if customer:
+            send_order_status_update_email(customer, customer_order, action_by="admin")
+
+        flash('Đơn hàng đã được cập nhật thành "Sẵn sàng nhận tại cửa hàng"', 'success')
+        return redirect(url_for('orders_manager'))
+
+    return redirect(url_for('orders_manager'))
+
+
 @app.route('/delete_order/<int:id>', methods=['GET', 'POST'])
 def delete_order(id):
     if 'email' not in session:

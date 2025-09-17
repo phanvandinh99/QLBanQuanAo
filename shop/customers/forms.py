@@ -22,3 +22,52 @@ class CustomerLoginFrom(FlaskForm):
     password = PasswordField('Password: ', [validators.DataRequired()])
 
 
+class CheckoutForm(FlaskForm):
+    delivery_method = RadioField('Phương thức nhận hàng: ',
+                                [validators.DataRequired(message='Vui lòng chọn phương thức nhận hàng')],
+                                choices=[('home_delivery', 'Giao tận nhà'),
+                                        ('instore_pickup', 'Nhận tại cửa hàng')],
+                                default='home_delivery')
+
+    customer_address = TextAreaField('Địa chỉ giao hàng: ',
+                                   render_kw={"placeholder": "Nhập địa chỉ giao hàng chi tiết"})
+
+    pickup_store = RadioField('Chọn cửa hàng nhận hàng: ',
+                             choices=[('belluni_cau_dien', 'Belluni Cầu Diễn - Số 298 Đ. Cầu Diễn, Minh Khai, Bắc Từ Liêm, Hà Nội'),
+                                     ('belluni_other', 'Cửa hàng khác (sẽ có trong tương lai)')],
+                             default='belluni_cau_dien')
+
+    payment_method = RadioField('Phương thức thanh toán: ',
+                               [validators.DataRequired(message='Vui lòng chọn phương thức thanh toán')],
+                               choices=[('cod', 'Thanh toán khi nhận hàng (COD)'),
+                                       ('vnpay', 'Thanh toán online (VNPAY)')],
+                               default='cod')
+    submit = SubmitField('Đặt hàng')
+
+    def validate(self):
+        """Custom validation to ensure proper fields are filled based on delivery and payment method"""
+        if not super().validate():
+            return False
+
+        delivery_method = self.delivery_method.data
+
+        if delivery_method == 'home_delivery':
+            # For home delivery, address is optional but if provided should be valid length
+            if self.customer_address.data and len(self.customer_address.data.strip()) < 10:
+                self.customer_address.errors.append('Địa chỉ giao hàng phải có ít nhất 10 ký tự')
+                return False
+        elif delivery_method == 'instore_pickup':
+            # For instore pickup, pickup_store should be selected
+            if not self.pickup_store.data:
+                self.pickup_store.errors.append('Vui lòng chọn cửa hàng nhận hàng')
+                return False
+
+        # Additional validation for payment method
+        payment_method = self.payment_method.data
+        if payment_method not in ['cod', 'vnpay']:
+            self.payment_method.errors.append('Phương thức thanh toán không hợp lệ')
+            return False
+
+        return True
+
+
