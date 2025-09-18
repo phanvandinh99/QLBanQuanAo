@@ -653,6 +653,7 @@ def toggle_article_status(id):
 @app.route('/admin/orders/<int:order_id>/export-invoice')
 def export_invoice(order_id):
     try:
+        current_app.logger.info(f"Starting PDF export for order {order_id}")
         from shop.models import Order, Product, Customer
         from flask import make_response, send_file, jsonify
         import io
@@ -664,15 +665,24 @@ def export_invoice(order_id):
 
         # Lấy thông tin đơn hàng
         order = Order.query.get_or_404(order_id)
+        current_app.logger.info(f"Order found: {order.invoice}")
+
+        # Validate order has required attributes
+        if not hasattr(order, 'created_at'):
+            current_app.logger.error(f"Order {order_id} missing created_at attribute")
+            return jsonify({'error': 'Đơn hàng thiếu thông tin ngày tạo'}), 400
 
         # Lấy thông tin khách hàng
         customer = Customer.query.get(order.customer_id)
-
         if not customer:
+            current_app.logger.error(f"Customer not found for order {order_id}")
             return jsonify({'error': 'Không tìm thấy thông tin khách hàng'}), 404
+
+        current_app.logger.info(f"Customer found: {customer.first_name} {customer.last_name}")
 
         # Parse dữ liệu sản phẩm
         order_data = get_order_data(order)
+        current_app.logger.info(f"Order data keys: {list(order_data.keys()) if order_data else 'None'}")
         products = []
 
         if order_data and isinstance(order_data, dict):
@@ -684,17 +694,25 @@ def export_invoice(order_id):
 
                     try:
                         quantity = int(quantity) if quantity else 0
-                        price = int(price) if price else 0
-                        discount = int(discount) if discount else 0
+                        price = float(price) if price else 0.0
+                        discount = float(discount) if discount else 0.0
                     except (ValueError, TypeError):
                         quantity = 0
-                        price = 0
-                        discount = 0
+                        price = 0.0
+                        discount = 0.0
 
                     if quantity > 0:
-                        discount_amount = int(price * discount / 100) if discount > 0 else 0
-                        final_price = price - discount_amount
+                        # Calculate discount amount per item (same logic as admin orders)
+                        discount_amount_per_item = (price * discount / 100) if discount > 0 else 0.0
+
+                        # Calculate discounted price per item
+                        final_price = price - discount_amount_per_item
+
+                        # Calculate total for this item after discount
                         total = final_price * quantity
+
+                        # Calculate total discount for this item
+                        total_discount = discount_amount_per_item * quantity
 
                         # Lấy thông tin sản phẩm từ database nếu có
                         product_info = None
@@ -708,13 +726,15 @@ def export_invoice(order_id):
 
                         products.append({
                             'name': product.get('name', 'N/A'),
-                            'brand': product_info.brand if product_info else product.get('brand', 'N/A'),
+                            'brand': product_info.brand.name if product_info and product_info.brand and hasattr(product_info.brand, 'name') else product.get('brand', 'N/A'),
                             'color': product_info.colors if product_info else product.get('color', 'N/A'),
                             'quantity': quantity,
                             'original_price': price,
                             'discount': discount,
+                            'discount_amount': discount_amount_per_item,
                             'final_price': final_price,
-                            'total': total
+                            'total': total,
+                            'total_discount': total_discount
                         })
 
         # Tạo PDF với encoding UTF-8
@@ -817,7 +837,17 @@ def export_invoice(order_id):
 
         # Thông tin đơn hàng
         elements.append(Paragraph(ensure_unicode(f"<b>Mã đơn hàng:</b> #{order_id}"), info_style))
-        elements.append(Paragraph(ensure_unicode(f"<b>Ngày đặt:</b> {order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}"), info_style))
+        # Format date safely
+        order_date = 'N/A'
+        if order.created_at:
+            try:
+                order_date = order.created_at.strftime('%d/%m/%Y %H:%M')
+                current_app.logger.debug(f"Order date formatted: {order_date}")
+            except Exception as e:
+                current_app.logger.warning(f"Could not format order date: {e}")
+                order_date = str(order.created_at)
+
+        elements.append(Paragraph(ensure_unicode(f"<b>Ngày đặt:</b> {order_date}"), info_style))
         elements.append(Paragraph(ensure_unicode(f"<b>Trạng thái:</b> {order.status}"), info_style))
         elements.append(Spacer(1, 0.2*inch))
 
@@ -845,7 +875,8 @@ def export_invoice(order_id):
 
         for i, product in enumerate(products, 1):
             discount_text = f"{product.get('discount', 0)}%" if product.get('discount', 0) > 0 else '-'
-            discount_amount = product['original_price'] * product['quantity'] * product.get('discount', 0) / 100
+            # Use the calculated discount amount from earlier calculation
+            discount_amount = product.get('total_discount', 0)
 
             table_data.append([
                 ensure_unicode(str(i)),
@@ -904,9 +935,13 @@ def export_invoice(order_id):
         elements.append(Paragraph(ensure_unicode("<i>Cảm ơn quý khách đã mua hàng tại Belluni!</i>"), footer_style))
 
         # Tạo PDF
+        current_app.logger.info("Building PDF document")
         doc.build(elements)
+        current_app.logger.info("PDF document built successfully")
 
         buffer.seek(0)
+        pdf_size = len(buffer.getvalue())
+        current_app.logger.info(f"PDF size: {pdf_size} bytes")
 
         # Trả về file PDF
         return send_file(
@@ -917,5 +952,8 @@ def export_invoice(order_id):
         )
 
     except Exception as e:
-        print(f"Error generating invoice: {str(e)}")
+        current_app.logger.error(f"Error generating invoice for order {order_id}: {str(e)}")
+        current_app.logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Có lỗi xảy ra khi tạo hóa đơn'}), 500
