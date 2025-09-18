@@ -3,7 +3,7 @@ import json
 import hmac
 import hashlib
 from datetime import datetime
-from flask import render_template, session, request, redirect, url_for, flash, jsonify
+from flask import render_template, session, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import current_user
 from shop import app, db
 from shop.models import Order, OrderItem, Category, Brand, Product, Customer
@@ -317,7 +317,8 @@ def vnpay_return():
         is_valid, response_code, order_id = vnpay.validate_response(vnp_response)
 
         if not is_valid:
-            flash('Chữ ký không hợp lệ!', 'danger')
+            current_app.logger.error(f"VNPAY signature validation failed for order {order_id}")
+            flash('Có lỗi xảy ra trong quá trình xử lý thanh toán. Vui lòng liên hệ hỗ trợ nếu tiền đã bị trừ.', 'danger')
             return redirect(url_for('payment_history'))
 
         # Find the order by invoice
@@ -337,6 +338,8 @@ def vnpay_return():
 
         # Process payment result
         if response_code == '00':
+            # Clear shopping cart after successful payment
+            session.pop('Shoppingcart', None)
             flash('Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.', 'success')
         else:
             # Update order status to "Thanh toán thất bại"

@@ -59,17 +59,31 @@ class VNPay:
         vnp_response_code = response_data.get('vnp_ResponseCode', '')
         vnp_txn_ref = response_data.get('vnp_TxnRef', '')
 
-        params_for_hash = {k: v for k, v in response_data.items() if k != 'vnp_SecureHash'}
-        sorted_params = sorted(params_for_hash.items())
-        hash_data = '&'.join([f"{key}={str(value)}" for key, value in sorted_params])
+        # Remove vnp_SecureHash and other non-hash parameters
+        params_for_hash = {k: v for k, v in response_data.items()
+                          if k != 'vnp_SecureHash' and k != 'vnp_SecureHashType'}
 
+        # Sort parameters by key name (case-sensitive)
+        sorted_params = sorted(params_for_hash.items(), key=lambda x: x[0])
+
+        # Create hash data string - URL decode values first
+        hash_parts = []
+        for key, value in sorted_params:
+            # URL decode the value if it's URL encoded
+            decoded_value = urllib.parse.unquote_plus(str(value))
+            hash_parts.append(f"{key}={decoded_value}")
+
+        hash_data = '&'.join(hash_parts)
+
+        # Calculate hash using HMAC-SHA512
         calculated_hash = hmac.new(
             self.hash_secret.encode('utf-8'),
             hash_data.encode('utf-8'),
             hashlib.sha512
         ).hexdigest()
 
-        is_valid = hmac.compare_digest(calculated_hash, vnp_secure_hash)
+        # Use secure comparison
+        is_valid = hmac.compare_digest(calculated_hash.lower(), vnp_secure_hash.lower())
         return is_valid, vnp_response_code, vnp_txn_ref
 
     def get_response_description(self, response_code):

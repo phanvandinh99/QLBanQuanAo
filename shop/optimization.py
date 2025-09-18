@@ -20,9 +20,6 @@ class QueryOptimizer:
     @staticmethod
     def optimize_product_queries():
         """Add database indexes and optimize queries for products"""
-        # This would be run during migration
-        # SQL commands to add indexes:
-
         indexes_sql = [
             "CREATE INDEX IF NOT EXISTS idx_product_name ON product (name);",
             "CREATE INDEX IF NOT EXISTS idx_product_category ON product (category_id);",
@@ -148,7 +145,7 @@ class PerformanceMonitor:
         """End performance timer and log duration"""
         if hasattr(g, 'start_time'):
             duration = time.time() - g.start_time
-            current_app.logger.info(".4f")
+            current_app.logger.info(f"Request duration: {duration:.4f}s")
             return duration
         return None
 
@@ -159,10 +156,17 @@ class PerformanceMonitor:
             return {'status': 'psutil not available'}
 
         try:
+            # Get disk usage for the drive where the application is running
+            import platform
+            if platform.system() == 'Windows':
+                disk_path = os.path.splitdrive(os.getcwd())[0] + '\\'
+            else:
+                disk_path = '/'
+
             stats = {
                 'cpu_percent': psutil.cpu_percent(interval=1),
                 'memory_percent': psutil.virtual_memory().percent,
-                'disk_usage': psutil.disk_usage('/').percent,
+                'disk_usage': psutil.disk_usage(disk_path).percent,
                 'process_memory_mb': psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
             }
             return stats

@@ -4,29 +4,22 @@ Caching utilities for performance optimization
 
 try:
     from flask_caching import Cache
+    cache = Cache()
     CACHING_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception):
+    cache = None
     CACHING_AVAILABLE = False
-    print("⚠️ Flask-Caching not available, caching disabled")
 
 import functools
 import time
-
-# Initialize cache if available
-if CACHING_AVAILABLE:
-    cache = Cache()
-else:
-    cache = None
 
 def init_cache(app):
     """Initialize cache for the Flask app"""
     if CACHING_AVAILABLE and cache:
         cache.init_app(app, config={
-            'CACHE_TYPE': 'simple',  # Use 'redis' in production
-            'CACHE_DEFAULT_TIMEOUT': 300  # 5 minutes default
+            'CACHE_TYPE': 'simple',
+            'CACHE_DEFAULT_TIMEOUT': 300
         })
-    else:
-        print("ℹ️ Caching disabled - Flask-Caching not available")
 
 def cached(timeout=None):
     """Decorator for caching function results"""
