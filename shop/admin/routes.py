@@ -87,7 +87,6 @@ def customer_manager():
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Customer.query.all()
     
-    # Kiểm tra xem mỗi customer có thể xóa hay không
     for customer in customers:
         customer_orders = Order.query.filter_by(customer_id=customer.id).all()
         customer.can_delete = len(customer_orders) == 0
@@ -342,7 +341,6 @@ def delete_customer(id):
         return redirect(url_for('login'))
     customer = Customer.query.get_or_404(id)
     
-    # Kiểm tra xem customer có đơn hàng nào không
     customer_orders = Order.query.filter_by(customer_id=id).all()
     if customer_orders:
         flash(f"Tài khoản {customer.username} đã đặt hàng (Ràng buộc khóa) không thể xóa.", "danger")

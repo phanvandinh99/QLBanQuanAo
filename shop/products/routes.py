@@ -282,7 +282,6 @@ def addproduct():
                 return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
                                        categories=categories, user=user[0])
 
-            # Kiểm tra file ảnh
             image_1 = request.files.get('image_1')
             image_2 = request.files.get('image_2')
             image_3 = request.files.get('image_3')

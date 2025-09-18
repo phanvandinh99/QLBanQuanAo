@@ -17,26 +17,20 @@ except ImportError:
 import pymysql
 pymysql.install_as_MySQLdb()
 
-# Import config
 from config import get_config
 
-# Create app with configuration
 app = Flask(__name__)
 config_class = get_config()
 app.config.from_object(config_class)
 
-# Initialize SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
-
-# Initialize extensions (SQLAlchemy already initialized above)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'customer_login'
 mail = Mail(app)
 
-# Custom image extensions including webp, bmp, svg, ico
 ALLOWED_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico',
     'JPG', 'JPEG', 'PNG', 'GIF', 'WEBP', 'BMP', 'SVG', 'ICO'
@@ -48,37 +42,43 @@ if FLASK_UPLOADS_AVAILABLE:
 else:
     photos = None
 
-# Custom filter for VND currency format
 @app.template_filter('vnd')
 def vnd_format(value):
     """Format number as VND currency"""
     try:
-        return f"{int(value):,} ₫"
+        # Handle different input types
+        if isinstance(value, str):
+            # Remove commas and spaces, then convert
+            value = value.replace(',', '').replace(' ', '').strip()
+            if '.' in value:
+                return f"{float(value):,.0f} ₫"
+            else:
+                return f"{int(value):,} ₫"
+        elif isinstance(value, (int, float)):
+            return f"{int(value):,} ₫"
+        else:
+            num_value = float(value)
+            return f"{int(num_value):,} ₫"
     except (ValueError, TypeError):
         return f"{value} ₫"
 
-# Import models and setup login manager
 from shop.models import Customer
 
 @login_manager.user_loader
 def load_user(user_id):
     return Customer.query.get(int(user_id))
 
-# Initialize caching
 from shop.caching import init_cache
 init_cache(app)
 
-# Register error handlers
 from shop.errors import register_error_handlers
 register_error_handlers(app)
 
-# Import routes
 from shop.admin import routes
 from shop.products import routes
 from shop.carts import routes
 from shop.customers import routes
 
-# Performance monitoring
 @app.before_request
 def before_request():
     from shop.optimization import PerformanceMonitor

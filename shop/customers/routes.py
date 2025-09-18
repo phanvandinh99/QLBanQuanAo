@@ -31,7 +31,7 @@ def get_order_data(order):
         for item in order_items:
             order_data[str(item.product_id)] = {
                 'name': item.product.name,
-                'price': str(item.unit_price),
+                'price': float(item.unit_price),  # Convert to float for VNĐ filter to work properly
                 'discount': item.discount,
                 'quantity': item.quantity,
                 'color': getattr(item.product, 'colors', ''),
@@ -99,7 +99,6 @@ def customer_register():
         return redirect(url_for('home'))
     form = CustomerRegisterForm()
     if form.validate_on_submit():
-        # Kiểm tra email đã tồn tại chưa
         if Admin.query.filter_by(email=form.email.data).first():
             flash(f'Email đã được sử dụng!', 'danger')
             return redirect(url_for('customer_register'))
@@ -107,18 +106,15 @@ def customer_register():
             flash(f'Email đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
         
-        # Kiểm tra username đã tồn tại chưa
         if Customer.query.filter_by(username=form.username.data).first():
             flash(f'Tên đăng nhập đã được sử dụng!', 'danger')
             return redirect(url_for('customer_register'))
         
-        # Kiểm tra số điện thoại đã tồn tại chưa
         if Customer.query.filter_by(phone_number=form.phone_number.data).first():
             flash(f'Số điện thoại đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
         
         try:
-            # Tạo user mới
             hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
             register = Register(
                 username=form.username.data, 
@@ -199,7 +195,6 @@ def get_order():
     if not current_user.is_authenticated:
         return redirect(url_for('customer_login'))
     
-    # Check if cart is empty
     if 'Shoppingcart' not in session or not session['Shoppingcart']:
         flash('Giỏ hàng trống!', 'danger')
         return redirect(url_for('getCart'))
@@ -207,7 +202,6 @@ def get_order():
     customer_id = current_user.id
     customer = Customer.query.filter_by(id=customer_id).first()
     
-    # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
@@ -225,13 +219,11 @@ def checkout():
     from shop.customers.forms import CheckoutForm
     form = CheckoutForm()
 
-    # Calculate cart totals
     if 'Shoppingcart' in session:
         subtotal = 0
         for key, item in session['Shoppingcart'].items():
             subtotal += float(item['price']) * int(item['quantity'])
 
-        # Apply discount if any
         discount = 0
         for key, item in session['Shoppingcart'].items():
             if 'discount' in item:
@@ -244,7 +236,6 @@ def checkout():
         total = 0
 
     if form.validate_on_submit():
-        # Check if cart exists
         if 'Shoppingcart' not in session or not session['Shoppingcart']:
             flash('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng trước khi đặt hàng.', 'warning')
             return redirect(url_for('carts'))
@@ -254,7 +245,6 @@ def checkout():
         customer_address = form.customer_address.data.strip() if delivery_method == 'home_delivery' and form.customer_address.data else ''
         pickup_store = form.pickup_store.data if delivery_method == 'instore_pickup' else ''
 
-        # Calculate total amount
         total_amount = 0
         for key, item in session['Shoppingcart'].items():
             price = float(item.get('price', 0))
@@ -341,7 +331,6 @@ def submit_order():
         try:
             # Create new order from session cart
             if 'Shoppingcart' in session and session['Shoppingcart']:
-                # Calculate total amount
                 total_amount = 0
                 for key, item in session['Shoppingcart'].items():
                     price = float(item.get('price', 0))
