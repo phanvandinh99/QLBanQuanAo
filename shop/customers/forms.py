@@ -1,7 +1,8 @@
 from wtforms import Form, StringField, TextAreaField, PasswordField, SubmitField, validators, ValidationError, RadioField
 from flask_wtf import FlaskForm
-from shop.models import Customer  # Changed from .models to shop.models
+from shop.models import Customer
 from flask_wtf.file import FileRequired, FileAllowed, FileField
+from flask import flash
 
 
 class CustomerRegisterForm(FlaskForm):
@@ -15,6 +16,21 @@ class CustomerRegisterForm(FlaskForm):
                                             validators.EqualTo('confirm', message='Mật khẩu xác nhận không khớp!')])
     confirm = PasswordField('Repeat Password: ', [validators.DataRequired()])
     submit = SubmitField('Register')
+
+    def validate_email(self, field):
+        """Check if email already exists"""
+        if Customer.query.filter_by(email=field.data).first():
+            raise ValidationError('Email đã được đăng ký!')
+
+    def validate_username(self, field):
+        """Check if username already exists"""
+        if Customer.query.filter_by(username=field.data).first():
+            raise ValidationError('Tên đăng nhập đã được sử dụng!')
+
+    def validate_phone_number(self, field):
+        """Check if phone number already exists"""
+        if Customer.query.filter_by(phone_number=field.data).first():
+            raise ValidationError('SĐT đã tồn tại trong hệ thống!')
 
 
 class CustomerLoginFrom(FlaskForm):

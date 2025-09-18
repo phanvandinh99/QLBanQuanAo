@@ -131,6 +131,17 @@
     margin-bottom: 2px;
 }
 
+.form-text {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+    display: block;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
 .checkbox-group {
     margin: 25px 0;
     padding: 20px;
@@ -346,6 +357,7 @@
                 {% endfor %}
               </div>
               {% endif %}
+              <small class="form-text text-muted">Ví dụ: 0987654321 hoặc 0123456789</small>
             </div>
             <div class="form-group">
               {{ form.gender.label(class="form-label") }}

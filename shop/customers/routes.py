@@ -59,7 +59,7 @@ def update_account():
                 return redirect(url_for('update_account'))
         if detail_customer.phone_number != phone_number:
             if Customer.query.filter_by(phone_number=phone_number).first():
-                flash(f'Phone Number Used!', 'danger')
+                flash(f'SĐT đã tồn tại trong hệ thống!', 'danger')
                 return redirect(url_for('update_account'))
         detail_customer.first_name = first_name
         detail_customer.last_name = last_name
@@ -99,40 +99,28 @@ def customer_register():
         return redirect(url_for('home'))
     form = CustomerRegisterForm()
     if form.validate_on_submit():
+        # Only check for admin email conflict (since admin and customer might share emails)
         if Admin.query.filter_by(email=form.email.data).first():
-            flash(f'Email đã được sử dụng!', 'danger')
+            flash(f'Email đã được sử dụng bởi quản trị viên!', 'danger')
             return redirect(url_for('customer_register'))
-        if Customer.query.filter_by(email=form.email.data).first():
-            flash(f'Email đã được đăng ký!', 'danger')
-            return redirect(url_for('customer_register'))
-        
-        if Customer.query.filter_by(username=form.username.data).first():
-            flash(f'Tên đăng nhập đã được sử dụng!', 'danger')
-            return redirect(url_for('customer_register'))
-        
-        if Customer.query.filter_by(phone_number=form.phone_number.data).first():
-            flash(f'Số điện thoại đã được đăng ký!', 'danger')
-            return redirect(url_for('customer_register'))
-        
+
         try:
             hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
-            register = Register(
-                username=form.username.data, 
-                email=form.email.data, 
+            customer = Customer(
+                username=form.username.data,
+                email=form.email.data,
                 first_name=form.first_name.data,
-                last_name=form.last_name.data, 
+                last_name=form.last_name.data,
                 phone_number=form.phone_number.data,
                 gender=form.gender.data,
-                password=hash_password,
-                date_created=datetime.utcnow(),
-                lock=False
+                password=hash_password
             )
-            db.session.add(register)
+            db.session.add(customer)
             db.session.commit()
-            
+
             flash(f'Chào mừng {form.first_name.data} {form.last_name.data}! Cảm ơn bạn đã đăng ký', 'success')
             return redirect(url_for('customer_login'))
-            
+
         except Exception as e:
             db.session.rollback()
             flash(f'Có lỗi xảy ra khi đăng ký! Vui lòng thử lại.', 'danger')
