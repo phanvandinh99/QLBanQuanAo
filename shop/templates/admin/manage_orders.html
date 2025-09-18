@@ -554,7 +554,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {%for order in orders %} {% if order.status == "Đang xác nhận" %}
+                            {%for order in orders %} {% if order.status == "pending" %}
                             <!-- Order {{order.id}} - Products: {{order.product_details|length if order.product_details else 0}}, Qty: {{order.total_quantity}}, Price: {{order.total_price}} -->
                             <tr>
                               {%for customer in customers%} {% if customer.id ==
@@ -586,7 +586,7 @@
                                   <span class="badge badge-secondary">N/A</span>
                                 {% endif %}
                               </td>
-                              <td>{{order.date_created}}</td>
+                              <td>{{order.created_at}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                                   data-target="#details-{{order.id}}" title="Xem chi tiết đơn hàng">
@@ -595,12 +595,12 @@
                               </td>
                               <td>
                                 <div class="btn-group-vertical btn-group-sm">
-                                  {% if order.delivery_method == 'instore_pickup' and order.status == 'Đang xác nhận' %}
+                                  {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
                                     <button type="button" class="btn btn-warning btn-sm mb-1" data-toggle="modal"
                                       data-target="#ready-{{order.id}}" title="Đánh dấu sẵn sàng nhận tại cửa hàng">
                                       <i class="fas fa-store"></i> Sẵn sàng nhận
                                     </button>
-                                  {% elif order.status == 'Đang xác nhận' %}
+                                  {% elif order.status == 'pending' %}
                                     <button type="button" class="btn btn-success btn-sm mb-1" data-toggle="modal"
                                       data-target="#accept-{{order.id}}" title="Xác nhận giao hàng">
                                       <i class="fas fa-truck"></i> Xác nhận giao
@@ -648,7 +648,7 @@
                             </div>
 
                             <!-- Ready for Pickup Modal -->
-                            {% if order.delivery_method == 'instore_pickup' and order.status == 'Đang xác nhận' %}
+                            {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
                             <div class="modal fade" id="ready-{{order.id}}" data-backdrop="static"
                               data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
                               aria-hidden="true">
@@ -748,14 +748,14 @@
                                               <div class="col-md-6">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                   <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
-                                                  <span class="badge badge-{{'success' if order.status == 'Đã giao' else 'warning' if order.status == 'Đang giao' else 'info' if order.status == 'Đang xác nhận' else 'danger'}} badge-sm">
-                                                    <i class="fas fa-{{'check-circle' if order.status == 'Đã giao' else 'truck' if order.status == 'Đang giao' else 'clock' if order.status == 'Đang xác nhận' else 'times-circle'}} mr-1"></i>
+                                                  <span class="badge badge-{{'success' if order.status == 'delivered' else 'warning' if order.status == 'shipping' else 'info' if order.status == 'pending' else 'danger'}} badge-sm">
+                                                    <i class="fas fa-{{'check-circle' if order.status == 'delivered' else 'truck' if order.status == 'shipping' else 'clock' if order.status == 'pending' else 'times-circle'}} mr-1"></i>
                                                     {{order.status}}
                                                   </span>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
-                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                  <span style="font-size: 14px;">{{order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A'}}</span>
                                                 </div>
                                               </div>
                                               <div class="col-md-6">
@@ -792,7 +792,7 @@
                                               </div>
                                               <div class="col-md-6">
                                                 <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
                                               </div>
                                             </div>
                                             {% endif %} {%endfor%}
@@ -1026,7 +1026,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {%for order in orders %} {% if order.status == "Đang giao" %}
+                            {%for order in orders %} {% if order.status == "shipping" %}
                             <tr>
                               <td>{{loop.index}}</td>
                               {%for customer in customers%} {% if customer.id ==
@@ -1049,7 +1049,7 @@
                                   <span class="badge badge-secondary">{{order.display_payment_status}}</span>
                                 {% endif %}
                               </td>
-                              <td>{{order.date_created}}</td>
+                              <td>{{order.created_at}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                                   data-target="#details-delivering-{{order.id}}" title="Xem chi tiết đơn hàng" style="margin-right: 5px;">
@@ -1132,14 +1132,14 @@
                                               <div class="col-md-6">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                   <span class="text-muted" style="font-size: 14px;">Trạng Thái:</span>
-                                                  <span class="badge badge-{{'success' if order.status == 'Đã giao' else 'warning' if order.status == 'Đang giao' else 'info' if order.status == 'Đang xác nhận' else 'danger'}} badge-sm">
-                                                    <i class="fas fa-{{'check-circle' if order.status == 'Đã giao' else 'truck' if order.status == 'Đang giao' else 'clock' if order.status == 'Đang xác nhận' else 'times-circle'}} mr-1"></i>
+                                                  <span class="badge badge-{{'success' if order.status == 'delivered' else 'warning' if order.status == 'shipping' else 'info' if order.status == 'pending' else 'danger'}} badge-sm">
+                                                    <i class="fas fa-{{'check-circle' if order.status == 'delivered' else 'truck' if order.status == 'shipping' else 'clock' if order.status == 'pending' else 'times-circle'}} mr-1"></i>
                                                     {{order.status}}
                                                   </span>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
-                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                  <span style="font-size: 14px;">{{order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A'}}</span>
                                                 </div>
                                               </div>
                                               <div class="col-md-6">
@@ -1176,7 +1176,7 @@
                                               </div>
                                               <div class="col-md-6">
                                                 <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
                                               </div>
                                             </div>
                                             {% endif %} {%endfor%}
@@ -1441,7 +1441,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {%for order in orders %} {% if order.status == "Đã giao" %}
+                            {%for order in orders %} {% if order.status == "delivered" %}
                             <tr>
                               <td>{{loop.index}}</td>
                               {%for customer in customers%} {% if customer.id ==
@@ -1464,7 +1464,7 @@
                                   <span class="badge badge-secondary">{{order.display_payment_status}}</span>
                                 {% endif %}
                               </td>
-                              <td>{{order.date_created}}</td>
+                              <td>{{order.created_at}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                                   data-target="#details-delivered-{{order.id}}" title="Xem chi tiết đơn hàng">
@@ -1516,7 +1516,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
-                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                  <span style="font-size: 14px;">{{order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A'}}</span>
                                                 </div>
                                               </div>
                                               <div class="col-md-6">
@@ -1553,7 +1553,7 @@
                                               </div>
                                               <div class="col-md-6">
                                                 <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
                                               </div>
                                             </div>
                                             {% endif %} {%endfor%}
@@ -1786,7 +1786,7 @@
                             </tr>
                           </thead>
                           <tbody>
-                            {%for order in orders %} {% if order.status == "Hủy đơn" %}
+                            {%for order in orders %} {% if order.status == "cancelled" %}
                             <tr>
                               <td>{{loop.index}}</td>
                               {%for customer in customers%} {% if customer.id ==
@@ -1809,7 +1809,7 @@
                                   <span class="badge badge-secondary">{{order.display_payment_status}}</span>
                                 {% endif %}
                               </td>
-                              <td>{{order.date_created}}</td>
+                              <td>{{order.created_at}}</td>
                               <td>
                                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                                   data-target="#details-cancelled-{{order.id}}" title="Xem chi tiết đơn hàng">
@@ -1861,7 +1861,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Ngày Đặt:</span>
-                                                  <span style="font-size: 14px;">{{order.date_created.strftime('%d/%m/%Y %H:%M') if order.date_created else 'N/A'}}</span>
+                                                  <span style="font-size: 14px;">{{order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A'}}</span>
                                                 </div>
                                               </div>
                                               <div class="col-md-6">
@@ -1898,7 +1898,7 @@
                                               </div>
                                               <div class="col-md-6">
                                                 <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.address}}</div>
+                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
                                               </div>
                                             </div>
                                             {% endif %} {%endfor%}

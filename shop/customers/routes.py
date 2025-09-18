@@ -1,9 +1,9 @@
 from flask import render_template, session, request, redirect, url_for, flash
 from flask_login import login_required, current_user, logout_user, login_user
 from shop import app, db, bcrypt
-from shop.models import Register, Admin, CustomerOrder
+from shop.models import Customer, Admin, Order, OrderItem
 from .forms import CustomerRegisterForm, CustomerLoginFrom
-from shop.models import Category, Brand, Addproduct
+from shop.models import Category, Brand, Product
 from shop.carts.routes import clearcart, MagerDicts
 from shop.email_utils import send_order_confirmation_email, send_order_status_update_email
 from flask import Markup
@@ -21,19 +21,32 @@ def categories():
 
 
 def get_order_data(order):
-    """Helper function to parse order data from JSON"""
-    if order.orders:
-        try:
-            return json.loads(order.orders)
-        except Exception:
-            return {}
-    return {}
+    """Helper function to get order items data from OrderItem relationships"""
+    try:
+        # Get all order items for this order
+        order_items = order.items  # This uses the relationship defined in the Order model
+
+        # Convert to the old format for compatibility with templates
+        order_data = {}
+        for item in order_items:
+            order_data[str(item.product_id)] = {
+                'name': item.product.name,
+                'price': str(item.unit_price),
+                'discount': item.discount,
+                'quantity': item.quantity,
+                'color': getattr(item.product, 'colors', ''),
+                'image': item.product.image_1
+            }
+        return order_data
+    except Exception as e:
+        print(f"Error getting order data: {e}")
+        return {}
 
 
 @app.route('/myaccount', methods=['GET', 'POST'])
 @login_required
 def update_account():
-    detail_customer = Register.query.get_or_404(current_user.id)
+    detail_customer = Customer.query.get_or_404(current_user.id)
     first_name = request.form.get('firstname')
     last_name = request.form.get('lastname')
     email = request.form.get('email')
@@ -41,11 +54,11 @@ def update_account():
     gender = request.form.get('gender')
     if request.method == "POST":
         if detail_customer.email != email:
-            if Register.query.filter_by(email=email).first():
+            if Customer.query.filter_by(email=email).first():
                 flash(f'Email Used!', 'danger')
                 return redirect(url_for('update_account'))
         if detail_customer.phone_number != phone_number:
-            if Register.query.filter_by(phone_number=phone_number).first():
+            if Customer.query.filter_by(phone_number=phone_number).first():
                 flash(f'Phone Number Used!', 'danger')
                 return redirect(url_for('update_account'))
         detail_customer.first_name = first_name
@@ -63,7 +76,7 @@ def update_account():
 @app.route('/changepassword', methods=['GET', 'POST'])
 @login_required
 def change_password():
-    detail_password_customer = Register.query.get_or_404(current_user.id)
+    detail_password_customer = Customer.query.get_or_404(current_user.id)
     old_password = request.form.get('oldpassword')
     new_password = request.form.get('newpassword')
     if request.method == "POST":
@@ -90,17 +103,17 @@ def customer_register():
         if Admin.query.filter_by(email=form.email.data).first():
             flash(f'Email đã được sử dụng!', 'danger')
             return redirect(url_for('customer_register'))
-        if Register.query.filter_by(email=form.email.data).first():
+        if Customer.query.filter_by(email=form.email.data).first():
             flash(f'Email đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
         
         # Kiểm tra username đã tồn tại chưa
-        if Register.query.filter_by(username=form.username.data).first():
+        if Customer.query.filter_by(username=form.username.data).first():
             flash(f'Tên đăng nhập đã được sử dụng!', 'danger')
             return redirect(url_for('customer_register'))
         
         # Kiểm tra số điện thoại đã tồn tại chưa
-        if Register.query.filter_by(phone_number=form.phone_number.data).first():
+        if Customer.query.filter_by(phone_number=form.phone_number.data).first():
             flash(f'Số điện thoại đã được đăng ký!', 'danger')
             return redirect(url_for('customer_register'))
         
@@ -138,42 +151,14 @@ def customer_login():
         return redirect(url_for('home'))
     form = CustomerLoginFrom()
     if form.validate_on_submit():
-        user = Register.query.filter_by(email=form.email.data).first()
+        user = Customer.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
-            if user.lock == True:
+            if not user.is_active:
                 flash(Markup(
                     "Account has been locked ! <a href='mailto: viethoang@gmail.com' class='alert-link' >Help here</a>"),
                     'danger')
                 return redirect(url_for('customer_login'))
             login_user(user)
-
-            # Xu ly gio hang
-            if 'Shoppingcart' in session:
-                orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
-                    CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
-                product_id = [order.orders for order in orders]
-                for key, item in session['Shoppingcart'].items():
-                    if key not in product_id:
-                        customer_id = current_user.id
-                        invoice = secrets.token_hex(5)
-                        order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                              orders=json.dumps({key: session['Shoppingcart'][key]}),
-                                              status=None)
-                        db.session.add(order)
-                        db.session.commit()
-            session.pop('Shoppingcart', None)
-            orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
-                CustomerOrder.status == None).order_by(CustomerOrder.id.desc()).all()
-            session.modified = True
-            for order in orders:
-                if order.orders:
-                    order_data = json.loads(order.orders)
-                    for product_id, DictItems in order_data.items():
-                        DictItems = {product_id: DictItems}
-                        if 'Shoppingcart' not in session:
-                            session['Shoppingcart'] = DictItems
-                        else:
-                            session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
 
             next = request.args.get('next')
             return redirect(next or url_for('home'))
@@ -189,7 +174,7 @@ def customer_login_page(page, id):
             return redirect(url_for('detail', id))
     form = CustomerLoginFrom()
     if form.validate_on_submit():
-        user = Register.query.filter_by(email=form.email.data).first()
+        user = Customer.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             login_user(user)
             return redirect(url_for('detail', id=id))
@@ -220,7 +205,7 @@ def get_order():
         return redirect(url_for('getCart'))
     
     customer_id = current_user.id
-    customer = Register.query.filter_by(id=customer_id).first()
+    customer = Customer.query.filter_by(id=customer_id).first()
     
     # Calculate totals from session cart
     subtotals = 0
@@ -278,16 +263,15 @@ def checkout():
             item_total = price * quantity * (1 - discount / 100)
             total_amount += item_total
 
-        # Create order
+        # Create order with new Order/OrderItem structure
         invoice = secrets.token_hex(5)
-        order = CustomerOrder(
+        order = Order(
             invoice=invoice,
             customer_id=current_user.id,
-            orders=json.dumps(session['Shoppingcart']),
-            status="Đang xác nhận",
-            address=customer_address,
-            amount=total_amount,
-            payment_status="Chưa thanh toán" if payment_method == "cod" else "Đang xử lý",
+            status="pending",  # Use English status
+            payment_status="unpaid" if payment_method == "cod" else "paid",
+            shipping_address=customer_address,
+            total_amount=total_amount,
             payment_method=payment_method,
             delivery_method=delivery_method,
             pickup_store=pickup_store
@@ -295,6 +279,24 @@ def checkout():
 
         try:
             db.session.add(order)
+            db.session.flush()  # Get order ID for OrderItems
+
+            # Create OrderItem objects for each cart item
+            for product_id, item in session['Shoppingcart'].items():
+                product = Product.query.get(int(product_id))
+                if product:
+                    quantity = int(item.get('quantity', 0))
+                    discount = float(item.get('discount', 0))
+
+                    order_item = OrderItem(
+                        order_id=order.id,
+                        product_id=int(product_id),
+                        quantity=quantity,
+                        unit_price=product.price,
+                        discount=discount
+                    )
+                    db.session.add(order_item)
+
             db.session.commit()
 
             # Handle payment method
@@ -310,7 +312,7 @@ def checkout():
                                      customer_phone=current_user.phone_number)
             else:
                 # COD - Send confirmation email and redirect to payment history
-                customer = Register.query.get(current_user.id)
+                customer = Customer.query.get(current_user.id)
                 if customer and customer.email:
                     send_order_confirmation_email(customer, order)
 
@@ -350,17 +352,40 @@ def submit_order():
 
                 customer_id = current_user.id
                 invoice = secrets.token_hex(5)
-                order = CustomerOrder(invoice=invoice, customer_id=customer_id,
-                                      orders=json.dumps(session['Shoppingcart']),
-                                      status="Đang xác nhận", address=address,
-                                      amount=total_amount,
-                                      payment_status="Chưa thanh toán", payment_method="cod",
-                                      delivery_method=delivery_method, pickup_store=pickup_store)
+                order = Order(
+                    invoice=invoice,
+                    customer_id=customer_id,
+                    status="pending",
+                    payment_status="unpaid",
+                    shipping_address=address,
+                    total_amount=total_amount,
+                    payment_method="cod",
+                    delivery_method=delivery_method,
+                    pickup_store=pickup_store
+                )
                 db.session.add(order)
+                db.session.flush()  # Get order ID
+
+                # Create OrderItem objects
+                for product_id, item in session['Shoppingcart'].items():
+                    product = Product.query.get(int(product_id))
+                    if product:
+                        quantity = int(item.get('quantity', 0))
+                        discount = float(item.get('discount', 0))
+
+                        order_item = OrderItem(
+                            order_id=order.id,
+                            product_id=int(product_id),
+                            quantity=quantity,
+                            unit_price=product.price,
+                            discount=discount
+                        )
+                        db.session.add(order_item)
+
                 db.session.commit()
 
                 # Gửi email xác nhận đơn hàng
-                customer = Register.query.get(customer_id)
+                customer = Customer.query.get(customer_id)
                 if customer and customer.email:
                     email_sent = send_order_confirmation_email(customer, order)
                     if email_sent:
@@ -384,8 +409,8 @@ def submit_order():
 @login_required
 def payment_history():
     # Get orders and update old statuses to new ones
-    orders = CustomerOrder.query.filter(CustomerOrder.customer_id == current_user.id).filter(
-        CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
+    orders = Order.query.filter(Order.customer_id == current_user.id).filter(
+        Order.status != None).order_by(Order.id.desc()).all()
     
     # Calculate totals for each order
     orders_with_totals = []
@@ -428,7 +453,7 @@ def order_detail(invoice):
         return redirect(url_for('customer_login'))
     
     # Get the specific order by invoice
-    order = CustomerOrder.query.filter_by(
+    order = Order.query.filter_by(
         invoice=invoice, 
         customer_id=current_user.id
     ).first()
@@ -460,7 +485,7 @@ def order_detail(invoice):
         order.status = 'Hủy đơn'
     
     # Get customer info
-    customer = Register.query.filter_by(id=current_user.id).first()
+    customer = Customer.query.filter_by(id=current_user.id).first()
     
     return render_template('customers/order_detail.html', 
                          order=order, 
@@ -481,7 +506,7 @@ def cancel_order(invoice):
         return redirect(url_for('customer_login'))
     
     # Get the specific order by invoice
-    order = CustomerOrder.query.filter_by(
+    order = Order.query.filter_by(
         invoice=invoice, 
         customer_id=current_user.id
     ).first()

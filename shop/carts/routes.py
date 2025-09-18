@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import render_template, session, request, redirect, url_for, flash, jsonify
 from flask_login import current_user
 from shop import app, db
-from shop.models import CustomerOrder, Category, Brand, Addproduct, Register
+from shop.models import Order, OrderItem, Category, Brand, Product, Customer
 from shop.email_utils import send_order_confirmation_email
 
 
@@ -33,7 +33,7 @@ def AddCart():
         product_id = request.form.get('product_id')
         quantity = int(request.form.get('quantity'))
         color = request.form.get('colors')
-        product = Addproduct.query.filter_by(id=product_id).first()
+        product = Product.query.filter_by(id=product_id).first()
         
         if not product:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -164,7 +164,7 @@ def vnpay_payment():
     pending_invoice = session.get('vnpay_pending_order')
     if pending_invoice:
         # Get order from database
-        order = CustomerOrder.query.filter_by(invoice=pending_invoice, customer_id=current_user.id).first()
+        order = Order.query.filter_by(invoice=pending_invoice, customer_id=current_user.id).first()
         if not order:
             flash('Không tìm thấy đơn hàng!', 'danger')
             return redirect(url_for('payment_history'))
@@ -173,8 +173,8 @@ def vnpay_payment():
         session.pop('vnpay_pending_order', None)
 
         # Use order data
-        customer_address = order.address or ''
-        final_amount = int(order.amount)
+        customer_address = order.shipping_address or ''
+        final_amount = int(order.total_amount)
         invoice = pending_invoice
 
         # For pending order, we don't need to store last_vnpay_order since order already exists
@@ -209,23 +209,40 @@ def vnpay_payment():
         if not invoice.replace('_', '').replace('-', '').isalnum():
             invoice = ''.join(c for c in invoice if c.isalnum())
 
-        # Create order immediately with "Chờ thanh toán" status
+        # Create order immediately with "pending" status
         try:
-            new_order = CustomerOrder(
+            new_order = Order(
                 invoice=invoice,
                 customer_id=customer_id,
-                orders=json.dumps(session['Shoppingcart']),
-                status="Đang xác nhận",  # Order status: pending confirmation
-                payment_status="Đang xử lý",  # Payment status: processing
-                address=customer_address,
-                amount=final_amount,
+                status="pending",
+                payment_status="paid",  # VNPAY payment is processed
+                shipping_address=customer_address,
+                total_amount=final_amount,
                 payment_method='vnpay'
             )
             db.session.add(new_order)
+            db.session.flush()  # Get order ID
+
+            # Create OrderItem objects for VNPAY order
+            for product_id, item in session['Shoppingcart'].items():
+                product = Product.query.get(int(product_id))
+                if product:
+                    quantity = int(item.get('quantity', 0))
+                    discount = float(item.get('discount', 0))
+
+                    order_item = OrderItem(
+                        order_id=new_order.id,
+                        product_id=int(product_id),
+                        quantity=quantity,
+                        unit_price=product.price,
+                        discount=discount
+                    )
+                    db.session.add(order_item)
+
             db.session.commit()
 
             # Gửi email xác nhận đơn hàng
-            customer = Register.query.get(customer_id)
+            customer = Customer.query.get(customer_id)
             if customer and customer.email:
                 send_order_confirmation_email(customer, new_order)
         except Exception as e:
@@ -305,7 +322,7 @@ def vnpay_return():
 
         # Find the order by invoice
         try:
-            order = CustomerOrder.query.filter_by(invoice=order_id).first()
+            order = Order.query.filter_by(invoice=order_id).first()
             if not order:
                 flash('Không tìm thấy đơn hàng để xử lý!', 'danger')
                 return redirect(url_for('payment_history'))
@@ -365,7 +382,7 @@ def vnpay_ipn():
         if not is_valid:
             return 'INVALID_SIGNATURE', 400
 
-        order = CustomerOrder.query.filter_by(invoice=order_id).first()
+        order = Order.query.filter_by(invoice=order_id).first()
         if not order:
             if response_code == '00':
                 return 'ORDER_NOT_FOUND', 404

@@ -25,75 +25,156 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), nullable=False, unique=True)
 
-class Addproduct(db.Model):
-    __tablename__ = 'addproduct'
+class Product(db.Model):
+    __tablename__ = 'product'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
+    name = db.Column(db.String(80), nullable=False, index=True)
     price = db.Column(db.Numeric(10,2), nullable=False)
     discount = db.Column(db.Integer, default=0)
-    stock = db.Column(db.Integer, nullable=False)
+    stock = db.Column(db.Integer, nullable=False, default=0)
     colors = db.Column(db.Text, nullable=False)
-    desc = db.Column(db.Text, nullable=False)
-    pub_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
-    brand_id = db.Column(db.Integer, db.ForeignKey('brand.id'), nullable=False)
-    
-    # Add these relationships
-    category = db.relationship('Category', backref='products')
-    brand = db.relationship('Brand', backref='products')
+    description = db.Column(db.Text, nullable=False)
+    pub_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False, index=True)
+    brand_id = db.Column(db.Integer, db.ForeignKey('brand.id'), nullable=False, index=True)
+
+    # Relationships
+    category = db.relationship('Category', backref=db.backref('products', lazy='dynamic'))
+    brand = db.relationship('Brand', backref=db.backref('products', lazy='dynamic'))
+
+    # Image fields
     image_1 = db.Column(db.String(150), nullable=False, default='image.jpg')
     image_2 = db.Column(db.String(150), nullable=False, default='image.jpg')
     image_3 = db.Column(db.String(150), nullable=False, default='image.jpg')
 
-class Register(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True)
-    first_name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
-    email = db.Column(db.String(50), unique=True)
-    phone_number = db.Column(db.String(50), unique=True)
-    gender = db.Column(db.String(5))
-    password = db.Column(db.String(200))
-    date_created = db.Column(db.DateTime, nullable=False)
-    lock = db.Column(db.Boolean)
+    def __repr__(self):
+        return f'<Product {self.name}>'
 
-class Rate(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('addproduct.id'), nullable=False)
-    register_id = db.Column(db.Integer, db.ForeignKey('register.id'), nullable=False)
-    time = db.Column(db.DateTime, nullable=False)
-    desc = db.Column(db.Text, nullable=False)
-    rate_number = db.Column(db.Integer, nullable=False)
+    @property
+    def discounted_price(self):
+        """Calculate discounted price"""
+        if self.discount > 0:
+            return self.price * (100 - self.discount) / 100
+        return self.price
 
-class CustomerOrder(db.Model):
-    __tablename__ = 'customer_order'
-    id = db.Column(db.Integer, primary_key=True)
-    invoice = db.Column(db.String(20), unique=True, nullable=False)
-    status = db.Column(db.String(20), default='Đang xác nhận')  # Order status: Đang xác nhận, Đang giao, Đã giao, Hủy đơn, Sẵn sàng nhận tại cửa hàng
-    payment_status = db.Column(db.String(20), default='Chưa thanh toán')  # Payment status: Chưa thanh toán (COD), Đã thanh toán (VNPAY)
-    customer_id = db.Column(db.Integer, nullable=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow)
-    orders = db.Column(db.Text)
-    address = db.Column(db.String(200))
-    amount = db.Column(db.Numeric(10,2), default=0)
-    payment_method = db.Column(db.String(20), default='cod')
-    delivery_method = db.Column(db.String(20), default='home_delivery')  # home_delivery or instore_pickup
-    pickup_store = db.Column(db.String(200), default='')  # Store location for pickup
+    @property
+    def is_available(self):
+        """Check if product is available for purchase"""
+        return self.stock > 0
 
-class Article(db.Model):
-    __tablename__ = 'articles'
+class Customer(db.Model, UserMixin):
+    __tablename__ = 'customer'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    cover_image = db.Column(db.String(255), default='article-default.jpg')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
-    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
-    status = db.Column(db.Enum('draft', 'published', 'archived'), default='draft')
-    slug = db.Column(db.String(255), unique=True)
+    username = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    phone_number = db.Column(db.String(20), unique=True, nullable=False)
+    gender = db.Column(db.String(10))  # male, female, other
+    password = db.Column(db.String(200), nullable=False)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+    last_login = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<Customer {self.username}>'
+
+    @property
+    def full_name(self):
+        """Return full name"""
+        return f"{self.first_name} {self.last_name}"
+
+    def is_locked(self):
+        """Check if customer account is locked"""
+        return not self.is_active
+
+class Rating(db.Model):
+    __tablename__ = 'rating'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    comment = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
 
     # Relationships
-    admin = db.relationship('Admin', backref='articles')
+    product = db.relationship('Product', backref=db.backref('ratings', lazy='dynamic'))
+    customer = db.relationship('Customer', backref=db.backref('ratings', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<Rating {self.rating} by {self.customer.username} for {self.product.name}>'
+
+class Order(db.Model):
+    __tablename__ = 'order'
+    id = db.Column(db.Integer, primary_key=True)
+    invoice = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    status = db.Column(db.Enum('pending', 'confirmed', 'shipping', 'delivered', 'cancelled', 'ready_for_pickup'), default='pending')
+    payment_status = db.Column(db.Enum('unpaid', 'paid', 'refunded'), default='unpaid')
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    shipping_address = db.Column(db.String(200))
+    total_amount = db.Column(db.Numeric(10,2), nullable=False, default=0)
+    payment_method = db.Column(db.Enum('cod', 'vnpay'), default='cod')
+    delivery_method = db.Column(db.Enum('home_delivery', 'instore_pickup'), default='home_delivery')
+    pickup_store = db.Column(db.String(200))
+    notes = db.Column(db.Text)
+
+    # Relationships
+    customer = db.relationship('Customer', backref=db.backref('orders', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<Order {self.invoice}>'
+
+    @property
+    def status_display(self):
+        """Return human-readable status"""
+        status_map = {
+            'pending': 'Đang xác nhận',
+            'confirmed': 'Đã xác nhận',
+            'shipping': 'Đang giao',
+            'delivered': 'Đã giao',
+            'cancelled': 'Đã hủy',
+            'ready_for_pickup': 'Sẵn sàng nhận tại cửa hàng'
+        }
+        return status_map.get(self.status, self.status)
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_item'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, index=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_price = db.Column(db.Numeric(10,2), nullable=False)
+    discount = db.Column(db.Integer, default=0)
+
+    # Relationships
+    order = db.relationship('Order', backref=db.backref('items', lazy='dynamic'))
+    product = db.relationship('Product', backref=db.backref('order_items', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<OrderItem {self.product.name} x{self.quantity}>'
+
+    @property
+    def total_price(self):
+        """Calculate total price for this item"""
+        discounted_price = self.unit_price * (100 - self.discount) / 100
+        return discounted_price * self.quantity
+
+class Article(db.Model):
+    __tablename__ = 'article'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False, index=True)
+    content = db.Column(db.Text, nullable=False)
+    cover_image = db.Column(db.String(255), default='article-default.jpg')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False, index=True)
+    status = db.Column(db.Enum('draft', 'published', 'archived'), default='draft', index=True)
+    slug = db.Column(db.String(255), unique=True, index=True)
+
+    # Relationships
+    admin = db.relationship('Admin', backref=db.backref('articles', lazy='dynamic'))
 
     def __repr__(self):
         return f'<Article {self.title}>'
@@ -112,3 +193,8 @@ class Article(db.Model):
         slug = slug.strip('-')
 
         return slug
+
+    @property
+    def is_published(self):
+        """Check if article is published"""
+        return self.status == 'published'

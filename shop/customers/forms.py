@@ -1,6 +1,6 @@
 from wtforms import Form, StringField, TextAreaField, PasswordField, SubmitField, validators, ValidationError, RadioField
 from flask_wtf import FlaskForm
-from shop.models import Register  # Changed from .models to shop.models
+from shop.models import Customer  # Changed from .models to shop.models
 from flask_wtf.file import FileRequired, FileAllowed, FileField
 
 

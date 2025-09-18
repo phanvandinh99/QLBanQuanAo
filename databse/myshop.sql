@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 14, 2025 at 07:20 PM
+-- Generation Time: Sep 17, 2025 at 11:15 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -54,7 +54,7 @@ INSERT INTO `addproduct` (`id`, `name`, `price`, `discount`, `stock`, `colors`, 
 (21, 'Phao Vip Lông Vũ Nam', 1500000.00, 5, 10, 'Ghi Nhạt, Ghi Đậm, Tím Than', 'Giao trong 3-5 ngày và freeship đơn từ 498k.\r\nĐổi trả trong vòng 15 ngày.\r\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:10:06', 1, 19, '9f509199a14affdad942.webp', '6326a17e8d0a9f30c054.webp', '21403909ab050330735c.webp'),
 (22, 'Giày Cao Gót Cơ Bản Đế Nhỏ', 200000.00, 10, 40, 'Trắng, Nâu, Đen', 'Mặt ngoài: 100% POLYURETHAN\r\n\r\nMặt trong: 100% POLYESTER\r\n\r\nGiày nữ YODY được làm từ Da PU có nhiều ưu điểm như: độ bền cao, tính đàn hồi và độ bền màu tốt.\r\n\r\nTính đàn hồi: Giày da PU có độ đàn hồi tốt, dễ dàng uốn cong và linh hoạt trong quá trình sử dụng.\r\n\r\nThân thiện với môi trường: Da PU thường được xem là thân thiện với môi trường vì nó được sản xuất bằng cách sử dụng các chất liệu tự nhiên hơn so với da thật.\r\n\r\nDễ dàng vệ sinh: Giày da PU dễ dàng vệ sinh và có thể lau chùi bằng một số chất tẩy rửa thông thường và nước.\r\n\r\nTuy nhiên, da PU cũng có một số nhược điểm, bao gồm khả năng chống nước kém hơn so với da thật và có thể dễ dàng bị xước hoặc rách nếu không được sử dụng và bảo quản đúng cách.', '2025-09-08 02:19:34', 3, 34, 'f57b6d09d24147449976.webp', 'e05b2efa57ab2f0ea450.webp', '715773296d04d1bc11ea.webp'),
 (23, 'Quần Shorts Lơ Vê Nắp Túi', 450000.00, 35, 4, 'Oliu, Trắng, Be', 'Chất liệu: Tuýt si\r\n\r\nBộ sưu tập Peaceful Summer 2025 - YODY mang đến vẻ đẹp thanh lịch, sự thoải mái và phong cách tinh tế. Với gam màu dịu nhẹ và chất liệu cao cấp, bộ sưu tập gợi lên cảm giác bình yên, tươi mới, như một sự kết nối hài hòa với thiên nhiên.\r\n\r\nƯu điểm chất liệu:\r\n\r\nCo giãn linh hoạt: Spandex giúp vải đàn hồi, thoải mái khi vận động.\r\n\r\nThoáng khí, không bám dính: Kiểu dệt đặc biệt giúp vải luôn nhẹ nhàng trên da.\r\n\r\nThân thiện tự nhiên: Thành phần từ thiên nhiên, an toàn cho da và môi trường.\r\n\r\nĐặc điểm thiết kế:\r\n\r\nPhom dáng rộng rãi: Mang lại cảm giác thoải mái khi mặc.\r\n\r\nChi tiết tinh tế: Hai ly trước, túi nhỏ, túi ẩn tạo điểm nhấn, túi sau hai viền sang trọng, tăng tính thẩm mỹ.', '2025-09-08 02:25:52', 2, 24, '6f42ccd138e4c556ae45.webp', '2b98f4865f6b8c47c6f3.webp', '03832a5d679159fead28.webp'),
-(24, 'Mũ Lưỡi Trai Thêu Space (MUU6008)', 100000.00, 3, 60, 'Navy, Xám, Đen', 'Mũ lưỡi trai unisex tiện lợi, khỏe khoắn, sử dụng hàng ngày với nhiều công năng chống nắng, cản gió, làm đẹp. Hình thêu Space tinh tế, sắc nét thêm phần cá tính, đồng thời vải thấm mồ hôi giúp bạn luôn mát mẻ và thoải mái khi thời tiết nắng. Kiểu dáng cơ bản nhưng không kém phần năng động.', '2025-09-08 02:27:42', 1, 21, '06490661fadf0aded8ee.webp', 'e3fa5d0944c5c73027da.webp', 'd5105a92f6e92e2d4ef1.webp'),
+(24, 'Mũ Lưỡi Trai Thêu Space (MUU6008)', 100000.00, 3, 59, 'Navy, Xám, Đen', 'Mũ lưỡi trai unisex tiện lợi, khỏe khoắn, sử dụng hàng ngày với nhiều công năng chống nắng, cản gió, làm đẹp. Hình thêu Space tinh tế, sắc nét thêm phần cá tính, đồng thời vải thấm mồ hôi giúp bạn luôn mát mẻ và thoải mái khi thời tiết nắng. Kiểu dáng cơ bản nhưng không kém phần năng động.', '2025-09-08 02:27:42', 1, 21, '06490661fadf0aded8ee.webp', 'e3fa5d0944c5c73027da.webp', 'd5105a92f6e92e2d4ef1.webp'),
 (25, 'Bộ Đồ Vải Hiệu Ứng', 200000.00, 2, 22, 'Be, Xám, Xanh', 'Chất liệu: Waffle mềm mại\r\n\r\nThành phần:47.7%Cotton, 47.7%Viscose, 4.6%Spandex\r\n\r\nƯu điểm chất liệu:\r\n\r\nMềm mại & Thoáng khí: Sợi cotton mang lại cảm giác êm ái, giúp da luôn thoáng mát nhờ khả năng thấm hút mồ hôi hiệu quả.\r\n\r\nBề mặt vải mịn màng: Sợi viscose tăng độ mềm mại, giúp vải có độ rủ tự nhiên, tạo cảm giác dễ chịu khi mặc.\r\n\r\nCo giãn linh hoạt: Sợi spandex giúp sản phẩm có độ đàn hồi tốt, giữ form dáng đẹp và thoải mái khi vận động.\r\n\r\nĐặc điểm thiết kế:\r\n\r\nThiết kế basic tiện dụng: Cạp quần bản to giúp ôm vừa vặn, kết hợp dây luồn thắt lưng dễ điều chỉnh, phù hợp với nhiều dáng người.\r\n\r\nPhom Relax trẻ trung: Dáng quần rộng vừa phải, mang lại cảm giác thoải mái, năng động khi mặc.', '2025-09-08 02:29:49', 1, 19, '271ea0d5b2a5c7c1c408.webp', '70c2c2ad159119d84745.webp', '9752dce96f8de7af1c4d.webp');
 
 -- --------------------------------------------------------
@@ -179,7 +179,9 @@ CREATE TABLE `customer_order` (
   `total_price` decimal(10,2) DEFAULT 0.00,
   `vnpay_transaction_id` varchar(50) DEFAULT NULL,
   `vnpay_transaction_no` varchar(50) DEFAULT NULL,
-  `amount` decimal(10,2) DEFAULT 0.00
+  `amount` decimal(10,2) DEFAULT 0.00,
+  `delivery_method` varchar(20) DEFAULT 'home_delivery',
+  `pickup_store` varchar(200) DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 -- --------------------------------------------------------
@@ -242,10 +244,8 @@ CREATE TABLE `register` (
 --
 
 INSERT INTO `register` (`id`, `username`, `first_name`, `last_name`, `email`, `phone_number`, `gender`, `password`, `date_created`, `lock`) VALUES
-(1, 'Manh', 'Lê', 'Mạnh', 'xuanmanhitweb1011@gmail.com', '0339134073', 'M', '$2b$12$KzjjXsRaDOKAsuQu3X2jUe5unm3wN3.j6QdH07J//zxzc0dt55RaC', '2020-11-09 03:35:01', 0),
-(4, 'VietHoang', 'Trương Việt', 'Hoàng', 'Hoang@gmail.com', '0971010273', 'Nam', '$2b$12$mGgkL2qb2NC7tMPjvbqhyencLhax6EHxnkF0KUX9Gtz8yHYCSTtaq', '2025-08-19 10:41:26', 0),
-(5, 'Dinh', 'Phan Văn', 'Định', 'Dinh@gmail.com', '0971010271', 'M', '$2b$12$LhdF.CovM8BhBV9OlJ3I1.gEqu4PtxP6V2WwI.hk/2yTmULELyhxy', '2025-08-21 16:43:39', 0),
-(7, 'VietHoang2', 'Trương Việt', 'Hoàng', 'VietHoang2@gmail.com', '0971234543', 'Nam', '$2b$12$JjbxX3S.dxU6Ncv1EgFSdOFYerrcM7NGH4HVKEiKsQgPJtP9GsR4u', '2025-09-05 08:39:06', 0);
+(1, 'VietHoang', 'Trương Việt', 'Hoàng', 'Hoang@gmail.com', '0971010273', 'Nam', '$2b$12$mGgkL2qb2NC7tMPjvbqhyencLhax6EHxnkF0KUX9Gtz8yHYCSTtaq', '2025-08-19 10:41:26', 0),
+(2, 'Bieu', 'Bieu', 'IT', 'BieuIT123@gmail.com', '0971234567', 'Nam', '$2b$12$1izz8H8QF/NyAM2rzgXTqe1nyqxP/EbFxbX8cvZLKOlzPeOGqCWZq', '2025-09-17 04:06:25', 0);
 
 --
 -- Indexes for dumped tables
@@ -360,7 +360,7 @@ ALTER TABLE `category`
 -- AUTO_INCREMENT for table `customer_order`
 --
 ALTER TABLE `customer_order`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
 
 --
 -- AUTO_INCREMENT for table `product`

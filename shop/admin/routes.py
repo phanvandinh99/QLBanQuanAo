@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash
 from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Addproduct, Register, Admin, CustomerOrder, Rate, Article
+from shop.models import Brand, Category, Product, Customer, Admin, Order, Rating, Article
 from shop.email_utils import send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
@@ -38,19 +38,19 @@ def admin_register_custormer():
         if Admin.query.filter_by(email=form.email.data).first():
             flash(f'Email Used!', 'danger')
             return redirect(url_for('admin_register_custormer'))
-        if Register.query.filter_by(email=form.email.data).first():
+        if Customer.query.filter_by(email=form.email.data).first():
             flash(f'Email Used!', 'danger')
             return redirect(url_for('admin_register_custormer'))
-        if Register.query.filter_by(phone_number=form.phone_number.data).first():
+        if Customer.query.filter_by(phone_number=form.phone_number.data).first():
             flash(f'Phone Number Used!', 'danger')
             return redirect(url_for('admin_register_custormer'))
         try:
             hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
-            register = Register(username=form.username.data, email=form.email.data, first_name=form.first_name.data,
+            customer = Customer(username=form.username.data, email=form.email.data, first_name=form.first_name.data,
                                 last_name=form.last_name.data, phone_number=form.phone_number.data,
                                 gender=form.gender.data,
                                 password=hash_password)
-            db.session.add(register)
+            db.session.add(customer)
             flash(f'Register account " {form.first_name.data} {form.last_name.data} " success', 'success')
             db.session.commit()
             return redirect(url_for('admin_register_custormer'))
@@ -85,11 +85,11 @@ def customer_manager():
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
-    customers = Register.query.all()
+    customers = Customer.query.all()
     
     # Kiểm tra xem mỗi customer có thể xóa hay không
     for customer in customers:
-        customer_orders = CustomerOrder.query.filter_by(customer_id=customer.id).all()
+        customer_orders = Order.query.filter_by(customer_id=customer.id).all()
         customer.can_delete = len(customer_orders) == 0
     
     return render_template('admin/customer_manager.html', title='Customer manager page', user=user[0],
@@ -102,10 +102,10 @@ def orders_manager():
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
-    customers = Register.query.all()
+    customers = Customer.query.all()
 
     # Get all orders and update old statuses to new ones
-    orders = CustomerOrder.query.filter(CustomerOrder.status != None).order_by(CustomerOrder.id.desc()).all()
+    orders = Order.query.filter(Order.status != None).order_by(Order.id.desc()).all()
 
     # Update old statuses to new ones in memory (for display)
     for order in orders:
@@ -180,10 +180,10 @@ def orders_manager():
                     # Try to get product image from database if we have product ID
                     if 'id' in product or key.isdigit():
                         try:
-                            from shop.models import Addproduct
+                            from shop.models import Product
                             product_id = product.get('id', key if key.isdigit() else None)
                             if product_id:
-                                db_product = Addproduct.query.get(int(product_id))
+                                db_product = Product.query.get(int(product_id))
                                 if db_product and db_product.image_1:
                                     enhanced_product['image_1'] = db_product.image_1
                         except:
@@ -210,22 +210,27 @@ def accept_order(id):
         return redirect(url_for('login'))
     
     if request.method == "POST":
-        customer_order = CustomerOrder.query.get_or_404(id)
-        if customer_order.orders:
-            order_data = json.loads(customer_order.orders)
-            for key, product in order_data.items():
-                product_order = Addproduct.query.get_or_404(key)
-                if (product_order.stock - int(product['quantity'])) >= 0:
-                    product_order.stock -= int(product['quantity'])
-                    db.session.commit()
-                    customer_order.status = 'Đang giao'
-                    db.session.commit()
-                else:
-                    flash('Quantity in stock has been exhausted', 'danger')
-                    return redirect(url_for('orders_manager'))
+        customer_order = Order.query.get_or_404(id)
+        # Process order items using OrderItem relationships
+        order_items = customer_order.items  # Get all order items
+        stock_exhausted = False
+
+        for order_item in order_items:
+            product = order_item.product
+            if (product.stock - order_item.quantity) >= 0:
+                product.stock -= order_item.quantity
+                customer_order.status = 'shipping'  # Use English status
+                db.session.commit()
+            else:
+                stock_exhausted = True
+                flash(f'Quantity in stock has been exhausted for product: {product.name}', 'danger')
+
+        if not stock_exhausted:
+            flash('Order status updated successfully', 'success')
+            return redirect(url_for('orders_manager'))
 
             # Send email notification to customer
-            customer = Register.query.get(customer_order.customer_id)
+            customer = Customer.query.get(customer_order.customer_id)
             if customer:
                 send_order_status_update_email(customer, customer_order, action_by="admin")
 
@@ -241,12 +246,12 @@ def delivered_order(id):
         return redirect(url_for('login'))
     
     if request.method == "POST":
-        customer_order = CustomerOrder.query.get_or_404(id)
+        customer_order = Order.query.get_or_404(id)
         customer_order.status = 'Đã giao'
         db.session.commit()
 
         # Send email notification to customer
-        customer = Register.query.get(customer_order.customer_id)
+        customer = Customer.query.get(customer_order.customer_id)
         if customer:
             send_order_status_update_email(customer, customer_order, action_by="admin")
 
@@ -263,7 +268,7 @@ def ready_for_pickup(id):
         return redirect(url_for('login'))
 
     if request.method == "POST":
-        customer_order = CustomerOrder.query.get_or_404(id)
+        customer_order = Order.query.get_or_404(id)
 
         # Only allow for instore pickup orders
         if customer_order.delivery_method != 'instore_pickup':
@@ -274,7 +279,7 @@ def ready_for_pickup(id):
         db.session.commit()
 
         # Send email notification to customer
-        customer = Register.query.get(customer_order.customer_id)
+        customer = Customer.query.get(customer_order.customer_id)
         if customer:
             send_order_status_update_email(customer, customer_order, action_by="admin")
 
@@ -289,13 +294,13 @@ def delete_order(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    customer = CustomerOrder.query.get_or_404(id)
+    customer = Order.query.get_or_404(id)
     if request.method == "POST":
         customer.status = "Hủy đơn"
         db.session.commit()
 
         # Send email notification to customer
-        customer_info = Register.query.get(customer.customer_id)
+        customer_info = Customer.query.get(customer.customer_id)
         if customer_info:
             send_order_status_update_email(customer_info, customer, action_by="admin")
 
@@ -309,9 +314,9 @@ def lock_customer(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    customer = Register.query.get_or_404(id)
+    customer = Customer.query.get_or_404(id)
     if request.method == "POST":
-        customer.lock = 1
+        customer.is_active = False
         db.session.commit()
         return redirect(url_for('customer_manager'))
     return redirect(url_for('customer_manager'))
@@ -322,9 +327,9 @@ def unlock_customer(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    customer = Register.query.get_or_404(id)
+    customer = Customer.query.get_or_404(id)
     if request.method == "POST":
-        customer.lock = 0
+        customer.is_active = True
         db.session.commit()
         return redirect(url_for('customer_manager'))
     return redirect(url_for('customer_manager'))
@@ -335,17 +340,17 @@ def delete_customer(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    customer = Register.query.get_or_404(id)
+    customer = Customer.query.get_or_404(id)
     
     # Kiểm tra xem customer có đơn hàng nào không
-    customer_orders = CustomerOrder.query.filter_by(customer_id=id).all()
+    customer_orders = Order.query.filter_by(customer_id=id).all()
     if customer_orders:
         flash(f"Tài khoản {customer.username} đã đặt hàng (Ràng buộc khóa) không thể xóa.", "danger")
         return redirect(url_for('customer_manager'))
     
     if request.method == "POST":
         # Xóa các đánh giá của customer trước
-        rates = Rate.query.filter(Rate.register_id == id).all()
+        rates = Rating.query.filter(Rating.customer_id == id).all()
         for rate in rates:
             db.session.delete(rate)
             db.session.commit()
@@ -380,7 +385,7 @@ def product():
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    products = Addproduct.query.all()
+    products = Product.query.all()
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('admin/index.html', title='Product page', products=products, user=user[0])
 
@@ -471,13 +476,26 @@ def logout():
 
 
 def get_order_data(order):
-    """Helper function to parse order data from JSON"""
-    if order.orders:
-        try:
-            return json.loads(order.orders)
-        except Exception:
-            return {}
-    return {}
+    """Helper function to get order items data from OrderItem relationships"""
+    try:
+        # Get all order items for this order
+        order_items = order.items  # This uses the relationship defined in the Order model
+
+        # Convert to the old format for compatibility with templates
+        order_data = {}
+        for item in order_items:
+            order_data[str(item.product_id)] = {
+                'name': item.product.name,
+                'price': str(item.unit_price),
+                'discount': item.discount,
+                'quantity': item.quantity,
+                'color': getattr(item.product, 'colors', ''),
+                'image': item.product.image_1
+            }
+        return order_data
+    except Exception as e:
+        print(f"Error getting order data: {e}")
+        return {}
 
 
 
@@ -640,7 +658,7 @@ def toggle_article_status(id):
 @app.route('/admin/orders/<int:order_id>/export-invoice')
 def export_invoice(order_id):
     try:
-        from shop.models import CustomerOrder, Addproduct, Register
+        from shop.models import Order, Product, Customer
         from flask import make_response, send_file, jsonify
         import io
         import json
@@ -650,10 +668,10 @@ def export_invoice(order_id):
             return jsonify({'error': 'ReportLab library is not available. Please install it to export invoices.'}), 500
 
         # Lấy thông tin đơn hàng
-        order = CustomerOrder.query.get_or_404(order_id)
+        order = Order.query.get_or_404(order_id)
 
         # Lấy thông tin khách hàng
-        customer = Register.query.get(order.customer_id)
+        customer = Customer.query.get(order.customer_id)
 
         if not customer:
             return jsonify({'error': 'Không tìm thấy thông tin khách hàng'}), 404
@@ -689,7 +707,7 @@ def export_invoice(order_id):
                             if 'id' in product or str(key).isdigit():
                                 product_id = product.get('id', key if str(key).isdigit() else None)
                                 if product_id:
-                                    product_info = Addproduct.query.get(int(product_id))
+                                    product_info = Product.query.get(int(product_id))
                         except:
                             pass
 
@@ -817,7 +835,7 @@ def export_invoice(order_id):
         elements.append(Paragraph(ensure_unicode(f"<b>Họ tên:</b> {customer.first_name} {customer.last_name}"), info_style))
         elements.append(Paragraph(ensure_unicode(f"<b>Email:</b> {customer.email}"), info_style))
         elements.append(Paragraph(ensure_unicode(f"<b>SĐT:</b> {customer.phone_number}"), info_style))
-        elements.append(Paragraph(ensure_unicode(f"<b>Địa chỉ:</b> {order.address}"), info_style))
+        elements.append(Paragraph(ensure_unicode(f"<b>Địa chỉ:</b> {order.shipping_address}"), info_style))
         elements.append(Spacer(1, 0.3*inch))
 
         # Bảng sản phẩm

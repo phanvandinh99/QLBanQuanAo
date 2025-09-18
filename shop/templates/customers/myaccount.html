@@ -489,18 +489,18 @@
                   {% set order = order_info.order %}
                   <tr>
                     <td><strong>{{order.invoice}}</strong></td>
-                    <td><i class="fa fa-clock-o"></i> {{order.date_created.strftime('%d/%m/%Y %H:%M')}}</td>
+                    <td><i class="fa fa-clock-o"></i> {{order.created_at.strftime('%d/%m/%Y %H:%M')}}</td>
                     <td><span class="badge-primary">{{order_info.total_quantity}} sản phẩm</span></td>
                     <td><strong>{{order_info.total_amount | vnd}}</strong></td>
                     <td>
-                      {% if order.status == "Đang xác nhận" %}
-                      <span class="status-badge status-pending">{{order.status}}</span>
-                      {% elif order.status == "Đang giao" %}
-                      <span class="status-badge status-shipping">{{order.status}}</span>
-                      {% elif order.status == "Đã giao" %}
-                      <span class="status-badge status-delivered">{{order.status}}</span>
-                      {% elif order.status == "Hủy đơn" %}
-                      <span class="status-badge status-cancelled">{{order.status}}</span>
+                      {% if order.status == "pending" %}
+                      <span class="status-badge status-pending">{{order.status_display}}</span>
+                      {% elif order.status == "shipping" %}
+                      <span class="status-badge status-shipping">{{order.status_display}}</span>
+                      {% elif order.status == "delivered" %}
+                      <span class="status-badge status-delivered">{{order.status_display}}</span>
+                      {% elif order.status == "cancelled" %}
+                      <span class="status-badge status-cancelled">{{order.status_display}}</span>
                       {% else %}
                       <span class="status-badge status-pending">{{order.status}}</span>
                       {% endif %}

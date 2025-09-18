@@ -87,16 +87,40 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 5. 🗄️ Thiết lập database
-- Import file `databse/myshop.sql` vào MySQL
-- Cập nhật thông tin database trong `shop/__init__.py`
+### 5. ⚙️ Cấu hình môi trường
+- Copy file `env.example` thành `.env`
+- Cập nhật các biến môi trường trong file `.env`:
+  ```bash
+  cp env.example .env
+  ```
+- Chỉnh sửa các giá trị trong `.env` theo môi trường của bạn
 
-### 6. ▶️ Chạy ứng dụng
+### 6. 🗄️ Thiết lập database
+- Import file `databse/myshop.sql` vào MySQL
+- Cập nhật `DATABASE_URL` trong file `.env`
+
+### 7. 🔄 Migrate Database (Quan trọng!)
+**Nếu bạn đã có dữ liệu cũ, chạy migration:**
+```bash
+# Bước 1: Backup database (khuyên dùng)
+python backup_database.py
+
+# Bước 2: Chạy migration
+python migrate_db_updated.py
+```
+
+**Migration sẽ:**
+- ✅ Đổi tên tables: `addproduct` → `product`, `register` → `customer`, v.v.
+- ✅ Migrate tất cả dữ liệu hiện có
+- ✅ Tạo tables mới: `order_item`
+- ✅ Thêm indexes cho performance
+
+### 8. ▶️ Chạy ứng dụng
 ```bash
 python run.py
 ```
 
-### 7. 🌐 Truy cập
+### 9. 🌐 Truy cập
 - **Website khách hàng:** http://localhost:5000
 - **Trang admin:** http://localhost:5000/admin
 - **Tài khoản admin:** viethoang@gmail.com / Abc123

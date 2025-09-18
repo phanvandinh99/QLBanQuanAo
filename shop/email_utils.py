@@ -13,8 +13,18 @@ def send_order_confirmation_email(customer, order):
         order: Object CustomerOrder (thông tin đơn hàng)
     """
     try:
-        # Parse order data
-        order_data = json.loads(order.orders) if order.orders else {}
+        # Get order data from OrderItem relationships
+        order_items = order.items  # This uses the relationship defined in the Order model
+        order_data = {}
+        for item in order_items:
+            order_data[str(item.product_id)] = {
+                'name': item.product.name,
+                'price': str(item.unit_price),
+                'discount': item.discount,
+                'quantity': item.quantity,
+                'color': getattr(item.product, 'colors', ''),
+                'image': item.product.image_1
+            }
 
         # Calculate totals
         total_quantity = 0
@@ -69,7 +79,7 @@ def send_order_confirmation_email(customer, order):
                     <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
                     <p><strong>Phương thức nhận hàng:</strong> {"🏠 Giao tận nhà" if order.delivery_method == "home_delivery" else "🏪 Nhận tại cửa hàng"}</p>
-                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.address + "</p>" if order.delivery_method == "home_delivery" and order.address else ""}
+                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.shipping_address + "</p>" if order.delivery_method == "home_delivery" and order.shipping_address else ""}
                     {"<p><strong>Cửa hàng nhận hàng:</strong> " + order.pickup_store.replace('_', ' ').title() + "</p>" if order.delivery_method == "instore_pickup" and order.pickup_store else ""}
                 </div>
 
@@ -78,7 +88,7 @@ def send_order_confirmation_email(customer, order):
                     <p><strong>Họ tên:</strong> {customer.first_name} {customer.last_name}</p>
                     <p><strong>Email:</strong> {customer.email}</p>
                     <p><strong>Số điện thoại:</strong> {customer.phone_number}</p>
-                    <p><strong>Địa chỉ giao hàng:</strong> {order.address}</p>
+                    <p><strong>Địa chỉ giao hàng:</strong> {order.shipping_address}</p>
                 </div>
 
                 <h3>Chi tiết sản phẩm</h3>
@@ -267,7 +277,7 @@ def send_order_status_update_email(customer, order, action_by="system"):
                     <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
                     <p><strong>Phương thức nhận hàng:</strong> {"🏠 Giao tận nhà" if order.delivery_method == "home_delivery" else "🏪 Nhận tại cửa hàng"}</p>
-                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.address + "</p>" if order.delivery_method == "home_delivery" and order.address else ""}
+                    {"<p><strong>Địa chỉ giao hàng:</strong> " + order.shipping_address + "</p>" if order.delivery_method == "home_delivery" and order.shipping_address else ""}
                     {"<p><strong>Cửa hàng nhận hàng:</strong> " + order.pickup_store.replace('_', ' ').title() + "</p>" if order.delivery_method == "instore_pickup" and order.pickup_store else ""}
                 </div>
 

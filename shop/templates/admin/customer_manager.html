@@ -62,7 +62,7 @@
                     <td>{{customer.gender}}</td>
                     <td>{{customer.date_created}}</td>
                     <td>
-                      {% if customer.lock == 0 %}
+                      {% if customer.is_active %}
                       <button
                         type="button"
                         class="btn btn-dark"

@@ -344,22 +344,22 @@
       <div class="info-item">
         <div class="info-label">Ngày đặt</div>
         <div class="info-value">
-          {{order.date_created.strftime('%d/%m/%Y %H:%M')}}
+          {{order.created_at.strftime('%d/%m/%Y %H:%M')}}
         </div>
       </div>
       <div class="info-item">
         <div class="info-label">Trạng thái</div>
         <div class="info-value">
           <span
-            class="status-badge {% if order.status == 'Đang xác nhận' %}status-pending {% elif order.status == 'Đã giao' %}status-accepted {% elif order.status == 'Hủy đơn' %}status-cancelled{% endif %}"
+            class="status-badge {% if order.status == 'pending' %}status-pending {% elif order.status == 'delivered' %}status-delivered {% elif order.status == 'cancelled' %}status-cancelled{% endif %}"
           >
-            {{order.status}}
+            {{order.status_display}}
           </span>
         </div>
       </div>
       <div class="info-item">
         <div class="info-label">Địa chỉ giao hàng</div>
-        <div class="info-value">{{order.address}}</div>
+        <div class="info-value">{{order.shipping_address}}</div>
       </div>
     </div>
   </div>
@@ -495,7 +495,7 @@
          ← Quay lại lịch sử đơn hàng
        </a>
        
-       {% if order.status == 'Đang xác nhận' %}
+       {% if order.status == 'pending' %}
        <form method="POST" action="{{url_for('cancel_order', invoice=order.invoice)}}" style="display: inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');">
          <button type="submit" class="cancel-button">
            <i class="fa fa-times"></i> Hủy đơn hàng
