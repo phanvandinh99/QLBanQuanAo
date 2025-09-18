@@ -199,6 +199,21 @@
     font-weight: 600;
     text-transform: uppercase;
   }
+
+  .status-paid {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-unpaid {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .delivery-badge {
+    font-size: 12px;
+    font-weight: 500;
+  }
   
   .btn-outline-primary {
     border: 1px solid #0cafe5;
@@ -285,18 +300,157 @@
     font-size: 11px;
   }
   
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    min-width: 1000px;
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  /* Optimize column widths */
+  .table th:nth-child(1) { width: 120px; } /* Mã đơn */
+  .table th:nth-child(2) { width: 130px; } /* Ngày đặt */
+  .table th:nth-child(3) { width: 100px; } /* SL sản phẩm */
+  .table th:nth-child(4) { width: 120px; } /* Tổng tiền */
+  .table th:nth-child(5) { width: 140px; } /* Thanh toán */
+  .table th:nth-child(6) { width: 120px; } /* Giao hàng */
+  .table th:nth-child(7) { width: 120px; } /* Trạng thái */
+  .table th:nth-child(8) { width: 100px; } /* Thao tác */
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .delivery-badge {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    display: block;
+  }
+
+  .delivery-badge small {
+    font-size: 9px;
+    color: #6c757d;
+    font-weight: 400;
+  }
+
+  .payment-info {
+    text-align: center;
+  }
+
+  .payment-method {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 10px;
+  }
+
+  .badge-primary {
+    background: #007bff;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .table-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+  }
+
   @media (max-width: 768px) {
     .account-container {
-      padding: 20px 0;
+      padding: 10px 0;
     }
-    
+
     .content-body {
-      padding: 20px;
+      padding: 10px;
     }
-    
+
     .sidebar-card {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
+
+    .table {
+      font-size: 12px;
+    }
+
+    .table th,
+    .table td {
+      padding: 8px 4px;
+    }
+
+    /* Hide less important columns on mobile */
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+      display: none;
+    }
+
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+      display: none;
+    }
+
+    /* Adjust remaining columns */
+    .table th:nth-child(1) { width: 100px; }
+    .table th:nth-child(2) { width: 120px; }
+    .table th:nth-child(4) { width: 100px; }
+    .table th:nth-child(5) { width: 140px; }
+    .table th:nth-child(7) { width: 100px; }
+    .table th:nth-child(8) { width: 80px; }
+
+    .status-badge {
+      font-size: 9px;
+      padding: 2px 4px;
+    }
+
+    .delivery-badge {
+      font-size: 10px;
+    }
+
+    .delivery-badge small {
+      font-size: 8px;
+    }
+
+    .payment-method {
+      font-size: 9px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .table th:nth-child(5),
+    .table td:nth-child(5) {
+      display: none;
+    }
+
+    .table th:nth-child(1) { width: 90px; }
+    .table th:nth-child(2) { width: 110px; }
+    .table th:nth-child(4) { width: 90px; }
+    .table th:nth-child(7) { width: 90px; }
+    .table th:nth-child(8) { width: 70px; }
   }
 </style>
 
@@ -473,6 +627,13 @@
           </div>
           <div class="content-body">
             <div class="table-responsive">
+              <div class="table-info mb-3">
+                <small class="text-muted">
+                  <i class="fa fa-info-circle"></i>
+                  Cuộn ngang để xem đầy đủ thông tin
+                  <span class="d-none d-md-inline">| Tổng cộng: {{orders_with_totals|length}} đơn hàng</span>
+                </small>
+              </div>
               <table class="table">
                 <thead>
                   <tr>
@@ -480,6 +641,8 @@
                     <th><i class="fa fa-calendar"></i> Ngày đặt</th>
                     <th><i class="fa fa-box"></i> SL sản phẩm</th>
                     <th><i class="fa fa-money"></i> Tổng tiền</th>
+                    <th><i class="fa fa-credit-card"></i> Thanh toán</th>
+                    <th><i class="fa fa-truck"></i> Giao hàng</th>
                     <th><i class="fa fa-info-circle"></i> Trạng thái</th>
                     <th><i class="fa fa-cogs"></i> Thao tác</th>
                   </tr>
@@ -492,6 +655,34 @@
                     <td><i class="fa fa-clock-o"></i> {{order.created_at.strftime('%d/%m/%Y %H:%M')}}</td>
                     <td><span class="badge-primary">{{order_info.total_quantity}} sản phẩm</span></td>
                     <td><strong>{{order_info.total_amount | vnd}}</strong></td>
+                    <td>
+                      <div class="payment-info">
+                        <span class="status-badge {% if order.payment_status == 'paid' %}status-paid{% else %}status-unpaid{% endif %}">
+                          {% if order.payment_status == 'paid' %}
+                            <i class="fa fa-check-circle"></i> Đã TT
+                          {% else %}
+                            <i class="fa fa-clock-o"></i> Chưa TT
+                          {% endif %}
+                        </span>
+                        <br>
+                        <small class="payment-method">
+                          {% if order.payment_method == 'vnpay' %}
+                            <i class="fa fa-credit-card"></i> VNPAY
+                          {% else %}
+                            <i class="fa fa-money"></i> COD
+                          {% endif %}
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="delivery-badge">
+                        {% if order.delivery_method == 'home_delivery' %}
+                          <i class="fa fa-home text-info"></i><br><small>Giao tận nhà</small>
+                        {% else %}
+                          <i class="fa fa-building text-warning"></i><br><small>Nhận tại CH</small>
+                        {% endif %}
+                      </span>
+                    </td>
                     <td>
                       {% if order.status == "pending" %}
                       <span class="status-badge status-pending">{{order.status_display}}</span>
