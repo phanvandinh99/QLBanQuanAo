@@ -1,0 +1,427 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+
+<style>
+.payment-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.payment-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.payment-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.payment-header h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.payment-header .invoice-id {
+    background: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.qr-section {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.qr-placeholder {
+    width: 250px;
+    height: 250px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-placeholder::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        transparent 90deg,
+        rgba(255,255,255,0.1) 90deg,
+        rgba(255,255,255,0.1) 180deg
+    );
+    animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.qr-placeholder i {
+    font-size: 80px;
+    color: white;
+    z-index: 2;
+    position: relative;
+}
+
+.qr-placeholder .qr-text {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    z-index: 2;
+}
+
+.qr-code-container {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    display: inline-block;
+}
+
+.qr-code-image {
+    width: 250px;
+    height: 250px;
+    display: block;
+    border-radius: 10px;
+}
+
+.payment-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #28a745;
+    margin: 20px 0;
+    text-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.customer-info {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.customer-info h5 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.customer-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.customer-detail strong {
+    color: #2c3e50;
+}
+
+.payment-instructions {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.payment-instructions h5 {
+    color: #856404;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.instruction-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.instruction-list li {
+    margin-bottom: 10px;
+    padding-left: 25px;
+    position: relative;
+    color: #856404;
+}
+
+.instruction-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-paid {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.action-buttons {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #1e7e34;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .payment-container {
+        padding: 10px;
+    }
+
+    .payment-card {
+        margin: 10px;
+        padding: 20px;
+    }
+
+    .qr-placeholder {
+        width: 200px;
+        height: 200px;
+    }
+
+    .payment-amount {
+        font-size: 28px;
+    }
+
+    .customer-info {
+        padding: 15px;
+    }
+
+    .action-buttons .btn {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+</style>
+
+<div class="payment-container">
+    <div class="container">
+        <div class="payment-card">
+            <!-- Header -->
+            <div class="payment-header">
+                <h2><i class="fa fa-qrcode"></i> Thanh Toán QR Code</h2>
+                <p class="text-muted">Khách hàng quét mã QR để thanh toán đơn hàng</p>
+                <div class="invoice-id">#{{ order.invoice }}</div>
+            </div>
+
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                {% if qr_code_url %}
+                <div class="qr-code-container">
+                    <img src="{{ qr_code_url }}" alt="QR Code thanh toán" class="qr-code-image">
+                </div>
+                {% else %}
+                <div class="qr-placeholder">
+                    <i class="fa fa-qrcode"></i>
+                    <div class="qr-text">QR Code</div>
+                </div>
+                {% endif %}
+
+                <div class="payment-amount">
+                    {{ qr_data.amount | vnd }}
+                </div>
+
+                <p class="text-muted">Quét mã QR bằng ứng dụng ngân hàng để thanh toán</p>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="customer-info">
+                <h5><i class="fa fa-user"></i> Thông Tin Khách Hàng</h5>
+                <div class="customer-detail">
+                    <span>Họ Tên:</span>
+                    <strong>{{ qr_data.customer }}</strong>
+                </div>
+                <div class="customer-detail">
+                    <span>Số Điện Thoại:</span>
+                    <strong>{{ qr_data.phone }}</strong>
+                </div>
+                <div class="customer-detail">
+                    <span>Mã Đơn Hàng:</span>
+                    <strong>{{ qr_data.invoice }}</strong>
+                </div>
+            </div>
+
+            <!-- Payment Instructions -->
+            <div class="payment-instructions">
+                <h5><i class="fa fa-info-circle"></i> Hướng Dẫn Thanh Toán</h5>
+                <ul class="instruction-list">
+                    <li>Mở ứng dụng ngân hàng trên điện thoại</li>
+                    <li>Chọn chức năng quét mã QR</li>
+                    <li>Quét mã QR hiển thị phía trên</li>
+                    <li>Xác nhận thanh toán số tiền <strong>{{ qr_data.amount | vnd }}</strong></li>
+                    <li>Chờ thông báo thanh toán thành công</li>
+                </ul>
+            </div>
+
+            <!-- Payment Status -->
+            <div class="text-center">
+                <span class="status-indicator status-pending">
+                    <i class="fa fa-clock-o"></i> Chờ Thanh Toán
+                </span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('orders_manager') }}" class="btn btn-primary">
+                    <i class="fa fa-list"></i> Quản Lý Đơn Hàng
+                </a>
+                <button onclick="printPayment()" class="btn btn-success">
+                    <i class="fa fa-print"></i> In Thông Tin
+                </button>
+                <a href="{{ url_for('admin_create_order') }}" class="btn btn-outline-secondary">
+                    <i class="fa fa-plus"></i> Tạo Đơn Mới
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Print payment information
+function printPayment() {
+    window.print();
+}
+
+// Auto refresh to check payment status (you can implement this later)
+// setInterval(function() {
+//     // Check payment status via AJAX
+//     console.log('Checking payment status...');
+// }, 5000);
+
+// Add print styles
+const printStyles = `
+<style>
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .payment-card, .payment-card * {
+        visibility: visible;
+    }
+    .payment-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    .action-buttons {
+        display: none !important;
+    }
+    .qr-placeholder {
+        page-break-inside: avoid;
+    }
+}
+</style>`;
+
+document.head.insertAdjacentHTML('beforeend', printStyles);
+
+// Show success message when payment is completed (you can trigger this via WebSocket or polling)
+function showPaymentSuccess() {
+    const statusElement = document.querySelector('.status-indicator');
+    statusElement.className = 'status-indicator status-paid';
+    statusElement.innerHTML = '<i class="fa fa-check"></i> Đã Thanh Toán';
+
+    // Show success alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success mt-3';
+    alert.innerHTML = '<i class="fa fa-check-circle"></i> Thanh toán thành công! Đơn hàng đã được xử lý.';
+    document.querySelector('.payment-card').insertBefore(alert, document.querySelector('.action-buttons'));
+}
+</script>
+
+{% endblock %}

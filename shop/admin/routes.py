@@ -1,8 +1,19 @@
 import os
 import urllib
+import secrets
+from datetime import datetime
 from itertools import product
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
+
+# QR Code generation (optional)
+try:
+    import qrcode
+    from io import BytesIO
+    import base64
+    QRCODE_AVAILABLE = True
+except ImportError:
+    QRCODE_AVAILABLE = False
 
 from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
@@ -11,6 +22,8 @@ from shop.models import Brand, Category, Product, Customer, Admin, Order, Rating
 from shop.email_utils import send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
+
+# CSRF protection temporarily disabled in app config
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
@@ -957,3 +970,521 @@ def export_invoice(order_id):
         import traceback
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Có lỗi xảy ra khi tạo hóa đơn'}), 500
+
+
+# Admin Order Management Routes
+@app.route('/admin/orders/create', methods=['GET', 'POST'])
+def admin_create_order():
+    """Admin create order at counter"""
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    from .forms import AdminOrderForm, AdminOrderItemForm
+    from shop.models import OrderItem
+
+    form = AdminOrderForm()
+    item_form = AdminOrderItemForm()
+
+    # Get all products for selection (products with stock > 0)
+    products = Product.query.filter(Product.stock > 0).all()
+
+    # Initialize cart for admin order
+    if 'admin_cart' not in session:
+        session['admin_cart'] = {}
+
+    admin_cart = session['admin_cart']
+
+    # Calculate totals
+    subtotal = 0
+    total_discount = 0
+    total_quantity = 0
+
+    cart_items = []
+    for product_id, item in admin_cart.items():
+        product = Product.query.get(int(product_id))
+        if product:
+            quantity = int(item.get('quantity', 0))
+            discount_percent = float(item.get('discount', 0))
+            unit_price = float(product.price)
+            discount_amount = (discount_percent / 100) * unit_price * quantity
+            final_price = unit_price * quantity - discount_amount
+
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'unit_price': unit_price,
+                'discount_percent': discount_percent,
+                'discount_amount': discount_amount,
+                'final_price': final_price
+            })
+
+            subtotal += unit_price * quantity
+            total_discount += discount_amount
+            total_quantity += quantity
+
+    total_amount = subtotal - total_discount
+
+    if request.method == 'POST':
+        # Handle adding item to cart
+        if 'add_item' in request.form:
+            if item_form.validate_on_submit():
+                product_id = str(item_form.product_id.data)
+                quantity = item_form.quantity.data
+                discount = item_form.discount.data or 0
+
+                # Check stock
+                product = Product.query.get(product_id)
+                if not product:
+                    flash('Sản phẩm không tồn tại!', 'danger')
+                    return redirect(url_for('admin_create_order'))
+
+                if quantity > product.stock:
+                    flash(f'Không đủ hàng trong kho. Chỉ còn {product.stock} sản phẩm!', 'danger')
+                    return redirect(url_for('admin_create_order'))
+
+                # Add to cart
+                admin_cart[product_id] = {
+                    'quantity': quantity,
+                    'discount': discount
+                }
+                session['admin_cart'] = admin_cart
+                flash('Đã thêm sản phẩm vào đơn hàng!', 'success')
+                return redirect(url_for('admin_create_order'))
+
+        # Handle removing item from cart
+        elif 'remove_item' in request.form:
+            product_id = request.form.get('product_id')
+            if product_id in admin_cart:
+                del admin_cart[product_id]
+                session['admin_cart'] = admin_cart
+                flash('Đã xóa sản phẩm khỏi đơn hàng!', 'success')
+            return redirect(url_for('admin_create_order'))
+
+        # Handle creating order
+        elif 'create_order' in request.form:
+            if not admin_cart:
+                flash('Vui lòng thêm sản phẩm vào đơn hàng!', 'danger')
+                return redirect(url_for('admin_create_order'))
+
+            if form.validate_on_submit():
+                try:
+                    # Check if customer exists by phone number
+                    customer = Customer.query.filter_by(phone_number=form.customer_phone.data).first()
+
+                    if not customer:
+                        # Create new customer
+                        # Generate username from phone number
+                        username = form.customer_phone.data.replace(' ', '').replace('+', '')
+                        base_username = username
+
+                        # Ensure unique username
+                        counter = 1
+                        while Customer.query.filter_by(username=username).first():
+                            username = f"{base_username}_{counter}"
+                            counter += 1
+
+                        # Split name into first and last name
+                        customer_name = form.customer_name.data.strip()
+                        name_parts = customer_name.split(' ', 1)
+                        first_name = name_parts[0] if name_parts else ''
+                        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                        customer = Customer(
+                            username=username,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=form.customer_email.data or None,
+                            phone_number=form.customer_phone.data,
+                            is_active=True
+                        )
+                        db.session.add(customer)
+                        db.session.flush()  # Get customer ID
+
+                        flash(f'Đã tạo tài khoản mới cho khách hàng {customer_name}!', 'info')
+                    else:
+                        # Update existing customer information if provided
+                        if form.customer_name.data and form.customer_name.data != customer.first_name + ' ' + customer.last_name:
+                            name_parts = form.customer_name.data.strip().split(' ', 1)
+                            customer.first_name = name_parts[0] if name_parts else ''
+                            customer.last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+                        if form.customer_email.data and form.customer_email.data != customer.email:
+                            customer.email = form.customer_email.data
+
+                        flash(f'Đã cập nhật thông tin khách hàng {customer.first_name} {customer.last_name}!', 'info')
+
+                    # Create order
+                    invoice = secrets.token_hex(5)
+                    order = Order(
+                        invoice=invoice,
+                        customer_id=customer.id,
+                        status='delivered',  # Admin orders are delivered immediately
+                        payment_status='paid',  # Payment completed at counter
+                        delivery_method='instore_pickup',  # At store pickup
+                        payment_method=form.payment_method.data,
+                        total_amount=total_amount,
+                        notes=form.notes.data or None
+                    )
+
+                    db.session.add(order)
+                    db.session.flush()  # Get order ID
+
+                    # Create order items
+                    for product_id, item in admin_cart.items():
+                        product = Product.query.get(int(product_id))
+                        if product:
+                            quantity = int(item.get('quantity', 0))
+                            discount = float(item.get('discount', 0))
+
+                            order_item = OrderItem(
+                                order_id=order.id,
+                                product_id=int(product_id),
+                                quantity=quantity,
+                                unit_price=product.price,
+                                discount=discount
+                            )
+                            db.session.add(order_item)
+
+                            # Update product stock
+                            product.stock -= quantity
+
+                    db.session.commit()
+
+                    # Clear admin cart
+                    session.pop('admin_cart', None)
+
+                    # Generate QR code for payment if selected
+                    qr_data = None
+                    qr_code_url = None
+                    if form.payment_method.data == 'qr_code':
+                        qr_data = {
+                            'amount': total_amount,
+                            'invoice': invoice,
+                            'customer': form.customer_name.data,
+                            'phone': form.customer_phone.data
+                        }
+
+                        # Generate QR code
+                        if QRCODE_AVAILABLE:
+                            try:
+                                # Create QR code data (you can customize this format for your payment gateway)
+                                qr_content = f"BANK_TRANSFER\nAMOUNT:{total_amount}\nINVOICE:{invoice}\nCUSTOMER:{form.customer_name.data}\nPHONE:{form.customer_phone.data}"
+
+                                # Generate QR code
+                                qr = qrcode.QRCode(
+                                    version=1,
+                                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                                    box_size=10,
+                                    border=4,
+                                )
+                                qr.add_data(qr_content)
+                                qr.make(fit=True)
+
+                                # Create QR code image
+                                img = qr.make_image(fill_color="black", back_color="white")
+
+                                # Convert to base64 for display in HTML
+                                buffered = BytesIO()
+                                img.save(buffered, format="PNG")
+                                qr_code_url = f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
+
+                            except Exception as e:
+                                current_app.logger.error(f"Error generating QR code: {str(e)}")
+                                qr_code_url = None
+                        else:
+                            current_app.logger.warning("qrcode library not available, using placeholder")
+                            qr_code_url = None
+
+                    flash(f'Đơn hàng #{invoice} đã được tạo thành công!', 'success')
+
+                    # Redirect to order detail or payment page
+                    if form.payment_method.data == 'qr_code':
+                        return render_template('admin/order_qr_payment.html',
+                                             order=order,
+                                             customer=customer,
+                                             qr_data=qr_data,
+                                             qr_code_url=qr_code_url,
+                                             cart_items=cart_items,
+                                             total_amount=total_amount)
+                    else:
+                        return redirect(url_for('orders_manager'))
+
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Error creating admin order: {str(e)}")
+                    flash('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!', 'danger')
+                    return redirect(url_for('admin_create_order'))
+
+    return render_template('admin/create_order.html',
+                         form=form,
+                         item_form=item_form,
+                         products=products,
+                         cart_items=cart_items,
+                         admin_cart=admin_cart,
+                         subtotal=subtotal,
+                         total_discount=total_discount,
+                         total_amount=total_amount,
+                         total_quantity=total_quantity)
+
+
+@app.route('/admin/orders/<int:order_id>/qr-payment')
+def admin_order_qr_payment(order_id):
+    """Display QR payment page for admin orders"""
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    order = Order.query.get_or_404(order_id)
+
+    # Get order items
+    from shop.customers.routes import get_order_data
+    order_data = get_order_data(order)
+
+    total_quantity = 0
+    total_amount = 0
+    if order_data:
+        for key, product in order_data.items():
+            total_quantity += int(product['quantity'])
+            total_amount += float(product['price']) * int(product['quantity']) * (1 - float(product.get('discount', 0))/100)
+
+    qr_data = {
+        'amount': order.total_amount,
+        'invoice': order.invoice,
+        'customer': order.customer.first_name + ' ' + order.customer.last_name,
+        'phone': order.customer.phone_number
+    }
+
+    return render_template('admin/order_qr_payment.html',
+                         order=order,
+                         qr_data=qr_data,
+                         total_quantity=total_quantity,
+                         total_amount=total_amount)
+
+
+@app.route('/admin/orders/clear-cart')
+def admin_clear_cart():
+    """Clear admin cart"""
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    session.pop('admin_cart', None)
+    flash('Đã xóa toàn bộ giỏ hàng!', 'success')
+    return redirect(url_for('admin_create_order'))
+
+
+
+@app.route('/admin/api/session-status', methods=['GET'])
+def session_status():
+    """Check admin session status"""
+    return jsonify({
+        'logged_in': 'email' in session,
+        'admin_email': session.get('email', None),
+        'session_keys': list(session.keys()),
+        'csrf_token': session.get('csrf_token', 'NO_TOKEN'),
+        'timestamp': datetime.now().isoformat()
+    })
+
+@app.route('/admin/api/test-no-csrf', methods=['POST'])
+def test_no_csrf():
+    """Test API without CSRF requirement"""
+    if 'email' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    try:
+        data = request.get_json()
+        return jsonify({
+            'success': True,
+            'message': 'API works without CSRF!',
+            'received_data': data
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/admin/debug', methods=['GET'])
+def debug_page():
+    """Debug page to check admin login status"""
+    return f"""
+    <h1>Admin Debug Page</h1>
+    <h2>Session Status:</h2>
+    <ul>
+        <li>Logged in: {'email' in session}</li>
+        <li>Admin email: {session.get('email', 'None')}</li>
+        <li>Session keys: {list(session.keys())}</li>
+    </ul>
+
+    <h3>Test API Calls:</h3>
+    <button onclick="testAPI()" style="margin-right: 10px; background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Test API with CSRF</button>
+    <button onclick="testAPINoCSRF()" style="margin-right: 10px; background-color: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Test API without CSRF</button>
+    <button onclick="checkSession()" style="background-color: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Check Session Details</button>
+    <div id="apiResult" style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #f8f9fa; min-height: 200px;"></div>
+
+    <p><a href="/admin/login">Login</a> | <a href="/admin/orders/create">Create Order</a></p>
+
+    <script>
+    function testAPI() {{
+        const csrfToken = '{session.get('csrf_token', '')}';
+        console.log('Testing API with CSRF token:', csrfToken);
+
+        document.getElementById('apiResult').innerHTML = '<div style="color: blue;">⏳ Testing API with CSRF...</div>';
+
+        fetch('/admin/api/check-customer-phone', {{
+            method: 'POST',
+            headers: {{
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }},
+            body: JSON.stringify({{ phone_number: '0971010281' }})
+        }})
+        .then(response => {{
+            console.log('API Response status:', response.status);
+            console.log('API Response headers:', response.headers.get('content-type'));
+
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {{
+                return response.text().then(html => {{
+                    console.log('Received HTML response instead of JSON');
+                    throw new Error('Server returned HTML instead of JSON. Check if you are logged in.');
+                }});
+            }}
+
+            return response.json().then(data => {{
+                if (!response.ok) {{
+                    throw new Error(data.error || `HTTP ${{response.status}}`);
+                }}
+                return data;
+            }});
+        }})
+        .then(data => {{
+            console.log('API Success:', data);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: green;">✅ API Test with CSRF Successful!</div>' +
+                '<pre style="background: #f0f8f0; padding: 10px; margin-top: 10px; border-radius: 4px;">' +
+                JSON.stringify(data, null, 2) + '</pre>';
+        }})
+        .catch(error => {{
+            console.error('API Error:', error);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: red;">❌ API Test with CSRF Failed!</div>' +
+                '<div style="color: red; margin-top: 10px;"><strong>Error:</strong> ' + error.message + '</div>' +
+                '<div style="color: #666; margin-top: 10px; font-size: 12px;">Check console (F12) for more details</div>';
+        }});
+    }}
+
+    function testAPINoCSRF() {{
+        console.log('Testing API without CSRF...');
+
+        document.getElementById('apiResult').innerHTML = '<div style="color: green;">⏳ Testing API without CSRF...</div>';
+
+        fetch('/admin/api/test-no-csrf', {{
+            method: 'POST',
+            headers: {{
+                'Content-Type': 'application/json'
+            }},
+            body: JSON.stringify({{ test: 'data', phone: '0971010281' }})
+        }})
+        .then(response => {{
+            console.log('No-CSRF Response status:', response.status);
+            return response.json().then(data => {{
+                console.log('No-CSRF Response data:', data);
+                return data;
+            }});
+        }})
+        .then(data => {{
+            console.log('No-CSRF Success:', data);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: green;">✅ API Test without CSRF Successful!</div>' +
+                '<pre style="background: #f0f8f0; padding: 10px; margin-top: 10px; border-radius: 4px;">' +
+                JSON.stringify(data, null, 2) + '</pre>';
+        }})
+        .catch(error => {{
+            console.error('No-CSRF Error:', error);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: red;">❌ API Test without CSRF Failed!</div>' +
+                '<div style="color: red; margin-top: 10px;"><strong>Error:</strong> ' + error.message + '</div>' +
+                '<div style="color: #666; margin-top: 10px; font-size: 12px;">Check console (F12) for more details</div>';
+        }});
+    }}
+
+    function checkSession() {{
+        console.log('Checking session status...');
+
+        document.getElementById('apiResult').innerHTML = '<div style="color: #17a2b8;">⏳ Checking session details...</div>';
+
+        fetch('/admin/api/session-status')
+        .then(response => response.json())
+        .then(data => {{
+            console.log('Session data:', data);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: #17a2b8;">✅ Session Check Complete!</div>' +
+                '<pre style="background: #e7f3ff; padding: 10px; margin-top: 10px; border-radius: 4px;">' +
+                JSON.stringify(data, null, 2) + '</pre>';
+        }})
+        .catch(error => {{
+            console.error('Session check error:', error);
+            document.getElementById('apiResult').innerHTML =
+                '<div style="color: red;">❌ Session Check Failed!</div>' +
+                '<div style="color: red; margin-top: 10px;"><strong>Error:</strong> ' + error.message + '</div>' +
+                '<div style="color: #666; margin-top: 10px; font-size: 12px;">Check console (F12) for more details</div>';
+        }});
+    }}
+    </script>
+    """
+
+@app.route('/admin/api/check-customer-phone', methods=['POST'])
+def api_check_customer_phone():
+    """API to check if customer exists by phone number"""
+
+    if 'email' not in session:
+        current_app.logger.warning("Unauthorized access attempt - no email in session")
+        # Return JSON response for API calls, not HTML redirect
+        return jsonify({
+            'error': 'Unauthorized - please login again',
+            'redirect_url': url_for('login'),
+            'session_expired': True
+        }), 401
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON data'}), 400
+
+        phone_number = data.get('phone_number', '').strip()
+
+        if not phone_number:
+            return jsonify({'error': 'Số điện thoại không được để trống'}), 400
+
+        # Validate phone number format
+        if not phone_number.isdigit() or len(phone_number) < 10 or len(phone_number) > 15:
+            return jsonify({'error': 'Số điện thoại không hợp lệ'}), 400
+
+        customer = Customer.query.filter_by(phone_number=phone_number).first()
+
+        if customer:
+            customer_data = {
+                'id': customer.id,
+                'first_name': customer.first_name,
+                'last_name': customer.last_name,
+                'email': customer.email or '',
+                'phone_number': customer.phone_number,
+                'full_name': f"{customer.first_name} {customer.last_name}".strip(),
+                'is_active': customer.is_active
+            }
+            return jsonify({
+                'exists': True,
+                'customer': customer_data
+            })
+        else:
+            return jsonify({
+                'exists': False,
+                'message': 'Số điện thoại chưa được đăng ký trong hệ thống'
+            })
+
+    except Exception as e:
+        current_app.logger.error(f"Error checking customer phone: {str(e)}")
+        import traceback
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Có lỗi xảy ra khi kiểm tra số điện thoại'}), 500
+

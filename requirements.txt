@@ -60,3 +60,6 @@ flask-msearch==0.2.9.4
 
 # For PDF generation (if needed)
 reportlab==4.0.7
+
+# For QR code generation
+qrcode[pil]==7.4.2

@@ -213,14 +213,31 @@
                         </ul>
                     </li>
 
-                    <li class="nav-item">
+                    <li class="nav-item has-treeview {% if request.endpoint == 'orders_manager' or request.endpoint == 'admin_create_order' or request.endpoint == 'admin_order_qr_payment' %} menu-open {% endif %}">
                         <a href="{{ url_for('orders_manager')}}"
-                           class="nav-link {% if request.endpoint == 'orders' %} active {% endif %}">
+                           class="nav-link {% if request.endpoint == 'orders_manager' or request.endpoint == 'admin_create_order' or request.endpoint == 'admin_order_qr_payment' %} active {% endif %}">
                             <i class="nav-icon fas fa-inbox"></i>
                             <p>
                                 Đơn Hàng
+                                <i class="right fas fa-angle-left"></i>
                             </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ url_for('orders_manager') }}"
+                                   class="nav-link {% if request.endpoint == 'orders_manager' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Quản Lý Đơn Hàng</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('admin_create_order') }}"
+                                   class="nav-link {% if request.endpoint == 'admin_create_order' or request.endpoint == 'admin_order_qr_payment' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Tạo Đơn Tại Quầy</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <!--                    <li class="nav-item">-->
                     <!--                        <a href="#" class="nav-link">-->

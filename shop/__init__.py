@@ -2,6 +2,7 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 try:
     from flask_uploads import UploadSet, IMAGES, configure_uploads
     FLASK_UPLOADS_AVAILABLE = True
@@ -30,6 +31,9 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'customer_login'
 mail = Mail(app)
+
+# CSRF Protection - Temporarily disabled for testing
+# csrf = CSRFProtect(app)
 
 ALLOWED_EXTENSIONS = (
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico',
@@ -78,6 +82,10 @@ from shop.admin import routes
 from shop.products import routes
 from shop.carts import routes
 from shop.customers import routes
+
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf)
 
 @app.before_request
 def before_request():
