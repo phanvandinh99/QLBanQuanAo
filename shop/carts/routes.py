@@ -85,14 +85,12 @@ def getCart():
         return render_template('products/carts.html', empty=True, brands=brands(),
                                categories=categories())
 
-    # Calculate totals from session cart
     subtotals = 0
     discounttotal = 0
     for key, product in session['Shoppingcart'].items():
         discounttotal += (product.get('discount', 0) / 100) * float(product['price']) * int(product['quantity'])
         subtotals += float(product['price']) * int(product['quantity'])
 
-    # Get customer info if authenticated
     customer = None
     if current_user.is_authenticated:
         customer = current_user
@@ -160,24 +158,19 @@ def vnpay_payment():
         flash('Vui lòng đăng nhập để thanh toán', 'danger')
         return redirect(url_for('customer_login'))
 
-    # Check for pending order from checkout
     pending_invoice = session.get('vnpay_pending_order')
     if pending_invoice:
-        # Get order from database
         order = Order.query.filter_by(invoice=pending_invoice, customer_id=current_user.id).first()
         if not order:
             flash('Không tìm thấy đơn hàng!', 'danger')
             return redirect(url_for('payment_history'))
 
-        # Clear pending order from session
         session.pop('vnpay_pending_order', None)
 
-        # Use order data
         customer_address = order.shipping_address or ''
         final_amount = int(order.total_amount)
         invoice = pending_invoice
 
-        # For pending order, we don't need to store last_vnpay_order since order already exists
     else:
         # Legacy method - calculate from cart (for backward compatibility)
         if 'Shoppingcart' not in session or not session['Shoppingcart']:

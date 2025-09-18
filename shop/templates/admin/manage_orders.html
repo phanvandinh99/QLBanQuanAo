@@ -566,7 +566,7 @@
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
                               <td><strong>{{total_quantity or 0}}</strong></td>
-                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
+                              <td><strong>{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>
                                 {% if order.display_payment_status == 'Đã thanh toán' %}
@@ -765,7 +765,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
-                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</span>
                                                 </div>
                                               </div>
                                             </div>
@@ -1038,7 +1038,7 @@
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
                               <td><strong>{{total_quantity or 0}}</strong></td>
-                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
+                              <td><strong>{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>
                                 {% if order.display_payment_status == 'Đã thanh toán' %}
@@ -1149,7 +1149,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
-                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</span>
                                                 </div>
                                               </div>
                                             </div>
@@ -1453,7 +1453,7 @@
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
                               <td><strong>{{total_quantity or 0}}</strong></td>
-                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
+                              <td><strong>{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>
                                 {% if order.display_payment_status == 'Đã thanh toán' %}
@@ -1526,7 +1526,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
-                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</span>
                                                 </div>
                                               </div>
                                             </div>
@@ -1798,7 +1798,7 @@
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
                               <td><strong>{{total_quantity or 0}}</strong></td>
-                              <td><strong>{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</strong></td>
+                              <td><strong>{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</strong></td>
                               <td>{{order.status}}</td>
                               <td>
                                 {% if order.display_payment_status == 'Đã thanh toán' %}
@@ -1871,7 +1871,7 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center">
                                                   <span class="text-muted" style="font-size: 14px;">Giá Trị:</span>
-                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | int | vnd if total_price and total_price > 0 else '0 VNĐ'}}</span>
+                                                  <span class="text-success font-weight-bold" style="font-size: 14px;">{{total_price | vnd if total_price and total_price > 0 else '0 ₫'}}</span>
                                                 </div>
                                               </div>
                                             </div>

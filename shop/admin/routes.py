@@ -103,12 +103,10 @@ def orders_manager():
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Customer.query.all()
 
-    # Get all orders and update old statuses to new ones
     orders = Order.query.filter(Order.status != None).order_by(Order.id.desc()).all()
 
     # Update old statuses to new ones in memory (for display)
     for order in orders:
-        # Update order status
         if order.status == 'Pending':
             order.status = 'Đang xác nhận'
         elif order.status == 'Accepted':
@@ -118,8 +116,6 @@ def orders_manager():
 
         # Add payment status display
         if hasattr(order, 'payment_status'):
-            # For COD orders, payment status should be "Chưa thanh toán"
-            # For VNPAY orders, payment status should be "Đã thanh toán"
             if order.payment_method == 'cod':
                 order.display_payment_status = 'Chưa thanh toán'
             elif order.payment_method == 'vnpay':
@@ -129,50 +125,50 @@ def orders_manager():
         else:
             order.display_payment_status = 'N/A'
 
-        # Calculate totals for each order
         order_data = get_order_data(order)
         total_quantity = 0
         total_price = 0
 
-        # Initialize enhanced products dictionary
         enhanced_products = {}
 
         if order_data and isinstance(order_data, dict):
             for key, product in order_data.items():
                 if product and isinstance(product, dict):
-                    # Create enhanced product with original data
                     enhanced_product = product.copy()
 
                     quantity = product.get('quantity', 0)
                     price = product.get('price', 0)
                     discount = product.get('discount', 0)
 
-                    # Convert to numbers
                     try:
                         quantity = int(quantity) if quantity else 0
-                        price = int(price) if price else 0
-                        discount = int(discount) if discount else 0
+                        price = float(price) if price else 0.0
+                        discount = float(discount) if discount else 0.0
                     except (ValueError, TypeError):
                         quantity = 0
-                        price = 0
-                        discount = 0
+                        price = 0.0
+                        discount = 0.0
 
-                    # Calculate if quantity > 0
                     if quantity > 0:
                         total_quantity += quantity
 
-                        # Calculate prices
                         original_price = price * quantity
-                        discount_amount = int(price * discount / 100) if discount > 0 else 0
-                        discounted_price_per_item = price - discount_amount
+
+                        # Calculate discount amount per item
+                        discount_amount_per_item = (price * discount / 100) if discount > 0 else 0.0
+
+                        discounted_price_per_item = price - discount_amount_per_item
+
                         discounted_total_per_item = discounted_price_per_item * quantity
 
-                        # Add calculated prices to enhanced product
+                        total_discount_for_item = discount_amount_per_item * quantity
+
                         enhanced_product['original_price'] = price
                         enhanced_product['discounted_price'] = discounted_price_per_item
-                        enhanced_product['discount_amount'] = discount_amount
+                        enhanced_product['discount_amount'] = discount_amount_per_item
                         enhanced_product['original_total'] = original_price
                         enhanced_product['discounted_total'] = discounted_total_per_item
+                        enhanced_product['total_discount'] = total_discount_for_item
 
                         total_price += discounted_total_per_item
 
@@ -194,7 +190,8 @@ def orders_manager():
         order.total_quantity = total_quantity
         order.total_price = total_price
         order.total_original_price = sum(p.get('original_total', 0) for p in enhanced_products.values())
-        order.total_discount_amount = sum(p.get('discount_amount', 0) * p.get('quantity', 0) for p in enhanced_products.values())
+        order.total_discount_amount = sum(p.get('total_discount', 0) for p in enhanced_products.values())
+
 
         order.product_details = enhanced_products if enhanced_products else order_data
 
