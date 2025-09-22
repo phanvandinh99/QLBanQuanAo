@@ -460,17 +460,29 @@ def register():
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def login():
+    print(f"=== LOGIN REQUEST: method={request.method}, form_data={dict(request.form)} ===")
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
+        print(f"Form validated, email: {form.email.data}")
         user = Admin.query.filter_by(email=form.email.data).first()
-        password = form.password.data.encode('utf8')
-        if user and bcrypt.check_password_hash(user.password, password):
-            session['email'] = form.email.data
-            flash(f'welcome {form.email.data} you are logedin now', 'success')
-            return redirect(url_for('admin'))
+        print(f"User found: {user is not None}")
+        if user:
+            password = form.password.data.encode('utf8')
+            password_valid = bcrypt.check_password_hash(user.password, password)
+            print(f"Password valid: {password_valid}")
+            if password_valid:
+                session['email'] = form.email.data
+                print(f"Session set, email: {session.get('email')}")
+                flash(f'welcome {form.email.data} you are logedin now', 'success')
+                return redirect(url_for('admin'))
+            else:
+                print("Password invalid")
         else:
-            flash(f'Wrong email and password', 'danger')
-            return redirect(url_for('login'))
+            print("User not found")
+        flash(f'Wrong email and password', 'danger')
+        return redirect(url_for('login'))
+    elif request.method == 'POST':
+        print(f"Form validation failed: {form.errors}")
     return render_template('admin/login.html', title='Login page', form=form)
 
 
@@ -1063,14 +1075,20 @@ def admin_create_order():
 
         # Handle creating order
         elif 'create_order' in request.form:
+            current_app.logger.info("=== CREATE ORDER REQUEST STARTED ===")
+            current_app.logger.info(f"Admin cart: {admin_cart}")
+            current_app.logger.info(f"Form data: {request.form}")
+
             if not admin_cart:
                 flash('Vui lòng thêm sản phẩm vào đơn hàng!', 'danger')
                 return redirect(url_for('admin_create_order'))
 
             if form.validate_on_submit():
+                current_app.logger.info("Form validation passed")
                 try:
                     # Check if customer exists by phone number
                     customer = Customer.query.filter_by(phone_number=form.customer_phone.data).first()
+                    current_app.logger.info(f"Customer lookup result: {'found' if customer else 'not found'} for phone: {form.customer_phone.data}")
 
                     if not customer:
                         # Create new customer
@@ -1102,8 +1120,10 @@ def admin_create_order():
                             password=hash_password,
                             is_active=True
                         )
+                        current_app.logger.info(f"Creating new customer: {first_name} {last_name}, phone: {form.customer_phone.data}")
                         db.session.add(customer)
                         db.session.flush()  # Get customer ID
+                        current_app.logger.info(f"New customer created with ID: {customer.id}")
 
                         # Mark this customer as newly created
                         customer._was_existing = False
@@ -1132,26 +1152,35 @@ def admin_create_order():
 
                     # Create order
                     invoice = secrets.token_hex(5)
+                    current_app.logger.info(f"Creating order with invoice: {invoice}, total_amount: {total_amount}")
+
+                    # Convert payment method for database storage
+                    payment_method_db = 'cod' if form.payment_method.data == 'cash' else 'vnpay'
+                    current_app.logger.info(f"Payment method from form: {form.payment_method.data}, converted to: {payment_method_db}")
+
                     order = Order(
                         invoice=invoice,
                         customer_id=customer.id,
                         status='delivered',  # Admin orders are delivered immediately
                         payment_status='paid',  # Payment completed at counter
                         delivery_method='instore_pickup',  # At store pickup
-                        payment_method=form.payment_method.data,
+                        payment_method=payment_method_db,
                         total_amount=total_amount,
                         notes=form.notes.data or None
                     )
 
                     db.session.add(order)
                     db.session.flush()  # Get order ID
+                    current_app.logger.info(f"Order created with ID: {order.id}")
 
                     # Create order items
+                    current_app.logger.info("Creating order items...")
                     for product_id, item in admin_cart.items():
                         product = Product.query.get(int(product_id))
                         if product:
                             quantity = int(item.get('quantity', 0))
                             discount = float(item.get('discount', 0))
+                            current_app.logger.info(f"Processing item: product_id={product_id}, quantity={quantity}, discount={discount}")
 
                             order_item = OrderItem(
                                 order_id=order.id,
@@ -1161,11 +1190,16 @@ def admin_create_order():
                                 discount=discount
                             )
                             db.session.add(order_item)
+                            current_app.logger.info(f"Order item created for product {product_id}")
 
                             # Update product stock
+                            old_stock = product.stock
                             product.stock -= quantity
+                            current_app.logger.info(f"Stock updated for product {product_id}: {old_stock} -> {product.stock}")
 
+                    current_app.logger.info("Committing transaction...")
                     db.session.commit()
+                    current_app.logger.info("Transaction committed successfully")
 
                     # Clear admin cart
                     session.pop('admin_cart', None)
@@ -1244,8 +1278,17 @@ def admin_create_order():
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(f"Error creating admin order: {str(e)}")
+                    current_app.logger.error(f"Error details: {type(e).__name__}: {str(e)}")
+                    import traceback
+                    current_app.logger.error(f"Traceback: {traceback.format_exc()}")
                     flash('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại!', 'danger')
                     return redirect(url_for('admin_create_order'))
+
+    # Log form validation errors if any
+    if request.method == 'POST' and 'create_order' in request.form:
+        current_app.logger.info("Form validation failed")
+        current_app.logger.info(f"Form errors: {form.errors}")
+        current_app.logger.info(f"Item form errors: {item_form.errors}")
 
     return render_template('admin/create_order.html',
                          form=form,
