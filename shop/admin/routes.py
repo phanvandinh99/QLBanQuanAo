@@ -19,7 +19,7 @@ from flask import render_template, session, request, redirect, url_for, flash, c
 from shop import app, db, bcrypt
 import json
 from shop.models import Brand, Category, Product, Customer, Admin, Order, Rating, Article
-from shop.email_utils import send_order_status_update_email
+from shop.email_utils import send_order_confirmation_email, send_new_customer_account_email, send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
 

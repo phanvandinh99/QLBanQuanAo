@@ -3,6 +3,7 @@ from flask_mail import Message
 from shop import mail, app
 import json
 from datetime import datetime
+import bcrypt
 
 def send_order_confirmation_email(customer, order):
     """
@@ -74,7 +75,7 @@ def send_order_confirmation_email(customer, order):
                 <div class="order-info">
                     <h3>Thông tin đơn hàng</h3>
                     <p><strong>Mã đơn hàng:</strong> {order.invoice}</p>
-                    <p><strong>Ngày đặt:</strong> {order.date_created.strftime('%d/%m/%Y %H:%M')}</p>
+                    <p><strong>Ngày đặt:</strong> {order.created_at.strftime('%d/%m/%Y %H:%M')}</p>
                     <p><strong>Trạng thái:</strong> {order.status}</p>
                     <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
@@ -273,7 +274,7 @@ def send_order_status_update_email(customer, order, action_by="system"):
 
                 <div class="order-info">
                     <h4>Thông tin đơn hàng</h4>
-                    <p><strong>Ngày đặt hàng:</strong> {order.date_created.strftime('%d/%m/%Y %H:%M')}</p>
+                    <p><strong>Ngày đặt hàng:</strong> {order.created_at.strftime('%d/%m/%Y %H:%M')}</p>
                     <p><strong>Phương thức thanh toán:</strong> {"💰 COD (Thanh toán khi nhận hàng)" if order.payment_method == "cod" else "💳 VNPAY (Thanh toán online)"}</p>
                     <p><strong>Trạng thái thanh toán:</strong> {order.payment_status}</p>
                     <p><strong>Phương thức nhận hàng:</strong> {"🏠 Giao tận nhà" if order.delivery_method == "home_delivery" else "🏪 Nhận tại cửa hàng"}</p>
@@ -315,5 +316,105 @@ def send_order_status_update_email(customer, order, action_by="system"):
 
     except Exception as e:
         print(f"❌ Lỗi khi gửi email cập nhật trạng thái: {e}")
+        return False
+
+
+def send_new_customer_account_email(customer):
+    """
+    Gửi email thông tin tài khoản cho khách hàng mới đăng ký
+
+    Args:
+        customer: Object Customer (thông tin khách hàng mới)
+    """
+    try:
+        # Tạo nội dung email
+        subject = f"Chào mừng đến với Belluni - Thông tin tài khoản"
+
+        html_body = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }}
+                .container {{ max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .header {{ text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 20px; }}
+                .account-info {{ background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff; }}
+                .login-credentials {{ background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+                .warning {{ background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107; }}
+                .footer {{ margin-top: 30px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px; }}
+                .highlight {{ background-color: #fff; padding: 2px 5px; border-radius: 3px; border: 1px solid #007bff; font-family: monospace; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🛍️ Belluni</h1>
+                    <h2 style="color: #007bff; margin-top: 10px;">Chào mừng quý khách!</h2>
+                </div>
+
+                <p>Kính chào <strong>{customer.first_name} {customer.last_name}</strong>,</p>
+
+                <p>Chúc mừng quý khách đã trở thành thành viên của <strong>Belluni</strong>! Tài khoản của quý khách đã được tạo thành công.</p>
+
+                <div class="account-info">
+                    <h3 style="color: #007bff; margin-top: 0;">📋 Thông tin tài khoản</h3>
+                    <p><strong>Họ tên:</strong> {customer.first_name} {customer.last_name}</p>
+                    <p><strong>Email:</strong> {customer.email}</p>
+                    <p><strong>Số điện thoại:</strong> {customer.phone_number}</p>
+                    <p><strong>Ngày tạo tài khoản:</strong> {customer.date_created.strftime('%d/%m/%Y %H:%M')}</p>
+                </div>
+
+                <div class="login-credentials">
+                    <h4 style="margin-top: 0;">🔐 Thông tin đăng nhập</h4>
+                    <p><strong>Tên đăng nhập:</strong> <span class="highlight">{customer.phone_number}</span></p>
+                    <p><strong>Mật khẩu:</strong> <span class="highlight">Abc123</span></p>
+                </div>
+
+                <div class="warning">
+                    <p><strong>⚠️ Lưu ý quan trọng:</strong></p>
+                    <ul>
+                        <li>Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu để bảo mật tài khoản.</li>
+                        <li>Mật khẩu hiện tại là mặc định và có thể dễ bị đoán. Hãy thay đổi ngay!</li>
+                        <li>Bảo mật thông tin đăng nhập và không chia sẻ với người khác.</li>
+                    </ul>
+                </div>
+
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                    <h4 style="margin-top: 0;">🚀 Bắt đầu mua sắm ngay!</h4>
+                    <p><a href="http://localhost:5000/login" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Đăng nhập ngay</a></p>
+                    <p><a href="http://localhost:5000" style="color: #007bff; text-decoration: none;">Xem sản phẩm mới nhất</a></p>
+                </div>
+
+                <p>Nếu quý khách có bất kỳ câu hỏi nào hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi:</p>
+
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>📧 Email:</strong> VietHoang@gmail.com</p>
+                    <p><strong>📞 Hotline:</strong> 1900-XXXX</p>
+                    <p><strong>🌐 Website:</strong> <a href="http://localhost:5000" style="color: #007bff;">Belluni.com</a></p>
+                </div>
+
+                <div class="footer">
+                    <p><strong>Belluni</strong> - Nâng tầm trải nghiệm mua sắm của bạn!</p>
+                    <p>© 2025 Belluni. Tất cả quyền được bảo lưu.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        # Tạo message
+        msg = Message(
+            subject=subject,
+            recipients=[customer.email],
+            html=html_body
+        )
+
+        # Gửi email
+        mail.send(msg)
+
+        print(f"✅ Email thông tin tài khoản đã gửi thành công đến {customer.email}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Lỗi khi gửi email thông tin tài khoản: {e}")
         return False
 
