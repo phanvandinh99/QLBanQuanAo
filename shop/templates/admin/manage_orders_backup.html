@@ -1,0 +1,1473 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+{% include 'admin/header.html' %}
+
+<style>
+/* Custom styles for order details modal */
+.modal-lg {
+  max-width: 900px;
+}
+
+/* Modal responsive adjustments */
+@media (min-width: 992px) {
+  .modal-lg {
+    max-width: 800px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .modal-lg {
+    max-width: 850px;
+  }
+}
+
+/* Product image styles */
+.product-image {
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.product-image:hover {
+  transform: scale(1.05);
+}
+
+.product-image-placeholder {
+  transition: background-color 0.2s;
+}
+
+.product-image-placeholder:hover {
+  background-color: #e9ecef;
+}
+
+/* Table responsive */
+.table-responsive {
+  border: none;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  font-size: 14px;
+  background-color: #f8f9fa;
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+/* Status badges */
+.badge {
+  font-size: 12px;
+}
+
+/* Button styles */
+.btn-group-vertical .btn {
+  margin-bottom: 2px;
+}
+
+.btn-group-vertical .btn:last-child {
+  margin-bottom: 0;
+}
+
+/* Modal styles */
+.modal-content {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Loading spinner */
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast notifications */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+/* Summary cards */
+.summary-item {
+  transition: transform 0.2s;
+}
+
+.summary-item:hover {
+  transform: translateY(-2px);
+}
+
+/* Tab styles */
+.nav-tabs .nav-link {
+  border: 1px solid #dee2e6;
+  border-bottom: none;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  color: #000000;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 12px 20px;
+  margin-right: 4px;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-tabs .nav-link:hover {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #000000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link.active:hover {
+  background-color: #0056b3;
+  color: white;
+  transform: none;
+}
+
+/* Specific styling for order status tabs to ensure black text */
+#custom-tabs-one-home-tab,
+#custom-tabs-one-profile-tab,
+#custom-tabs-one-messages-tab,
+#custom-tabs-one-settings-tab {
+  color: #000000 !important;
+}
+
+#custom-tabs-one-home-tab:hover,
+#custom-tabs-one-profile-tab:hover,
+#custom-tabs-one-messages-tab:hover,
+#custom-tabs-one-settings-tab:hover {
+  color: #000000 !important;
+}
+
+.tab-content {
+  border: 1px solid #dee2e6;
+  border-top: none;
+  padding: 25px;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 12px;
+  }
+
+  .modal-lg {
+    max-width: 95vw;
+    margin: 2.5vh auto;
+  }
+
+  .btn-group-vertical {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .btn-group-vertical .btn {
+    margin-bottom: 0;
+    margin-right: 5px;
+  }
+
+  .btn-group-vertical .btn:last-child {
+    margin-right: 0;
+  }
+}
+</style>
+
+<!-- Content Header (Page header) -->
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Quản lý đơn hàng</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin') }}">Trang chủ</a></li>
+            <li class="breadcrumb-item active">Quản lý đơn hàng</li>
+          </ol>
+        </div>
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Danh sách đơn hàng</h3>
+            </div>
+            <!-- /.card-header -->
+
+            <!-- Tabs -->
+            <div class="card-body">
+              <div class="row">
+                <div class="col-12">
+                  <div class="card card-primary card-tabs">
+                    <div class="card-header p-0 pt-1">
+                      <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
+                        <li class="nav-item">
+                          <a class="nav-link active" id="custom-tabs-one-home-tab" data-toggle="pill" href="#custom-tabs-one-home" role="tab" aria-controls="custom-tabs-one-home" aria-selected="true">Đơn chờ xử lý</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="custom-tabs-one-profile-tab" data-toggle="pill" href="#custom-tabs-one-profile" role="tab" aria-controls="custom-tabs-one-profile" aria-selected="false">Đang giao hàng</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="custom-tabs-one-messages-tab" data-toggle="pill" href="#custom-tabs-one-messages" role="tab" aria-controls="custom-tabs-one-messages" aria-selected="false">Đã giao</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" id="custom-tabs-one-settings-tab" data-toggle="pill" href="#custom-tabs-one-settings" role="tab" aria-controls="custom-tabs-one-settings" aria-selected="false">Đã hủy</a>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div class="card-body">
+                      <div class="tab-content" id="custom-tabs-one-tabContent">
+
+                        <!-- Pending Orders Tab -->
+                        <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel" aria-labelledby="custom-tabs-one-home-tab">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                              <thead>
+                                <tr>
+                                  <th>STT</th>
+                                  <th>Khách hàng</th>
+                                  <th>Số lượng</th>
+                                  <th>Tổng tiền</th>
+                                  <th>Trạng thái</th>
+                                  <th>Thanh toán</th>
+                                  <th>Giao hàng</th>
+                                  <th>Ngày đặt</th>
+                                  <th>Chi tiết</th>
+                                  <th>Hành động</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for order in orders %}
+                                  {% if order.status == "pending" %}
+                                  <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                      {% set customer_name = '' %}
+                                      {% for customer in customers %}
+                                        {% if customer.id == order.customer_id %}
+                                          {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                        {% endif %}
+                                      {% endfor %}
+                                      {{ customer_name }}
+                                    </td>
+                                    <td><strong>{{ order.total_quantity or 0 }}</strong></td>
+                                    <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
+                                    <td>{{ order.status }}</td>
+                                    <td>
+                                      {% if order.display_payment_status == 'Đã thanh toán' %}
+                                        <span class="badge badge-success">{{ order.display_payment_status }}</span>
+                                      {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                        <span class="badge badge-warning">{{ order.display_payment_status }}</span>
+                                      {% else %}
+                                        <span class="badge badge-secondary">{{ order.display_payment_status }}</span>
+                                      {% endif %}
+                                    </td>
+                                    <td>
+                                      {% if order.delivery_method == 'instore_pickup' %}
+                                        <span class="badge badge-primary">🏪 Nhận tại cửa hàng</span>
+                                      {% elif order.delivery_method == 'home_delivery' %}
+                                        <span class="badge badge-info">🚚 Giao tận nhà</span>
+                                      {% else %}
+                                        <span class="badge badge-secondary">N/A</span>
+                                      {% endif %}
+                                    </td>
+                                    <td>{{ order.created_at }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#details-pending-{{ order.id }}" title="Xem chi tiết đơn hàng">
+                                        <i class="fas fa-eye mr-1"></i> Chi tiết
+                                      </button>
+                                    </td>
+                                    <td>
+                                      <div class="btn-group-vertical btn-group-sm">
+                                        {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
+                                          <button type="button" class="btn btn-warning btn-sm mb-1" data-toggle="modal" data-target="#ready-{{ order.id }}" title="Đánh dấu sẵn sàng nhận tại cửa hàng">
+                                            <i class="fas fa-store"></i> Sẵn sàng nhận
+                                          </button>
+                                        {% elif order.status == 'pending' %}
+                                          <button type="button" class="btn btn-success btn-sm mb-1" data-toggle="modal" data-target="#accept-{{ order.id }}" title="Xác nhận giao hàng">
+                                            <i class="fas fa-truck"></i> Xác nhận giao
+                                          </button>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#delete-{{ order.id }}" title="Hủy đơn hàng">
+                                          <i class="fas fa-times"></i> Hủy đơn
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+
+                                  <!-- Details Modal for Pending Orders -->
+                                  <div class="modal fade" id="details-pending-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-xl" role="document">
+                                      <div class="modal-content invoice-modal">
+                                        <div class="modal-header bg-primary text-white">
+                                          <h5 class="modal-title">
+                                            <i class="fas fa-file-invoice-dollar"></i>
+                                            HÓA ĐƠN CHI TIẾT - {{ order.invoice or order.id }}
+                                          </h5>
+                                          <button type="button" class="close text-white" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <!-- Company Info & Invoice Header -->
+                                          <div class="row mb-4">
+                                            <div class="col-md-6">
+                                              <div class="company-info">
+                                                <h4 class="text-primary mb-2">MOBILE STORE</h4>
+                                                <p class="mb-1"><i class="fas fa-map-marker-alt"></i> Địa chỉ: 123 Đường ABC, Quận XYZ, TP.HCM</p>
+                                                <p class="mb-1"><i class="fas fa-phone"></i> Hotline: 1900-xxxx</p>
+                                                <p class="mb-1"><i class="fas fa-envelope"></i> Email: info@mobilestore.com</p>
+                                              </div>
+                                            </div>
+                                            <div class="col-md-6 text-right">
+                                              <div class="invoice-details">
+                                                <h6 class="text-muted mb-2">THÔNG TIN HÓA ĐƠN</h6>
+                                                <p><strong>Mã hóa đơn:</strong> {{ order.invoice or order.id }}</p>
+                                                <p><strong>Ngày lập:</strong> {{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</p>
+                                                <p><strong>Trạng thái:</strong>
+                                                  <span class="badge badge-warning">{{ order.status.title() }}</span>
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <!-- Customer & Shipping Info -->
+                                          <div class="row mb-4">
+                                            <div class="col-md-6">
+                                              <div class="card border-primary">
+                                                <div class="card-header bg-light">
+                                                  <h6 class="mb-0 text-primary"><i class="fas fa-user"></i> THÔNG TIN KHÁCH HÀNG</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                  {% for customer in customers %}
+                                                    {% if customer.id == order.customer_id %}
+                                                      <p class="mb-1"><strong>Họ tên:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                                      <p class="mb-1"><strong>Email:</strong> {{ customer.email }}</p>
+                                                      <p class="mb-1"><strong>SĐT:</strong> {{ customer.phone or 'N/A' }}</p>
+                                                      <p class="mb-1"><strong>Địa chỉ:</strong> {{ customer.address or 'N/A' }}</p>
+                                                    {% endif %}
+                                                  {% endfor %}
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                              <div class="card border-success">
+                                                <div class="card-header bg-light">
+                                                  <h6 class="mb-0 text-success"><i class="fas fa-truck"></i> THÔNG TIN GIAO HÀNG</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                  <p class="mb-1"><strong>Phương thức:</strong>
+                                                    {% if order.delivery_method == 'instore_pickup' %}
+                                                      <span class="badge badge-primary">🏪 Nhận tại cửa hàng</span>
+                                                    {% else %}
+                                                      <span class="badge badge-info">🚚 Giao tận nhà</span>
+                                                    {% endif %}
+                                                  </p>
+                                                  {% if order.delivery_method == 'instore_pickup' %}
+                                                    <p class="mb-1"><strong>Cửa hàng:</strong> {{ order.pickup_store.replace('_', ' ').title() if order.pickup_store else 'Chưa xác định' }}</p>
+                                                  {% else %}
+                                                    <p class="mb-1"><strong>Địa chỉ giao:</strong> {{ order.shipping_address or 'Sẽ cập nhật' }}</p>
+                                                  {% endif %}
+                                                  <p class="mb-1"><strong>Thanh toán:</strong>
+                                                    {% if order.display_payment_status == 'Đã thanh toán' %}
+                                                      <span class="badge badge-success">{{ order.display_payment_status }}</span>
+                                                    {% else %}
+                                                      <span class="badge badge-warning">{{ order.display_payment_status }}</span>
+                                                    {% endif %}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <!-- Products Table -->
+                                          <div class="card">
+                                            <div class="card-header bg-dark text-white">
+                                              <h6 class="mb-0"><i class="fas fa-shopping-cart"></i> CHI TIẾT SẢN PHẨM</h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                              <div class="table-responsive">
+                                                <table class="table table-striped mb-0">
+                                                  <thead class="thead-light">
+                                                    <tr>
+                                                      <th class="text-center" style="width: 60px;">STT</th>
+                                                      <th style="width: 80px;">Hình ảnh</th>
+                                                      <th>Tên sản phẩm</th>
+                                                      <th class="text-center" style="width: 100px;">Số lượng</th>
+                                                      <th class="text-right" style="width: 120px;">Đơn giá</th>
+                                                      {% if order.total_discount_amount and order.total_discount_amount > 0 %}
+                                                        <th class="text-right" style="width: 120px;">Giảm giá</th>
+                                                      {% endif %}
+                                                      <th class="text-right" style="width: 120px;">Thành tiền</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {% if order.product_details %}
+                                                      {% set total_original = 0 %}
+                                                      {% set total_discount = 0 %}
+                                                      {% set loop_index = 0 %}
+                                                      {% for key, product in order.product_details.items() %}
+                                                        {% if product %}
+                                                          {% set loop_index = loop_index + 1 %}
+                                                          <tr>
+                                                            <td class="text-center">{{ loop_index }}</td>
+                                                            <td class="text-center">
+                                                              {% if product.get('image_1') %}
+                                                                <img src="{{ url_for('static', filename='images/' + product.get('image_1')) }}"
+                                                                     alt="{{ product.get('name', 'Product') }}"
+                                                                     class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                                              {% else %}
+                                                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                                  <i class="fas fa-image text-muted"></i>
+                                                                </div>
+                                                              {% endif %}
+                                                            </td>
+                                                            <td>
+                                                              <strong>{{ product.get('name', 'N/A') }}</strong><br>
+                                                              <small class="text-muted">
+                                                                Thương hiệu: {{ product.get('brand', 'N/A') }} |
+                                                                Màu: {{ product.get('color', 'N/A') }}
+                                                              </small>
+                                                            </td>
+                                                            <td class="text-center">
+                                                              <span class="badge badge-secondary">{{ product.get('quantity', 0) }}</span>
+                                                            </td>
+                                                            <td class="text-right">
+                                                              {% if product.get('discount', 0) > 0 %}
+                                                                <div>
+                                                                  <small class="text-muted"><del>{{ product.get('original_price', 0) | vnd }}</del></small><br>
+                                                                  <strong class="text-primary">{{ product.get('discounted_price', 0) | vnd }}</strong>
+                                                                </div>
+                                                              {% else %}
+                                                                <strong>{{ product.get('price', 0) | vnd }}</strong>
+                                                              {% endif %}
+                                                            </td>
+                                                            {% if order.total_discount_amount and order.total_discount_amount > 0 %}
+                                                              <td class="text-right">
+                                                                {% if product.get('discount', 0) > 0 %}
+                                                                  <span class="text-danger">-{{ product.get('total_discount', 0) | vnd }}</span><br>
+                                                                  <small class="text-muted">{{ product.get('discount', 0) }}%</small>
+                                                                {% else %}
+                                                                  <span class="text-muted">-</span>
+                                                                {% endif %}
+                                                              </td>
+                                                            {% endif %}
+                                                            <td class="text-right">
+                                                              <strong class="text-success">{{ product.get('discounted_total', 0) | vnd if product.get('discount', 0) > 0 else product.get('original_total', 0) | vnd }}</strong>
+                                                            </td>
+                                                          </tr>
+                                                        {% endif %}
+                                                      {% endfor %}
+                                                    {% endif %}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <!-- Invoice Summary -->
+                                          <div class="row mt-4">
+                                            <div class="col-md-8"></div>
+                                            <div class="col-md-4">
+                                              <div class="card border-0 bg-light">
+                                                <div class="card-body">
+                                                  <h6 class="text-center mb-3 text-primary"><i class="fas fa-calculator"></i> TÓM TẮT THANH TOÁN</h6>
+
+                                                  {% set subtotal = order.total_original_price or 0 %}
+                                                  {% set discount_amount = order.total_discount_amount or 0 %}
+                                                  {% set tax_amount = 0 %}
+                                                  {% set shipping_fee = 0 %}
+                                                  {% set total = order.total_price or 0 %}
+
+                                                  <div class="d-flex justify-content-between mb-2">
+                                                    <span>Tổng tiền hàng:</span>
+                                                    <strong>{{ subtotal | vnd }}</strong>
+                                                  </div>
+
+                                                  {% if discount_amount > 0 %}
+                                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                                      <span>Giảm giá:</span>
+                                                      <strong>-{{ discount_amount | vnd }}</strong>
+                                                    </div>
+                                                  {% endif %}
+
+                                                  <div class="d-flex justify-content-between mb-2">
+                                                    <span>Thuế VAT (0%):</span>
+                                                    <strong>{{ tax_amount | vnd }}</strong>
+                                                  </div>
+
+                                                  <div class="d-flex justify-content-between mb-2">
+                                                    <span>Phí vận chuyển:</span>
+                                                    <strong>{{ shipping_fee | vnd }}</strong>
+                                                  </div>
+
+                                                  <hr class="my-2">
+
+                                                  <div class="d-flex justify-content-between">
+                                                    <h5 class="text-primary mb-0">TỔNG CỘNG:</h5>
+                                                    <h5 class="text-success mb-0">{{ total | vnd }}</h5>
+                                                  </div>
+
+                                                  {% if order.display_payment_status == 'Đã thanh toán' %}
+                                                    <div class="mt-3 p-2 bg-success text-white text-center rounded">
+                                                      <i class="fas fa-check-circle"></i> ĐÃ THANH TOÁN
+                                                    </div>
+                                                  {% else %}
+                                                    <div class="mt-3 p-2 bg-warning text-dark text-center rounded">
+                                                      <i class="fas fa-clock"></i> CHƯA THANH TOÁN
+                                                    </div>
+                                                  {% endif %}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <!-- Notes -->
+                                          <div class="row mt-3">
+                                            <div class="col-12">
+                                              <div class="alert alert-info">
+                                                <h6><i class="fas fa-info-circle"></i> Lưu ý quan trọng:</h6>
+                                                <ul class="mb-0">
+                                                  <li>Hóa đơn này được tạo tự động bởi hệ thống</li>
+                                                  <li>Vui lòng kiểm tra kỹ thông tin trước khi nhận hàng</li>
+                                                  <li>Liên hệ hotline 1900-xxxx để được hỗ trợ</li>
+                                                  <li>Cảm ơn quý khách đã tin tưởng và sử dụng dịch vụ!</li>
+                                                </ul>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <!-- Modal Footer with Print Button -->
+                                        <div class="modal-footer bg-light">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                            <i class="fas fa-times"></i> Đóng
+                                          </button>
+                                          <button type="button" class="btn btn-primary" onclick="printInvoice('invoice-content-{{ order.id }}')">
+                                            <i class="fas fa-print"></i> In hóa đơn
+                                          </button>
+                                          <button type="button" class="btn btn-success" onclick="exportInvoice({{ order.id }})">
+                                            <i class="fas fa-download"></i> Xuất PDF
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Hidden Invoice for Printing -->
+                                  <div id="invoice-content-{{ order.id }}" class="d-none">
+                                    <style>
+                                      @media print {
+                                        body { font-size: 12px; }
+                                        .no-print { display: none; }
+                                        .invoice-print { max-width: 100%; margin: 0; }
+                                        .table { font-size: 11px; }
+                                        .text-center { text-align: center; }
+                                        .text-right { text-align: right; }
+                                      }
+                                    </style>
+                                    <div class="invoice-print p-4">
+                                      <!-- Invoice Header for Print -->
+                                      <div class="text-center mb-4">
+                                        <h3>MOBILE STORE</h3>
+                                        <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.HCM</p>
+                                        <p>Hotline: 1900-xxxx | Email: info@mobilestore.com</p>
+                                        <hr>
+                                        <h4>HÓA ĐƠN BÁN HÀNG</h4>
+                                        <p>Mã hóa đơn: <strong>{{ order.invoice or order.id }}</strong></p>
+                                        <p>Ngày: {{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</p>
+                                      </div>
+
+                                      <!-- Customer Info for Print -->
+                                      <div class="row mb-3">
+                                        <div class="col-6">
+                                          <strong>Khách hàng:</strong><br>
+                                          {% for customer in customers %}
+                                            {% if customer.id == order.customer_id %}
+                                              {{ customer.first_name }} {{ customer.last_name }}<br>
+                                              {{ customer.phone or 'N/A' }}<br>
+                                              {{ customer.email }}
+                                            {% endif %}
+                                          {% endfor %}
+                                        </div>
+                                        <div class="col-6 text-right">
+                                          <strong>Trạng thái:</strong> {{ order.status.title() }}<br>
+                                          <strong>Thanh toán:</strong> {{ order.display_payment_status }}<br>
+                                          <strong>Giao hàng:</strong>
+                                          {% if order.delivery_method == 'instore_pickup' %}
+                                            Nhận tại cửa hàng
+                                          {% else %}
+                                            Giao tận nhà
+                                          {% endif %}
+                                        </div>
+                                      </div>
+
+                                      <!-- Products Table for Print -->
+                                      <table class="table table-bordered">
+                                        <thead>
+                                          <tr>
+                                            <th>STT</th>
+                                            <th>Sản phẩm</th>
+                                            <th class="text-center">SL</th>
+                                            <th class="text-right">Đơn giá</th>
+                                            <th class="text-right">Thành tiền</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {% if order.product_details %}
+                                            {% set print_index = 0 %}
+                                            {% for key, product in order.product_details.items() %}
+                                              {% if product %}
+                                                {% set print_index = print_index + 1 %}
+                                                <tr>
+                                                  <td class="text-center">{{ print_index }}</td>
+                                                  <td>{{ product.get('name', 'N/A') }}<br><small>{{ product.get('brand', 'N/A') }} - {{ product.get('color', 'N/A') }}</small></td>
+                                                  <td class="text-center">{{ product.get('quantity', 0) }}</td>
+                                                  <td class="text-right">{{ product.get('discounted_price', 0) | vnd if product.get('discount', 0) > 0 else product.get('price', 0) | vnd }}</td>
+                                                  <td class="text-right">{{ product.get('discounted_total', 0) | vnd if product.get('discount', 0) > 0 else product.get('original_total', 0) | vnd }}</td>
+                                                </tr>
+                                              {% endif %}
+                                            {% endfor %}
+                                          {% endif %}
+                                        </tbody>
+                                      </table>
+
+                                      <!-- Summary for Print -->
+                                      <div class="row mt-3">
+                                        <div class="col-8"></div>
+                                        <div class="col-4">
+                                          <table class="table table-borderless">
+                                            <tr>
+                                              <td><strong>Tổng tiền hàng:</strong></td>
+                                              <td class="text-right">{{ order.total_original_price | vnd if order.total_original_price else '0 ₫' }}</td>
+                                            </tr>
+                                            {% if order.total_discount_amount and order.total_discount_amount > 0 %}
+                                              <tr>
+                                                <td><strong>Giảm giá:</strong></td>
+                                                <td class="text-right text-success">-{{ order.total_discount_amount | vnd }}</td>
+                                              </tr>
+                                            {% endif %}
+                                            <tr>
+                                              <td><strong>Thuế VAT:</strong></td>
+                                              <td class="text-right">0 ₫</td>
+                                            </tr>
+                                            <tr>
+                                              <td><strong>Phí vận chuyển:</strong></td>
+                                              <td class="text-right">0 ₫</td>
+                                            </tr>
+                                            <tr class="border-top">
+                                              <td><strong class="h5">TỔNG CỘNG:</strong></td>
+                                              <td class="text-right"><strong class="h5">{{ order.total_price | vnd if order.total_price else '0 ₫' }}</strong></td>
+                                            </tr>
+                                          </table>
+                                        </div>
+                                      </div>
+
+                                      <div class="text-center mt-4">
+                                        <p><em>Cảm ơn quý khách đã tin tưởng sử dụng dịch vụ!</em></p>
+                                        <p><small>In ngày: {{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</small></p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Accept Order Modal -->
+                                  {% if order.status == 'pending' and order.delivery_method == 'home_delivery' %}
+                                  <div class="modal fade" id="accept-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Xác nhận giao hàng</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <p>Bạn có muốn xác nhận giao đơn hàng <strong>{{ order.invoice or order.id }}</strong> không?</p>
+                                          <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            Sau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái "Đang giao hàng".
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                                          <form action="{{ url_for('accept_order', id=order.id) }}" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-success">
+                                              <i class="fas fa-check"></i> Xác nhận giao hàng
+                                            </button>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {% endif %}
+
+                                  <!-- Ready for Pickup Modal -->
+                                  {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
+                                  <div class="modal fade" id="ready-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Sẵn sàng nhận tại cửa hàng</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="alert alert-warning">
+                                            <strong>🏪 Đơn hàng nhận tại cửa hàng</strong><br>
+                                            Cửa hàng: {{ order.pickup_store.replace('_', ' ').title() if order.pickup_store else 'Chưa xác định' }}
+                                          </div>
+                                          <p>Bạn có muốn đánh dấu đơn hàng <strong>{{ order.invoice or order.id }}</strong> đã sẵn sàng để khách hàng nhận tại cửa hàng không?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                                          <form action="{{ url_for('ready_for_pickup', id=order.id) }}" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-warning">
+                                              <i class="fas fa-store"></i> Sẵn sàng nhận
+                                            </button>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {% endif %}
+
+                                  <!-- Delete Order Modal -->
+                                  <div class="modal fade" id="delete-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title text-danger">Hủy đơn hàng</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
+                                          </div>
+                                          <p>Bạn có chắc chắn muốn hủy đơn hàng <strong>{{ order.invoice or order.id }}</strong> không?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Không, giữ lại</button>
+                                          <form action="{{ url_for('delete_order', id=order.id) }}" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-danger">
+                                              <i class="fas fa-times"></i> Có, hủy đơn hàng
+                                            </button>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {% endif %}
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <!-- Shipping Orders Tab -->
+                        <div class="tab-pane fade" id="custom-tabs-one-profile" role="tabpanel" aria-labelledby="custom-tabs-one-profile-tab">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                              <thead>
+                                <tr>
+                                  <th>STT</th>
+                                  <th>Khách hàng</th>
+                                  <th>Số lượng</th>
+                                  <th>Tổng tiền</th>
+                                  <th>Trạng thái</th>
+                                  <th>Thanh toán</th>
+                                  <th>Ngày đặt</th>
+                                  <th>Chi tiết</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for order in orders %}
+                                  {% if order.status == "shipping" %}
+                                  <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                      {% set customer_name = '' %}
+                                      {% for customer in customers %}
+                                        {% if customer.id == order.customer_id %}
+                                          {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                        {% endif %}
+                                      {% endfor %}
+                                      {{ customer_name }}
+                                    </td>
+                                    <td><strong>{{ order.total_quantity or 0 }}</strong></td>
+                                    <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
+                                    <td>{{ order.status }}</td>
+                                    <td>
+                                      {% if order.display_payment_status == 'Đã thanh toán' %}
+                                        <span class="badge badge-success">{{ order.display_payment_status }}</span>
+                                      {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                        <span class="badge badge-warning">{{ order.display_payment_status }}</span>
+                                      {% else %}
+                                        <span class="badge badge-secondary">{{ order.display_payment_status }}</span>
+                                      {% endif %}
+                                    </td>
+                                    <td>{{ order.created_at }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#details-delivering-{{ order.id }}" title="Xem chi tiết đơn hàng">
+                                        <i class="fas fa-eye mr-1"></i> Chi tiết
+                                      </button>
+                                    </td>
+                                    <td>
+                                      <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#delivered-{{ order.id }}" title="Đánh dấu đã giao">
+                                        <i class="fas fa-check"></i> Đã giao
+                                      </button>
+                                    </td>
+                                  </tr>
+
+                                  <!-- Details Modal for Shipping Orders -->
+                                  <div class="modal fade" id="details-delivering-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Chi tiết đơn hàng đang giao {{ order.invoice or order.id }}</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="row">
+                                            <div class="col-md-6">
+                                              <h6>Thông tin khách hàng:</h6>
+                                              {% for customer in customers %}
+                                                {% if customer.id == order.customer_id %}
+                                                  <p><strong>Tên:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                                  <p><strong>Email:</strong> {{ customer.email }}</p>
+                                                  <p><strong>SĐT:</strong> {{ customer.phone or 'N/A' }}</p>
+                                                {% endif %}
+                                              {% endfor %}
+                                            </div>
+                                            <div class="col-md-6">
+                                              <h6>Thông tin đơn hàng:</h6>
+                                              <p><strong>Mã đơn:</strong> {{ order.invoice or order.id }}</p>
+                                              <p><strong>Trạng thái:</strong> {{ order.status }}</p>
+                                              <p><strong>Thanh toán:</strong> {{ order.display_payment_status }}</p>
+                                              <p><strong>Giao hàng:</strong> Đang giao tận nhà</p>
+                                              <p><strong>Ngày đặt:</strong> {{ order.created_at }}</p>
+                                            </div>
+                                          </div>
+
+                                          <div class="row mt-3">
+                                            <div class="col-12">
+                                              <h6>Sản phẩm:</h6>
+                                              {% if order.product_details %}
+                                                {% for key, product in order.product_details.items() %}
+                                                  {% if product %}
+                                                    <div class="product-item mb-2 p-2 border rounded">
+                                                      <div class="row align-items-center">
+                                                        <div class="col-md-2 text-center">
+                                                          {% if product.get('image_1') %}
+                                                            <img src="{{ url_for('static', filename='images/' + product.get('image_1')) }}"
+                                                                 alt="{{ product.get('name', 'Product') }}"
+                                                                 class="img-fluid rounded" style="max-width: 50px;">
+                                                          {% else %}
+                                                            <div class="text-muted">No image</div>
+                                                          {% endif %}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                          <strong>{{ product.get('name', 'N/A') }}</strong><br>
+                                                          <small class="text-muted">
+                                                            Thương hiệu: {{ product.get('brand', 'N/A') }} |
+                                                            Màu: {{ product.get('color', 'N/A') }} |
+                                                            SL: {{ product.get('quantity', 0) }}
+                                                          </small>
+                                                        </div>
+                                                        <div class="col-md-4 text-right">
+                                                          {% if product.get('discount', 0) > 0 %}
+                                                            <div class="text-success font-weight-bold">{{ product.get('discounted_total', 0) | vnd }}</div>
+                                                            <small class="text-muted"><del>{{ product.get('original_total', 0) | vnd }}</del></small>
+                                                          {% else %}
+                                                            <div class="font-weight-bold">{{ product.get('original_total', 0) | vnd }}</div>
+                                                          {% endif %}
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  {% endif %}
+                                                {% endfor %}
+                                              {% endif %}
+
+                                              <div class="mt-3">
+                                                <strong>Tổng cộng: {{ order.total_price | vnd if order.total_price else '0 ₫' }}</strong>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <!-- Mark as Delivered Modal -->
+                                  <div class="modal fade" id="delivered-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Xác nhận đã giao hàng</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <p>Bạn có muốn đánh dấu đơn hàng <strong>{{ order.invoice or order.id }}</strong> đã được giao thành công không?</p>
+                                          <div class="alert alert-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            Sau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái "Đã giao".
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Chưa giao</button>
+                                          <form action="{{ url_for('delivered_order', id=order.id) }}" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-success">
+                                              <i class="fas fa-check"></i> Xác nhận đã giao
+                                            </button>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {% endif %}
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <!-- Delivered Orders Tab -->
+                        <div class="tab-pane fade" id="custom-tabs-one-messages" role="tabpanel" aria-labelledby="custom-tabs-one-messages-tab">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                              <thead>
+                                <tr>
+                                  <th>STT</th>
+                                  <th>Khách hàng</th>
+                                  <th>Số lượng</th>
+                                  <th>Tổng tiền</th>
+                                  <th>Trạng thái</th>
+                                  <th>Thanh toán</th>
+                                  <th>Ngày đặt</th>
+                                  <th>Chi tiết</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for order in orders %}
+                                  {% if order.status == "delivered" %}
+                                  <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                      {% set customer_name = '' %}
+                                      {% for customer in customers %}
+                                        {% if customer.id == order.customer_id %}
+                                          {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                        {% endif %}
+                                      {% endfor %}
+                                      {{ customer_name }}
+                                    </td>
+                                    <td><strong>{{ order.total_quantity or 0 }}</strong></td>
+                                    <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
+                                    <td>{{ order.status }}</td>
+                                    <td>
+                                      {% if order.display_payment_status == 'Đã thanh toán' %}
+                                        <span class="badge badge-success">{{ order.display_payment_status }}</span>
+                                      {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                        <span class="badge badge-warning">{{ order.display_payment_status }}</span>
+                                      {% else %}
+                                        <span class="badge badge-secondary">{{ order.display_payment_status }}</span>
+                                      {% endif %}
+                                    </td>
+                                    <td>{{ order.created_at }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#details-delivered-{{ order.id }}" title="Xem chi tiết đơn hàng">
+                                        <i class="fas fa-eye mr-1"></i> Chi tiết
+                                      </button>
+                                    </td>
+                                  </tr>
+
+                                  <!-- Details Modal for Delivered Orders -->
+                                  <div class="modal fade" id="details-delivered-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title">Chi tiết đơn hàng đã giao {{ order.invoice or order.id }}</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="row">
+                                            <div class="col-md-6">
+                                              <h6>Thông tin khách hàng:</h6>
+                                              {% for customer in customers %}
+                                                {% if customer.id == order.customer_id %}
+                                                  <p><strong>Tên:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                                  <p><strong>Email:</strong> {{ customer.email }}</p>
+                                                  <p><strong>SĐT:</strong> {{ customer.phone or 'N/A' }}</p>
+                                                {% endif %}
+                                              {% endfor %}
+                                            </div>
+                                            <div class="col-md-6">
+                                              <h6>Thông tin đơn hàng:</h6>
+                                              <p><strong>Mã đơn:</strong> {{ order.invoice or order.id }}</p>
+                                              <p><strong>Trạng thái:</strong> <span class="badge badge-success">{{ order.status }}</span></p>
+                                              <p><strong>Thanh toán:</strong> {{ order.display_payment_status }}</p>
+                                              <p><strong>Giao hàng:</strong> Đã giao thành công</p>
+                                              <p><strong>Ngày đặt:</strong> {{ order.created_at }}</p>
+                                            </div>
+                                          </div>
+
+                                          <div class="row mt-3">
+                                            <div class="col-12">
+                                              <h6>Sản phẩm:</h6>
+                                              {% if order.product_details %}
+                                                {% for key, product in order.product_details.items() %}
+                                                  {% if product %}
+                                                    <div class="product-item mb-2 p-2 border rounded">
+                                                      <div class="row align-items-center">
+                                                        <div class="col-md-2 text-center">
+                                                          {% if product.get('image_1') %}
+                                                            <img src="{{ url_for('static', filename='images/' + product.get('image_1')) }}"
+                                                                 alt="{{ product.get('name', 'Product') }}"
+                                                                 class="img-fluid rounded" style="max-width: 50px;">
+                                                          {% else %}
+                                                            <div class="text-muted">No image</div>
+                                                          {% endif %}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                          <strong>{{ product.get('name', 'N/A') }}</strong><br>
+                                                          <small class="text-muted">
+                                                            Thương hiệu: {{ product.get('brand', 'N/A') }} |
+                                                            Màu: {{ product.get('color', 'N/A') }} |
+                                                            SL: {{ product.get('quantity', 0) }}
+                                                          </small>
+                                                        </div>
+                                                        <div class="col-md-4 text-right">
+                                                          {% if product.get('discount', 0) > 0 %}
+                                                            <div class="text-success font-weight-bold">{{ product.get('discounted_total', 0) | vnd }}</div>
+                                                            <small class="text-muted"><del>{{ product.get('original_total', 0) | vnd }}</del></small>
+                                                          {% else %}
+                                                            <div class="font-weight-bold">{{ product.get('original_total', 0) | vnd }}</div>
+                                                          {% endif %}
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  {% endif %}
+                                                {% endfor %}
+                                              {% endif %}
+
+                                              <div class="mt-3">
+                                                <strong>Tổng cộng: {{ order.total_price | vnd if order.total_price else '0 ₫' }}</strong>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {% endif %}
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <!-- Cancelled Orders Tab -->
+                        <div class="tab-pane fade" id="custom-tabs-one-settings" role="tabpanel" aria-labelledby="custom-tabs-one-settings-tab">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                              <thead>
+                                <tr>
+                                  <th>STT</th>
+                                  <th>Khách hàng</th>
+                                  <th>Số lượng</th>
+                                  <th>Tổng tiền</th>
+                                  <th>Trạng thái</th>
+                                  <th>Thanh toán</th>
+                                  <th>Ngày đặt</th>
+                                  <th>Chi tiết</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for order in orders %}
+                                  {% if order.status == "cancelled" %}
+                                  <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                      {% set customer_name = '' %}
+                                      {% for customer in customers %}
+                                        {% if customer.id == order.customer_id %}
+                                          {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                        {% endif %}
+                                      {% endfor %}
+                                      {{ customer_name }}
+                                    </td>
+                                    <td><strong>{{ order.total_quantity or 0 }}</strong></td>
+                                    <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
+                                    <td>{{ order.status }}</td>
+                                    <td>
+                                      {% if order.display_payment_status == 'Đã thanh toán' %}
+                                        <span class="badge badge-success">{{ order.display_payment_status }}</span>
+                                      {% elif order.display_payment_status == 'Chưa thanh toán' %}
+                                        <span class="badge badge-warning">{{ order.display_payment_status }}</span>
+                                      {% else %}
+                                        <span class="badge badge-secondary">{{ order.display_payment_status }}</span>
+                                      {% endif %}
+                                    </td>
+                                    <td>{{ order.created_at }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#details-cancelled-{{ order.id }}" title="Xem chi tiết đơn hàng">
+                                        <i class="fas fa-eye mr-1"></i> Chi tiết
+                                      </button>
+                                    </td>
+                                  </tr>
+
+                                  <!-- Details Modal for Cancelled Orders -->
+                                  <div class="modal fade" id="details-cancelled-{{ order.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                      <div class="modal-content">
+                                        <div class="modal-header">
+                                          <h5 class="modal-title text-danger">Chi tiết đơn hàng đã hủy {{ order.invoice or order.id }}</h5>
+                                          <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                          </button>
+                                        </div>
+                                        <div class="modal-body">
+                                          <div class="row">
+                                            <div class="col-md-6">
+                                              <h6>Thông tin khách hàng:</h6>
+                                              {% for customer in customers %}
+                                                {% if customer.id == order.customer_id %}
+                                                  <p><strong>Tên:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                                                  <p><strong>Email:</strong> {{ customer.email }}</p>
+                                                  <p><strong>SĐT:</strong> {{ customer.phone or 'N/A' }}</p>
+                                                {% endif %}
+                                              {% endfor %}
+                                            </div>
+                                            <div class="col-md-6">
+                                              <h6>Thông tin đơn hàng:</h6>
+                                              <p><strong>Mã đơn:</strong> {{ order.invoice or order.id }}</p>
+                                              <p><strong>Trạng thái:</strong> <span class="badge badge-danger">{{ order.status }}</span></p>
+                                              <p><strong>Thanh toán:</strong> {{ order.display_payment_status }}</p>
+                                              <p><strong>Giao hàng:</strong> Đã hủy</p>
+                                              <p><strong>Ngày đặt:</strong> {{ order.created_at }}</p>
+                                            </div>
+                                          </div>
+
+                                          <div class="alert alert-danger mt-3">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Đơn hàng này đã được hủy.</strong> Không thể thực hiện thêm thao tác nào.
+                                          </div>
+
+                                          <div class="row mt-3">
+                                            <div class="col-12">
+                                              <h6>Sản phẩm:</h6>
+                                              {% if order.product_details %}
+                                                {% for key, product in order.product_details.items() %}
+                                                  {% if product %}
+                                                    <div class="product-item mb-2 p-2 border rounded">
+                                                      <div class="row align-items-center">
+                                                        <div class="col-md-2 text-center">
+                                                          {% if product.get('image_1') %}
+                                                            <img src="{{ url_for('static', filename='images/' + product.get('image_1')) }}"
+                                                                 alt="{{ product.get('name', 'Product') }}"
+                                                                 class="img-fluid rounded" style="max-width: 50px; opacity: 0.5;">
+                                                          {% else %}
+                                                            <div class="text-muted">No image</div>
+                                                          {% endif %}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                          <strong style="color: #6c757d;">{{ product.get('name', 'N/A') }}</strong><br>
+                                                          <small class="text-muted">
+                                                            Thương hiệu: {{ product.get('brand', 'N/A') }} |
+                                                            Màu: {{ product.get('color', 'N/A') }} |
+                                                            SL: {{ product.get('quantity', 0) }}
+                                                          </small>
+                                                        </div>
+                                                        <div class="col-md-4 text-right">
+                                                          {% if product.get('discount', 0) > 0 %}
+                                                            <div class="text-muted font-weight-bold">{{ product.get('discounted_total', 0) | vnd }}</div>
+                                                            <small class="text-muted"><del>{{ product.get('original_total', 0) | vnd }}</del></small>
+                                                          {% else %}
+                                                            <div class="text-muted font-weight-bold">{{ product.get('original_total', 0) | vnd }}</div>
+                                                          {% endif %}
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  {% endif %}
+                                                {% endfor %}
+                                              {% endif %}
+
+                                              <div class="mt-3">
+                                                <strong class="text-muted">Tổng cộng: {{ order.total_price | vnd if order.total_price else '0 ₫' }}</strong>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {% endif %}
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                    <!-- /.card -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<!-- Order Details Modals will be added here -->
+
+<!-- Invoice Export JavaScript -->
+<script>
+// Print Invoice Function
+function printInvoice(invoiceId) {
+  const printContent = document.getElementById(invoiceId);
+  if (!printContent) {
+    showToast('Không tìm thấy nội dung hóa đơn để in!', 'error');
+    return;
+  }
+
+  const originalContent = document.body.innerHTML;
+  document.body.innerHTML = printContent.innerHTML;
+
+  // Add print-specific styles
+  const printStyles = `
+    <style>
+      @media print {
+        body {
+          font-family: 'Times New Roman', serif;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+          margin: 0;
+          padding: 20px;
+        }
+        .table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+        }
+        .table th, .table td {
+          border: 1px solid #000;
+          padding: 8px;
+          text-align: left;
+        }
+        .table th {
+          background-color: #f8f8f8 !important;
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-primary { color: #000 !important; }
+        .text-success { color: #000 !important; }
+        .text-danger { color: #000 !important; }
+        .badge {
+          display: inline-block;
+          padding: 2px 6px;
+          font-size: 10px;
+          border: 1px solid #000;
+          border-radius: 3px;
+        }
+        h3, h4, h5, h6 {
+          margin-top: 0;
+          margin-bottom: 10px;
+        }
+        .mb-1, .mb-2, .mb-3, .mb-4 {
+          margin-bottom: 5px !important;
+        }
+        .mt-3, .mt-4 {
+          margin-top: 15px !important;
+        }
+        hr {
+          border: none;
+          border-top: 1px solid #000;
+          margin: 15px 0;
+        }
+        .row {
+          display: table;
+          width: 100%;
+          margin-bottom: 10px;
+        }
+        .col-6, .col-md-6 {
+          display: table-cell;
+          width: 50%;
+          vertical-align: top;
+        }
+        .col-8 {
+          display: table-cell;
+          width: 66.66%;
+        }
+        .col-4, .col-md-4 {
+          display: table-cell;
+          width: 33.33%;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+      }
+    </style>
+  `;
+
+  document.head.insertAdjacentHTML('beforeend', printStyles);
+
+  window.print();
+
+  // Restore original content
+  document.body.innerHTML = originalContent;
+
+  showToast('Hóa đơn đã được gửi đến máy in!', 'success');
+}
+
+// Invoice Export JavaScript
+function exportInvoice(orderId) {
+  // Hiển thị loading
+  const btn = event.target.closest('button');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xuất...';
+  btn.disabled = true;
+
+  // Gửi request để xuất hóa đơn
+  fetch(`/admin/orders/${orderId}/export-invoice`, {
+    method: 'GET',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => {
+    if (response.ok) {
+      return response.blob();
+    } else {
+      throw new Error('Không thể xuất hóa đơn');
+    }
+  })
+  .then(blob => {
+    // Tạo URL để download file
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `hoa-don-${orderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    // Khôi phục button
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+
+    // Hiển thị thông báo thành công
+    showToast('Hóa đơn đã được xuất thành công!', 'success');
+  })
+  .catch(error => {
+    console.error('Error:', error);
+
+    // Khôi phục button
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+
+    // Hiển thị thông báo lỗi
+    showToast('Có lỗi xảy ra khi xuất hóa đơn!', 'error');
+  });
+}
+
+function showToast(message, type) {
+  // Tạo toast notification
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  toast.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+    ${message}
+    <button type="button" class="close" data-dismiss="alert">
+      <span>&times;</span>
+    </button>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 3000);
+}
+</script>
+
+{% endblock content %}
