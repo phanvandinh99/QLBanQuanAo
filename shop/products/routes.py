@@ -115,18 +115,21 @@ def deletebrand(id):
         return redirect(url_for('login'))
     brand = Brand.query.get_or_404(id)
     if request.method == "POST":
-        products = Product.query.filter(Product.category_id == id).all()
-        for product in products:
-            rates = Rating.query.filter(Rating.product_id == product.id).all()
-            for rate in rates:
-                db.session.delete(rate)
-                db.session.commit()
-            db.session.delete(product)
+        try:
+            products = Product.query.filter(Product.category_id == id).all()
+            for product in products:
+                rates = Rating.query.filter(Rating.product_id == product.id).all()
+                for rate in rates:
+                    db.session.delete(rate)
+                db.session.delete(product)
+            db.session.delete(brand)
             db.session.commit()
-        db.session.delete(brand)
-        db.session.commit()
-        flash(f"Thương hiệu {brand.name} đã xóa thành công", "success")
-        return redirect(url_for('brands'))
+            flash(f"Thương hiệu {brand.name} đã xóa thành công", "success")
+            return redirect(url_for('brands'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Lỗi khi xóa thương hiệu: {str(e)}", "danger")
+            return redirect(url_for('brands'))
     flash(f"Thương hiệu {brand.name} không thể xóa", "warning")
     return redirect(url_for('brands'))
 
@@ -184,24 +187,27 @@ def deletecat(id):
         return redirect(url_for('login'))
     category = Category.query.get_or_404(id)
     if request.method == "POST":
-        products = Product.query.filter(Product.category_id == id).all()
-        for product in products:
-            rates = Rating.query.filter(Rating.product_id == product.id).all()
-            for rate in rates:
-                db.session.delete(rate)
-                db.session.commit()
-            db.session.delete(product)
-            db.session.commit()
-        brands = Brand.query.filter(Brand.category_id == id).all()
-        for brand in brands:
-            db.session.delete(brand)
-            db.session.commit()
+        try:
+            products = Product.query.filter(Product.category_id == id).all()
+            for product in products:
+                rates = Rating.query.filter(Rating.product_id == product.id).all()
+                for rate in rates:
+                    db.session.delete(rate)
+                db.session.delete(product)
 
-        db.session.delete(category)
-        db.session.commit()
-        flash(f"The brand {category.name} was deleted from your database", "success")
-        return redirect(url_for('categories'))
-    flash(f"The brand {category.name} can't be  deleted from your database", "warning")
+            brands = Brand.query.filter(Brand.category_id == id).all()
+            for brand in brands:
+                db.session.delete(brand)
+
+            db.session.delete(category)
+            db.session.commit()
+            flash(f"Danh mục {category.name} đã được xóa thành công", "success")
+            return redirect(url_for('categories'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Lỗi khi xóa danh mục: {str(e)}", "danger")
+            return redirect(url_for('categories'))
+    flash(f"Danh mục {category.name} không thể xóa", "warning")
     return redirect(url_for('categories'))
 
 
@@ -426,20 +432,28 @@ def deleteproduct(id):
     product = Product.query.get_or_404(id)
     if request.method == "POST":
         try:
-            os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
-            os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
-            os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
-        except Exception:
-            pass
-        rates = Rating.query.filter(Rating.product_id == id).all()
-        for rate in rates:
-            db.session.delete(rate)
+            # Delete image files
+            try:
+                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
+                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
+                os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
+            except Exception:
+                pass  # Ignore file deletion errors
+
+            # Delete ratings and product in a single transaction
+            rates = Rating.query.filter(Rating.product_id == id).all()
+            for rate in rates:
+                db.session.delete(rate)
+            db.session.delete(product)
             db.session.commit()
-        db.session.delete(product)
-        db.session.commit()
-        flash(f'Sản phẩm {product.name} đã được xóa khỏi hệ thống', 'success')
-        return redirect(url_for('product'))
-    flash(f'Can not delete the product', 'success')
+
+            flash(f'Sản phẩm {product.name} đã được xóa khỏi hệ thống', 'success')
+            return redirect(url_for('product'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Lỗi khi xóa sản phẩm: {str(e)}', 'danger')
+            return redirect(url_for('product'))
+    flash(f'Không thể xóa sản phẩm', 'warning')
     return redirect(url_for('product'))
 
 
