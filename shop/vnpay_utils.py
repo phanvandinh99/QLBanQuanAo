@@ -2,6 +2,9 @@ import hashlib
 import hmac
 import urllib.parse
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class VNPay:
     def __init__(self, vnpay_url, tmn_code, hash_secret, return_url, ipn_url):
@@ -59,6 +62,8 @@ class VNPay:
         vnp_response_code = response_data.get('vnp_ResponseCode', '')
         vnp_txn_ref = response_data.get('vnp_TxnRef', '')
 
+        logger.debug(f"VNPAY validation for order {vnp_txn_ref}: received secure_hash={vnp_secure_hash[:10]}..., response_code={vnp_response_code}")
+
         # Remove vnp_SecureHash and other non-hash parameters
         params_for_hash = {k: v for k, v in response_data.items()
                           if k != 'vnp_SecureHash' and k != 'vnp_SecureHashType'}
@@ -75,6 +80,8 @@ class VNPay:
 
         hash_data = '&'.join(hash_parts)
 
+        logger.debug(f"VNPAY hash data for order {vnp_txn_ref}: {hash_data}")
+
         # Calculate hash using HMAC-SHA512
         calculated_hash = hmac.new(
             self.hash_secret.encode('utf-8'),
@@ -82,8 +89,17 @@ class VNPay:
             hashlib.sha512
         ).hexdigest()
 
+        logger.debug(f"VNPAY calculated hash for order {vnp_txn_ref}: {calculated_hash[:10]}..., received: {vnp_secure_hash[:10]}...")
+
         # Use secure comparison
         is_valid = hmac.compare_digest(calculated_hash.lower(), vnp_secure_hash.lower())
+
+        if is_valid:
+            logger.info(f"VNPAY signature validation successful for order {vnp_txn_ref}")
+        else:
+            logger.error(f"VNPAY signature validation failed for order {vnp_txn_ref}")
+            logger.error(f"Expected hash: {calculated_hash}, Received hash: {vnp_secure_hash}")
+
         return is_valid, vnp_response_code, vnp_txn_ref
 
     def get_response_description(self, response_code):

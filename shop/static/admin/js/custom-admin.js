@@ -245,7 +245,7 @@ function markAsRead(notificationId) {
 
 // ===== DATA TABLES =====
 function initializeDataTables() {
-    // Enhanced DataTables configuration
+    // Enhanced DataTables configuration for elements with data-table class
     $('.data-table').each(function() {
         const table = $(this).DataTable({
             responsive: true,
@@ -259,6 +259,25 @@ function initializeDataTables() {
                 $('.dataTables_length select').addClass('form-control form-control-sm');
             }
         });
+    });
+
+    // Initialize DataTables for tables with IDs starting with "example"
+    $('table[id^="example"]').each(function() {
+        const tableId = $(this).attr('id');
+        if (!$.fn.DataTable.isDataTable('#' + tableId)) {
+            $(this).DataTable({
+                responsive: true,
+                autoWidth: false,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Vietnamese.json"
+                },
+                initComplete: function() {
+                    // Add search input styling
+                    $('.dataTables_filter input').addClass('form-control form-control-sm');
+                    $('.dataTables_length select').addClass('form-control form-control-sm');
+                }
+            });
+        }
     });
 }
 

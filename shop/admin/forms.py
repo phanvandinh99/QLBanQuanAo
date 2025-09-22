@@ -27,9 +27,13 @@ class AdminOrderForm(FlaskForm):
                                 validators=[DataRequired(message='Vui lòng nhập số điện thoại'),
                                           Length(min=10, max=15, message='Số điện thoại phải từ 10-15 ký tự')])
 
-    customer_name = StringField('Họ tên khách hàng',
-                               validators=[DataRequired(message='Vui lòng nhập họ tên khách hàng'),
-                                         Length(min=2, max=100, message='Họ tên phải từ 2-100 ký tự')])
+    customer_last_name = StringField('Họ khách hàng',
+                                    validators=[DataRequired(message='Vui lòng nhập họ khách hàng'),
+                                              Length(min=1, max=50, message='Họ phải từ 1-50 ký tự')])
+
+    customer_name = StringField('Tên khách hàng',
+                               validators=[DataRequired(message='Vui lòng nhập tên khách hàng'),
+                                         Length(min=1, max=50, message='Tên phải từ 1-50 ký tự')])
 
     customer_email = StringField('Email khách hàng',
                                 validators=[Optional(), Email(message='Email không hợp lệ')])

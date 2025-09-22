@@ -557,12 +557,22 @@
                             {%for order in orders %} {% if order.status == "pending" %}
                             <!-- Order {{order.id}} - Products: {{order.product_details|length if order.product_details else 0}}, Qty: {{order.total_quantity}}, Price: {{order.total_price}} -->
                             <tr>
-                              {%for customer in customers%} {% if customer.id ==
-                              order.customer_id %} {% set customer_name =
-                              customer.first_name +" "+customer.last_name %}
-                              <td>{{customer_name}}</td>
-                              {% endif %} {%endfor%}
+                              {% set customer_name = '' %}
+                              {% for customer in customers %}
+                                {% if customer.id == order.customer_id %}
+                                  {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                {% endif %}
+                              {% endfor %}
+                              <td>{{ customer_name }}</td>
                               {# Use pre-calculated totals from route #}
+                              {% set total_quantity = order.total_quantity %}
+                              {% set customer_name = '' %}
+                              {% for customer in customers %}
+                                {% if customer.id == order.customer_id %}
+                                  {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                {% endif %}
+                              {% endfor %}
+                              <td>{{ customer_name }}</td>
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
                               <td><strong>{{total_quantity or 0}}</strong></td>
@@ -784,18 +794,21 @@
                                             </h6>
                                           </div>
                                           <div class="card-body p-2">
-                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
-                                            <div class="row">
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
-                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
-                                              </div>
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
-                                              </div>
-                                            </div>
-                                            {% endif %} {%endfor%}
+                                            {% for customer in customers %}
+                                              {% if customer.id == order.customer_id %}
+                                                <div class="row">
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                    <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                    <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
+                                                  </div>
+                                                </div>
+                                              {% endif %}
+                                            {% endfor %}
+                                          </div>
                                           </div>
                                         </div>
                                       </div>
@@ -994,10 +1007,8 @@
                                 </div>
                               </div>
                             </div>
-                            {% endif %}
                             {% endfor %}
-
-                            {%endfor%}
+                            {% endif %}
                           </tbody>
                         </table>
                       </div>
@@ -1029,11 +1040,13 @@
                             {%for order in orders %} {% if order.status == "shipping" %}
                             <tr>
                               <td>{{loop.index}}</td>
-                              {%for customer in customers%} {% if customer.id ==
-                              order.customer_id %} {% set customer_name =
-                              customer.first_name +" "+customer.last_name %}
-                              <td>{{customer_name}}</td>
-                              {% endif %} {%endfor%}
+                              {% set customer_name = '' %}
+                              {% for customer in customers %}
+                                {% if customer.id == order.customer_id %}
+                                  {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                {% endif %}
+                              {% endfor %}
+                              <td>{{ customer_name }}</td>
                               {# Use pre-calculated totals from route #}
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
@@ -1168,18 +1181,21 @@
                                             </h6>
                                           </div>
                                           <div class="card-body p-2">
-                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
-                                            <div class="row">
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
-                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
-                                              </div>
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
-                                              </div>
-                                            </div>
-                                            {% endif %} {%endfor%}
+                                            {% for customer in customers %}
+                                              {% if customer.id == order.customer_id %}
+                                                <div class="row">
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                    <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                    <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
+                                                  </div>
+                                                </div>
+                                              {% endif %}
+                                            {% endfor %}
+                                          </div>
                                           </div>
                                         </div>
                                       </div>
@@ -1410,9 +1426,8 @@
                                 </div>
                               </div>
                             </div>
-                            {% endif %}
                             {% endfor %}
-                            {% endif %} {%endfor%}
+                            {% endif %}
                           </tbody>
                         </table>
                       </div>
@@ -1444,11 +1459,13 @@
                             {%for order in orders %} {% if order.status == "delivered" %}
                             <tr>
                               <td>{{loop.index}}</td>
-                              {%for customer in customers%} {% if customer.id ==
-                              order.customer_id %} {% set customer_name =
-                              customer.first_name +" "+customer.last_name %}
-                              <td>{{customer_name}}</td>
-                              {% endif %} {%endfor%}
+                              {% set customer_name = '' %}
+                              {% for customer in customers %}
+                                {% if customer.id == order.customer_id %}
+                                  {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                {% endif %}
+                              {% endfor %}
+                              <td>{{ customer_name }}</td>
                               {# Use pre-calculated totals from route #}
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
@@ -1545,18 +1562,21 @@
                                             </h6>
                                           </div>
                                           <div class="card-body p-2">
-                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
-                                            <div class="row">
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
-                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
-                                              </div>
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
-                                              </div>
-                                            </div>
-                                            {% endif %} {%endfor%}
+                                            {% for customer in customers %}
+                                              {% if customer.id == order.customer_id %}
+                                                <div class="row">
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                    <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                    <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
+                                                  </div>
+                                                </div>
+                                              {% endif %}
+                                            {% endfor %}
+                                          </div>
                                           </div>
                                         </div>
                                       </div>
@@ -1755,9 +1775,8 @@
                                 </div>
                               </div>
                             </div>
-                            {% endif %}
                             {% endfor %}
-                            {% endif %} {%endfor%}
+                            {% endif %}
                           </tbody>
                         </table>
                       </div>
@@ -1789,11 +1808,13 @@
                             {%for order in orders %} {% if order.status == "cancelled" %}
                             <tr>
                               <td>{{loop.index}}</td>
-                              {%for customer in customers%} {% if customer.id ==
-                              order.customer_id %} {% set customer_name =
-                              customer.first_name +" "+customer.last_name %}
-                              <td>{{customer_name}}</td>
-                              {% endif %} {%endfor%}
+                              {% set customer_name = '' %}
+                              {% for customer in customers %}
+                                {% if customer.id == order.customer_id %}
+                                  {% set customer_name = customer.first_name + " " + customer.last_name %}
+                                {% endif %}
+                              {% endfor %}
+                              <td>{{ customer_name }}</td>
                               {# Use pre-calculated totals from route #}
                               {% set total_quantity = order.total_quantity %}
                               {% set total_price = order.total_price %}
@@ -1890,18 +1911,21 @@
                                             </h6>
                                           </div>
                                           <div class="card-body p-2">
-                                            {%for customer in customers%} {% if customer.id == order.customer_id %}
-                                            <div class="row">
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
-                                                <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
-                                              </div>
-                                              <div class="col-md-6">
-                                                <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
-                                                <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
-                                              </div>
-                                            </div>
-                                            {% endif %} {%endfor%}
+                                            {% for customer in customers %}
+                                              {% if customer.id == order.customer_id %}
+                                                <div class="row">
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>Họ Tên:</strong> {{customer.first_name + ' ' + customer.last_name}}</div>
+                                                    <div style="font-size: 14px;"><strong>Email:</strong> {{customer.email}}</div>
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                    <div class="mb-1" style="font-size: 14px;"><strong>SĐT:</strong> {{customer.phone_number}}</div>
+                                                    <div style="font-size: 14px;"><strong>Địa Chỉ:</strong> {{order.shipping_address}}</div>
+                                                  </div>
+                                                </div>
+                                              {% endif %}
+                                            {% endfor %}
+                                          </div>
                                           </div>
                                         </div>
                                       </div>
@@ -2097,9 +2121,8 @@
                                 </div>
                               </div>
                             </div>
-                            {% endif %}
                             {% endfor %}
-                            {% endif %} {%endfor%}
+                            {% endif %}
                           </tbody>
                         </table>
                       </div>

@@ -1,0 +1,191 @@
+{% extends "admin/layout.html" %}
+{% block title %}VNPay Debug{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">VNPay Debug & Testing</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>VNPay Configuration</h4>
+                            <table class="table table-striped">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>VNPay URL:</strong></td>
+                                        <td>{{ config_info.vnpay_url }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>TMN Code:</strong></td>
+                                        <td>{{ config_info.tmn_code }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hash Secret:</strong></td>
+                                        <td>
+                                            {% if config_info.hash_secret_configured %}
+                                                <span class="text-success">✓ Configured</span>
+                                            {% else %}
+                                                <span class="text-danger">✗ Not configured</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Return URL:</strong></td>
+                                        <td>{{ config_info.return_url }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>IPN URL:</strong></td>
+                                        <td>{{ config_info.ipn_url }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h4>Test Results</h4>
+                            <div class="alert alert-info">
+                                <h5>Payment URL Generation:</h5>
+                                {% if test_payment_url %}
+                                    <p class="text-success">✓ Success</p>
+                                    <small class="text-muted">{{ test_payment_url[:100] }}...</small>
+                                {% else %}
+                                    <p class="text-danger">✗ Failed</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="alert alert-info">
+                                <h5>Signature Validation Test:</h5>
+                                {% if test_validation %}
+                                    {% if test_validation[0] %}
+                                        <p class="text-success">✓ Validation successful</p>
+                                        <small>Response Code: {{ test_validation[1] }}, Order ID: {{ test_validation[2] }}</small>
+                                    {% else %}
+                                        <p class="text-danger">✗ Validation failed</p>
+                                        <small>Response Code: {{ test_validation[1] }}, Order ID: {{ test_validation[2] }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="text-warning">⚠ Test not run</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>Common VNPay Issues & Solutions</h4>
+                            <div class="accordion" id="issuesAccordion">
+                                <div class="card">
+                                    <div class="card-header" id="headingOne">
+                                        <h5 class="mb-0">
+                                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne">
+                                                Invalid Signature Error
+                                            </button>
+                                        </h5>
+                                    </div>
+                                    <div id="collapseOne" class="collapse show" data-parent="#issuesAccordion">
+                                        <div class="card-body">
+                                            <p><strong>Possible causes:</strong></p>
+                                            <ul>
+                                                <li>Hash secret mismatch between your config and VNPay settings</li>
+                                                <li>Parameters not sorted correctly during hash calculation</li>
+                                                <li>URL encoding/decoding issues</li>
+                                                <li>VNPay API version mismatch (should use 2.0.0)</li>
+                                            </ul>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Check hash secret in config.py matches VNPay dashboard</li>
+                                                <li>Verify all parameters are URL decoded before hashing</li>
+                                                <li>Check application logs for detailed validation information</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header" id="headingTwo">
+                                        <h5 class="mb-0">
+                                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo">
+                                                Order Not Found Error
+                                            </button>
+                                        </h5>
+                                    </div>
+                                    <div id="collapseTwo" class="collapse" data-parent="#issuesAccordion">
+                                        <div class="card-body">
+                                            <p><strong>Possible causes:</strong></p>
+                                            <ul>
+                                                <li>Order invoice format incompatible with VNPay (too long or contains invalid characters)</li>
+                                                <li>Order not saved to database before redirect to VNPay</li>
+                                                <li>Database connection issues during order creation</li>
+                                            </ul>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Ensure invoice is alphanumeric and max 34 characters</li>
+                                                <li>Check order creation flow in application logs</li>
+                                                <li>Verify database connectivity</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header" id="headingThree">
+                                        <h5 class="mb-0">
+                                            <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree">
+                                                Payment Amount Mismatch
+                                            </button>
+                                        </h5>
+                                    </div>
+                                    <div id="collapseThree" class="collapse" data-parent="#issuesAccordion">
+                                        <div class="card-body">
+                                            <p><strong>Possible causes:</strong></p>
+                                            <ul>
+                                                <li>Amount calculation error in cart/order processing</li>
+                                                <li>Amount format issues (should be VND * 100)</li>
+                                                <li>Discount calculation errors</li>
+                                            </ul>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Verify amount calculation logic</li>
+                                                <li>Check for floating point precision issues</li>
+                                                <li>Test with different cart configurations</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>Log Files</h4>
+                            <p>To debug VNPay issues, check the application logs. All VNPay operations are logged with detailed information including:</p>
+                            <ul>
+                                <li>Payment URL creation parameters</li>
+                                <li>Return/IPN request parameters</li>
+                                <li>Signature validation details</li>
+                                <li>Order status updates</li>
+                            </ul>
+                            <p><strong>Log levels:</strong></p>
+                            <ul>
+                                <li><code>INFO</code>: Successful operations and key events</li>
+                                <li><code>WARNING</code>: Non-critical issues (failed payments, etc.)</li>
+                                <li><code>ERROR</code>: Critical errors requiring attention</li>
+                                <li><code>DEBUG</code>: Detailed validation information (enable for troubleshooting)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

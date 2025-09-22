@@ -1084,11 +1084,13 @@ def admin_create_order():
                             username = f"{base_username}_{counter}"
                             counter += 1
 
-                        # Split name into first and last name
-                        customer_name = form.customer_name.data.strip()
-                        name_parts = customer_name.split(' ', 1)
-                        first_name = name_parts[0] if name_parts else ''
-                        last_name = name_parts[1] if len(name_parts) > 1 else ''
+                        # Use separate first name and last name fields
+                        first_name = form.customer_name.data.strip()
+                        last_name = form.customer_last_name.data.strip()
+
+                        # Generate default password for walk-in customers
+                        default_password = "Abc123"
+                        hash_password = bcrypt.generate_password_hash(default_password).decode('utf8')
 
                         customer = Customer(
                             username=username,
@@ -1096,23 +1098,37 @@ def admin_create_order():
                             last_name=last_name,
                             email=form.customer_email.data or None,
                             phone_number=form.customer_phone.data,
+                            gender="male",  # Default gender is male
+                            password=hash_password,
                             is_active=True
                         )
                         db.session.add(customer)
                         db.session.flush()  # Get customer ID
 
-                        flash(f'Đã tạo tài khoản mới cho khách hàng {customer_name}!', 'info')
+                        # Mark this customer as newly created
+                        customer._was_existing = False
+
+                        flash(f'Đã tạo tài khoản mới cho khách hàng {first_name} {last_name}! Tài khoản có thể đăng nhập bằng số điện thoại và mật khẩu "Abc123".', 'info')
                     else:
                         # Update existing customer information if provided
-                        if form.customer_name.data and form.customer_name.data != customer.first_name + ' ' + customer.last_name:
-                            name_parts = form.customer_name.data.strip().split(' ', 1)
-                            customer.first_name = name_parts[0] if name_parts else ''
-                            customer.last_name = name_parts[1] if len(name_parts) > 1 else ''
+                        updated = False
+                        if form.customer_name.data and form.customer_name.data != customer.first_name:
+                            customer.first_name = form.customer_name.data.strip()
+                            updated = True
+
+                        if form.customer_last_name.data and form.customer_last_name.data != customer.last_name:
+                            customer.last_name = form.customer_last_name.data.strip()
+                            updated = True
 
                         if form.customer_email.data and form.customer_email.data != customer.email:
                             customer.email = form.customer_email.data
+                            updated = True
 
-                        flash(f'Đã cập nhật thông tin khách hàng {customer.first_name} {customer.last_name}!', 'info')
+                        if updated:
+                            flash(f'Đã cập nhật thông tin khách hàng {customer.first_name} {customer.last_name}!', 'info')
+
+                        # Mark this customer as existing
+                        customer._was_existing = True
 
                     # Create order
                     invoice = secrets.token_hex(5)
@@ -1161,7 +1177,7 @@ def admin_create_order():
                         qr_data = {
                             'amount': total_amount,
                             'invoice': invoice,
-                            'customer': form.customer_name.data,
+                            'customer': f"{form.customer_last_name.data} {form.customer_name.data}",
                             'phone': form.customer_phone.data
                         }
 
@@ -1197,6 +1213,21 @@ def admin_create_order():
                             qr_code_url = None
 
                     flash(f'Đơn hàng #{invoice} đã được tạo thành công!', 'success')
+
+                    # Send email notifications
+                    try:
+                        if customer.email:
+                            # Check if this was a newly created customer
+                            customer_was_new = (not hasattr(customer, '_was_existing') or not customer._was_existing)
+                            if customer_was_new:
+                                # Send account info email for new customers
+                                send_new_customer_account_email(customer)
+
+                            # Send order confirmation email for all customers
+                            send_order_confirmation_email(customer, order)
+                    except Exception as e:
+                        current_app.logger.error(f"Error sending emails: {str(e)}")
+                        flash('Đơn hàng đã tạo thành công nhưng có lỗi khi gửi email thông báo.', 'warning')
 
                     # Redirect to order detail or payment page
                     if form.payment_method.data == 'qr_code':
