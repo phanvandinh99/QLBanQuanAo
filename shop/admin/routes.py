@@ -1,7 +1,7 @@
 import os
 import urllib
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import product
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
@@ -18,7 +18,7 @@ except ImportError:
 from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Product, Customer, Admin, Order, Rating, Article
+from shop.models import Brand, Category, Product, Customer, Admin, Order, OrderItem, Rating, Article
 from shop.email_utils import send_order_confirmation_email, send_new_customer_account_email, send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
@@ -1562,3 +1562,316 @@ def api_check_customer_phone():
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({'error': 'Có lỗi xảy ra khi kiểm tra số điện thoại'}), 500
 
+
+# ============= STATISTICS ROUTES =============
+
+@app.route('/admin/statistics')
+def statistics():
+    """Trang thống kê tổng quan cho admin"""
+    if 'email' not in session:
+        flash(f'Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    user = Admin.query.filter_by(email=session['email']).first()
+
+    # Lấy thống kê tổng quan
+    stats = get_overview_stats()
+
+    # Lấy dữ liệu cho biểu đồ
+    chart_data = get_chart_data()
+
+    return render_template('admin/statistics.html',
+                         title='Thống kê tổng quan',
+                         user=user,
+                         stats=stats,
+                         chart_data=chart_data)
+
+
+@app.route('/admin/api/statistics/<period>')
+def get_statistics_api(period):
+    """API để lấy dữ liệu thống kê theo khoảng thời gian"""
+    if 'email' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        if period not in ['day', 'week', 'month', 'year']:
+            return jsonify({'error': 'Invalid period'}), 400
+
+        data = get_chart_data_by_period(period)
+        return jsonify(data)
+    except Exception as e:
+        current_app.logger.error(f"Error getting statistics: {str(e)}")
+        return jsonify({'error': 'Có lỗi xảy ra khi tải dữ liệu thống kê'}), 500
+
+
+def get_overview_stats():
+    """Lấy thống kê tổng quan"""
+    try:
+        # Tổng số khách hàng
+        total_customers = Customer.query.count()
+
+        # Tổng số sản phẩm
+        total_products = Product.query.count()
+
+        # Tổng số đơn hàng
+        total_orders = Order.query.count()
+
+        # Tổng doanh thu (từ đơn hàng đã giao)
+        total_revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+            Order.status == 'delivered'
+        ).scalar() or 0
+
+        # Đơn hàng hôm nay
+        today = datetime.now().date()
+        today_orders = Order.query.filter(
+            db.func.date(Order.created_at) == today
+        ).count()
+
+        # Doanh thu hôm nay
+        today_revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+            Order.status == 'delivered',
+            db.func.date(Order.created_at) == today
+        ).scalar() or 0
+
+        # Đơn hàng trong tháng này
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        monthly_orders = Order.query.filter(
+            db.extract('month', Order.created_at) == current_month,
+            db.extract('year', Order.created_at) == current_year
+        ).count()
+
+        # Doanh thu tháng này
+        monthly_revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+            Order.status == 'delivered',
+            db.extract('month', Order.created_at) == current_month,
+            db.extract('year', Order.created_at) == current_year
+        ).scalar() or 0
+
+        # Thống kê trạng thái đơn hàng
+        order_status_stats = db.session.query(
+            Order.status,
+            db.func.count(Order.id)
+        ).group_by(Order.status).all()
+
+        # Thống kê phương thức thanh toán
+        payment_stats = db.session.query(
+            Order.payment_method,
+            db.func.count(Order.id),
+            db.func.sum(Order.total_amount)
+        ).filter(Order.status == 'delivered').group_by(Order.payment_method).all()
+
+        return {
+            'total_customers': total_customers,
+            'total_products': total_products,
+            'total_orders': total_orders,
+            'total_revenue': float(total_revenue),
+            'today_orders': today_orders,
+            'today_revenue': float(today_revenue),
+            'monthly_orders': monthly_orders,
+            'monthly_revenue': float(monthly_revenue),
+            'order_status_stats': dict(order_status_stats),
+            'payment_stats': [
+                {
+                    'method': method,
+                    'count': count,
+                    'revenue': float(revenue or 0)
+                } for method, count, revenue in payment_stats
+            ]
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error getting overview stats: {str(e)}")
+        return {
+            'total_customers': 0,
+            'total_products': 0,
+            'total_orders': 0,
+            'total_revenue': 0,
+            'today_orders': 0,
+            'today_revenue': 0,
+            'monthly_orders': 0,
+            'monthly_revenue': 0,
+            'order_status_stats': {},
+            'payment_stats': []
+        }
+
+
+def get_chart_data():
+    """Lấy dữ liệu biểu đồ mặc định (tháng này)"""
+    return get_chart_data_by_period('month')
+
+
+def get_chart_data_by_period(period):
+    """Lấy dữ liệu biểu đồ theo khoảng thời gian"""
+    try:
+        now = datetime.now()
+
+        if period == 'day':
+            # Thống kê theo giờ trong ngày
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+            # Doanh thu theo giờ
+            revenue_data = []
+            order_data = []
+            labels = []
+
+            for hour in range(24):
+                hour_start = start_date.replace(hour=hour)
+                hour_end = hour_start.replace(hour=hour, minute=59, second=59)
+
+                revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+                    Order.status == 'delivered',
+                    Order.created_at >= hour_start,
+                    Order.created_at <= hour_end
+                ).scalar() or 0
+
+                orders = Order.query.filter(
+                    Order.created_at >= hour_start,
+                    Order.created_at <= hour_end
+                ).count()
+
+                labels.append(f'{hour:02d}:00')
+                revenue_data.append(float(revenue))
+                order_data.append(orders)
+
+        elif period == 'week':
+            # Thống kê theo ngày trong tuần
+            start_date = now - timedelta(days=now.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            revenue_data = []
+            order_data = []
+            labels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']
+
+            for i in range(7):
+                day_start = start_date + timedelta(days=i)
+                day_end = day_start + timedelta(days=1)
+
+                revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+                    Order.status == 'delivered',
+                    Order.created_at >= day_start,
+                    Order.created_at < day_end
+                ).scalar() or 0
+
+                orders = Order.query.filter(
+                    Order.created_at >= day_start,
+                    Order.created_at < day_end
+                ).count()
+
+                revenue_data.append(float(revenue))
+                order_data.append(orders)
+
+        elif period == 'month':
+            # Thống kê theo ngày trong tháng
+            year = now.year
+            month = now.month
+            days_in_month = (datetime(year, month + 1, 1) - datetime(year, month, 1)).days if month < 12 else 31
+
+            revenue_data = []
+            order_data = []
+            labels = []
+
+            for day in range(1, days_in_month + 1):
+                try:
+                    day_start = datetime(year, month, day, 0, 0, 0)
+                    day_end = datetime(year, month, day, 23, 59, 59)
+
+                    revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+                        Order.status == 'delivered',
+                        Order.created_at >= day_start,
+                        Order.created_at <= day_end
+                    ).scalar() or 0
+
+                    orders = Order.query.filter(
+                        Order.created_at >= day_start,
+                        Order.created_at <= day_end
+                    ).count()
+
+                    labels.append(str(day))
+                    revenue_data.append(float(revenue))
+                    order_data.append(orders)
+                except ValueError:
+                    # Ngày không hợp lệ (ví dụ: 31 tháng 2)
+                    continue
+
+        else:  # year
+            # Thống kê theo tháng trong năm
+            year = now.year
+            revenue_data = []
+            order_data = []
+            labels = ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6',
+                     'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12']
+
+            for month in range(1, 13):
+                month_start = datetime(year, month, 1, 0, 0, 0)
+                if month == 12:
+                    month_end = datetime(year + 1, 1, 1, 23, 59, 59)
+                else:
+                    month_end = datetime(year, month + 1, 1, 23, 59, 59)
+
+                revenue = db.session.query(db.func.sum(Order.total_amount)).filter(
+                    Order.status == 'delivered',
+                    Order.created_at >= month_start,
+                    Order.created_at < month_end
+                ).scalar() or 0
+
+                orders = Order.query.filter(
+                    Order.created_at >= month_start,
+                    Order.created_at < month_end
+                ).count()
+
+                revenue_data.append(float(revenue))
+                order_data.append(orders)
+
+        # Thống kê sản phẩm bán chạy
+        top_products = db.session.query(
+            Product.name,
+            db.func.sum(OrderItem.quantity).label('total_sold'),
+            db.func.sum(OrderItem.unit_price * OrderItem.quantity * (100 - OrderItem.discount) / 100).label('total_revenue')
+        ).join(OrderItem, Product.id == OrderItem.product_id)\
+         .join(Order, OrderItem.order_id == Order.id)\
+         .filter(Order.status == 'delivered')\
+         .group_by(Product.id, Product.name)\
+         .order_by(db.desc('total_sold'))\
+         .limit(10).all()
+
+        # Thống kê danh mục sản phẩm
+        category_stats = db.session.query(
+            Category.name,
+            db.func.count(Product.id).label('product_count'),
+            db.func.sum(OrderItem.quantity).label('sold_count')
+        ).join(Product, Category.id == Product.category_id)\
+         .outerjoin(OrderItem, Product.id == OrderItem.product_id)\
+         .outerjoin(Order, OrderItem.order_id == Order.id)\
+         .filter(Order.status == 'delivered')\
+         .group_by(Category.id, Category.name)\
+         .order_by(db.desc('sold_count')).all()
+
+        return {
+            'labels': labels,
+            'revenue_data': revenue_data,
+            'order_data': order_data,
+            'top_products': [
+                {
+                    'name': name,
+                    'sold': int(total_sold),
+                    'revenue': float(total_revenue or 0)
+                } for name, total_sold, total_revenue in top_products
+            ],
+            'category_stats': [
+                {
+                    'name': name,
+                    'product_count': int(product_count),
+                    'sold_count': int(sold_count or 0)
+                } for name, product_count, sold_count in category_stats
+            ]
+        }
+    except Exception as e:
+        current_app.logger.error(f"Error getting chart data for period {period}: {str(e)}")
+        return {
+            'labels': [],
+            'revenue_data': [],
+            'order_data': [],
+            'top_products': [],
+            'category_stats': []
+        }

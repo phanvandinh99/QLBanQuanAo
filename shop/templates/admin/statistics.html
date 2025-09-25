@@ -1,0 +1,624 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+{%include 'admin/header.html'%}
+
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <i class="fas fa-chart-bar mr-2"></i>Thống kê tổng quan
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{url_for('admin_manager')}}">Home</a></li>
+                        <li class="breadcrumb-item active">Thống kê</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Bộ lọc thời gian -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Chọn khoảng thời gian</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group" aria-label="Time period selection">
+                            <button type="button" class="btn btn-outline-primary active" onclick="changePeriod('day')">Hôm nay</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="changePeriod('week')">Tuần này</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="changePeriod('month')">Tháng này</button>
+                            <button type="button" class="btn btn-outline-primary" onclick="changePeriod('year')">Năm này</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info boxes -->
+        <div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info elevation-1"><i class="fas fa-users"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Tổng khách hàng</span>
+                        <span class="info-box-number" id="total-customers">{{ "{:,}".format(stats.total_customers) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-shopping-cart"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Tổng đơn hàng</span>
+                        <span class="info-box-number" id="total-orders">{{ "{:,}".format(stats.total_orders) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix hidden-md-up"></div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-dollar-sign"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Tổng doanh thu</span>
+                        <span class="info-box-number" id="total-revenue">{{ "{:,.0f}".format(stats.total_revenue) }}₫</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box mb-3">
+                    <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-boxes"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Tổng sản phẩm</span>
+                        <span class="info-box-number" id="total-products">{{ "{:,}".format(stats.total_products) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê theo thời gian -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-calendar-day"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Đơn hàng hôm nay</span>
+                        <span class="info-box-number">{{ "{:,}".format(stats.today_orders) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-money-bill-wave"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Doanh thu hôm nay</span>
+                        <span class="info-box-number">{{ "{:,.0f}".format(stats.today_revenue) }}₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info elevation-1"><i class="fas fa-calendar-alt"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Đơn hàng tháng này</span>
+                        <span class="info-box-number">{{ "{:,}".format(stats.monthly_orders) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-chart-line"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Doanh thu tháng này</span>
+                        <span class="info-box-number">{{ "{:,.0f}".format(stats.monthly_revenue) }}₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <!-- Revenue and Orders Chart -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-line mr-1"></i>
+                            Doanh thu và Đơn hàng
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart">
+                            <canvas id="revenueOrdersChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Chart -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-pie mr-1"></i>
+                            Trạng thái đơn hàng
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="orderStatusChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables -->
+        <div class="row">
+            <!-- Top Products -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy mr-1"></i>
+                            Top 10 sản phẩm bán chạy
+                        </h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-striped table-valign-middle">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Đã bán</th>
+                                    <th>Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-products-table">
+                                {% for product in chart_data.top_products %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ "{:,}".format(product.sold) }}</td>
+                                    <td>{{ "{:,.0f}".format(product.revenue) }}₫</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Statistics -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-tags mr-1"></i>
+                            Thống kê danh mục
+                        </h3>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-striped table-valign-middle">
+                            <thead>
+                                <tr>
+                                    <th>Danh mục</th>
+                                    <th>Số sản phẩm</th>
+                                    <th>Đã bán</th>
+                                </tr>
+                            </thead>
+                            <tbody id="category-stats-table">
+                                {% for category in chart_data.category_stats %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ "{:,}".format(category.product_count) }}</td>
+                                    <td>{{ "{:,}".format(category.sold_count) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Methods Statistics -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-credit-card mr-1"></i>
+                            Thống kê phương thức thanh toán
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for payment in stats.payment_stats %}
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-{% if payment.method == 'vnpay' %}success{% else %}primary{% endif %} elevation-1">
+                                        <i class="fas fa-{% if payment.method == 'vnpay' %}credit-card{% else %}money-bill-wave{% endif %}"></i>
+                                    </span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">
+                                            {{ 'VNPay' if payment.method == 'vnpay' else 'Thanh toán khi nhận hàng' }}
+                                        </span>
+                                        <span class="info-box-number">{{ "{:,}".format(payment.count) }} đơn</span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-{% if payment.method == 'vnpay' %}success{% else %}primary{% endif %}"
+                                                 style="width: {{ (payment.count / stats.total_orders * 100) if stats.total_orders > 0 else 0 }}%">
+                                            </div>
+                                        </div>
+                                        <span class="progress-description">
+                                            {{ "{:,.0f}".format(payment.revenue) }}₫
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='admin/plugins/chart.js/Chart.min.js') }}"></script>
+<script>
+
+let currentPeriod = 'month';
+let revenueOrdersChart = null;
+let orderStatusChart = null;
+
+// Khởi tạo biểu đồ khi trang load
+$(document).ready(function() {
+    // Đợi Chart.js load xong từ extra_head
+    const checkChartJS = function() {
+        if (typeof Chart !== 'undefined') {
+            console.log('Chart.js ready, initializing charts...');
+            setTimeout(function() {
+                initializeCharts();
+            }, 100);
+        } else {
+            console.log('Waiting for Chart.js...');
+            setTimeout(checkChartJS, 100);
+        }
+    };
+    checkChartJS();
+});
+
+function initializeCharts() {
+    try {
+
+        console.log('Chart.js version:', Chart.version);
+
+        // Destroy existing charts to prevent conflicts
+        if (revenueOrdersChart) {
+            revenueOrdersChart.destroy();
+            revenueOrdersChart = null;
+        }
+        if (orderStatusChart) {
+            orderStatusChart.destroy();
+            orderStatusChart = null;
+        }
+
+        // Đảm bảo dữ liệu hợp lệ
+        const chartData = {{ chart_data | tojson }};
+        const safeLabels = Array.isArray(chartData.labels) ? chartData.labels : [];
+        const safeRevenueData = Array.isArray(chartData.revenue_data) ? chartData.revenue_data : [];
+        const safeOrderData = Array.isArray(chartData.order_data) ? chartData.order_data : [];
+
+        // Khởi tạo với dữ liệu mẫu trước để tránh lỗi
+        const defaultLabels = safeLabels.length > 0 ? safeLabels : ['1', '2', '3', '4', '5'];
+        const defaultRevenueData = safeRevenueData.length > 0 ? safeRevenueData : [0, 0, 0, 0, 0];
+        const defaultOrderData = safeOrderData.length > 0 ? safeOrderData : [0, 0, 0, 0, 0];
+
+        console.log('Initializing charts with data:', {
+            labels: defaultLabels.length,
+            revenue: defaultRevenueData.length,
+            orders: defaultOrderData.length
+        });
+
+        // Revenue and Orders Chart
+        const ctx1 = document.getElementById('revenueOrdersChart');
+        if (!ctx1) {
+            console.error('Không tìm thấy canvas revenueOrdersChart');
+            return;
+        }
+
+        const ctx1_2d = ctx1.getContext('2d');
+        if (!ctx1_2d) {
+            console.error('Không thể lấy 2d context cho revenueOrdersChart');
+            return;
+        }
+
+        revenueOrdersChart = new Chart(ctx1_2d, {
+            type: 'line',
+            data: {
+                labels: defaultLabels,
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: defaultRevenueData,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-revenue'
+                }, {
+                    label: 'Số đơn hàng',
+                    data: defaultOrderData,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-orders'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    yAxes: [{
+                        id: 'y-axis-revenue',
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: {
+                            beginAtZero: true,
+                            callback: function(value) {
+                                return new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND',
+                                    minimumFractionDigits: 0
+                                }).format(value);
+                            }
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Doanh thu (₫)'
+                        }
+                    }, {
+                        id: 'y-axis-orders',
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        ticks: {
+                            beginAtZero: true
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Số đơn hàng'
+                        },
+                        gridLines: {
+                            drawOnChartArea: false,
+                        }
+                    }],
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Thời gian'
+                        }
+                    }]
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Doanh thu và số đơn hàng theo thời gian'
+                }
+            }
+        });
+
+    // Order Status Chart
+    const ctx2 = document.getElementById('orderStatusChart');
+    if (!ctx2) {
+        console.error('Không tìm thấy canvas orderStatusChart');
+        return;
+    }
+
+    const ctx2_2d = ctx2.getContext('2d');
+    if (!ctx2_2d) {
+        console.error('Không thể lấy 2d context cho orderStatusChart');
+        return;
+    }
+
+    const statsData = {{ stats | tojson }};
+    const orderStatusData = statsData.order_status_stats || {};
+
+    // Chuyển đổi dữ liệu trạng thái đơn hàng
+    const statusLabels = Object.keys(orderStatusData);
+    const statusValues = Object.values(orderStatusData);
+
+    // Dữ liệu mặc định nếu không có dữ liệu
+    const defaultStatusLabels = statusLabels.length > 0 ? statusLabels : ['Đang xử lý'];
+    const defaultValues = statusValues.length > 0 ? statusValues : [1];
+
+    console.log('Order status data:', {
+        labels: defaultStatusLabels.length,
+        values: defaultValues.length,
+        data: orderStatusData
+    });
+
+    // Map trạng thái sang tiếng Việt
+    const statusMapping = {
+        'pending': 'Đang xác nhận',
+        'confirmed': 'Đã xác nhận',
+        'shipping': 'Đang giao',
+        'delivered': 'Đã giao',
+        'cancelled': 'Đã hủy',
+        'ready_for_pickup': 'Sẵn sàng nhận tại cửa hàng'
+    };
+
+    const vietnameseLabels = defaultStatusLabels.map(status => statusMapping[status] || status);
+
+    orderStatusChart = new Chart(ctx2_2d, {
+        type: 'doughnut',
+        data: {
+            labels: vietnameseLabels,
+            datasets: [{
+                data: defaultValues,
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)'
+                ],
+                hoverBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            legend: {
+                position: 'bottom',
+            },
+            title: {
+                display: true,
+                text: 'Phân bố trạng thái đơn hàng'
+            }
+        }
+    });
+
+    console.log('Charts initialized successfully');
+    } catch (error) {
+        console.error('Lỗi khi khởi tạo biểu đồ:', error);
+        alert('Có lỗi xảy ra khi tải biểu đồ thống kê. Vui lòng thử lại sau.');
+    }
+}
+
+function changePeriod(period) {
+    if (period === currentPeriod) return;
+
+    currentPeriod = period;
+
+    // Cập nhật active button
+    $('.btn-group .btn').removeClass('active');
+    $(`.btn[onclick="changePeriod('${period}')"]`).addClass('active');
+
+    // Gọi API để lấy dữ liệu mới
+    fetch(`/admin/api/statistics/${period}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                alert('Có lỗi xảy ra khi tải dữ liệu: ' + data.error);
+                return;
+            }
+
+            // Cập nhật biểu đồ doanh thu và đơn hàng
+            if (revenueOrdersChart && data.labels && data.revenue_data && data.order_data) {
+                console.log('Updating revenue chart with new data');
+                revenueOrdersChart.data.labels = data.labels;
+                revenueOrdersChart.data.datasets[0].data = data.revenue_data;
+                revenueOrdersChart.data.datasets[1].data = data.order_data;
+                revenueOrdersChart.update();
+            } else {
+                console.warn('Revenue chart not ready or missing data');
+            }
+
+            // Cập nhật bảng top products
+            if (data.top_products) {
+                updateTopProductsTable(data.top_products);
+            }
+
+            // Cập nhật bảng category stats
+            if (data.category_stats) {
+                updateCategoryStatsTable(data.category_stats);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi tải dữ liệu thống kê');
+        });
+}
+
+function updateTopProductsTable(products) {
+    try {
+        const tbody = document.getElementById('top-products-table');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (products && Array.isArray(products)) {
+            products.forEach((product, index) => {
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${product.name || 'N/A'}</td>
+                        <td>${(product.sold || 0).toLocaleString()}</td>
+                        <td>${(product.revenue || 0).toLocaleString()}₫</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi khi cập nhật bảng sản phẩm:', error);
+    }
+}
+
+function updateCategoryStatsTable(categories) {
+    try {
+        const tbody = document.getElementById('category-stats-table');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (categories && Array.isArray(categories)) {
+            categories.forEach(category => {
+                const row = `
+                    <tr>
+                        <td>${category.name || 'N/A'}</td>
+                        <td>${(category.product_count || 0).toLocaleString()}</td>
+                        <td>${(category.sold_count || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi khi cập nhật bảng danh mục:', error);
+    }
+}
+
+// Format currency helper
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}
