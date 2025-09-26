@@ -84,12 +84,24 @@ def admin():
 
 @app.route('/admin_manager')
 def admin_manager():
+    """Trang thống kê tổng quan cho admin - thay thế dashboard cũ"""
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    user = Admin.query.filter_by(email=session['email']).all()
-    admins = Admin.query.all()
-    return render_template('admin/admin-manager.html', title='Admin manager page', user=user[0], admins=admins)
+
+    user = Admin.query.filter_by(email=session['email']).first()
+
+    # Lấy thống kê tổng quan
+    stats = get_overview_stats()
+
+    # Lấy dữ liệu cho biểu đồ
+    chart_data = get_chart_data()
+
+    return render_template('admin/statistics.html',
+                         title='Thống kê tổng quan',
+                         user=user,
+                         stats=stats,
+                         chart_data=chart_data)
 
 
 @app.route('/customer_manager')
