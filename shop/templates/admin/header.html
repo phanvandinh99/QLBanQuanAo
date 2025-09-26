@@ -212,24 +212,14 @@
                             </li>
                         </ul>
                     </li>
-                    <li class="nav-item {% if request.endpoint == 'statistics' or request.endpoint == 'admin_manager' %} menu-open {% endif %}">
-                        <a href="{{url_for('admin_manager')}}"
-                           class="nav-link {% if request.endpoint == 'statistics' or request.endpoint == 'admin_manager' %} active {% endif %}">
+                    <li class="nav-item">
+                        <a href="{{url_for('statistics')}}"
+                           class="nav-link {% if request.endpoint == 'statistics' %} active {% endif %}">
                             <i class="nav-icon fas fa-chart-bar"></i>
                             <p>
-                                Thống kê
-                                <i class="right fas fa-angle-left"></i>
+                                Thống kê tổng quan
                             </p>
                         </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{url_for('admin_manager')}}"
-                                   class="nav-link {% if request.endpoint == 'statistics' or request.endpoint == 'admin_manager' %} active {% endif %}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>Thống kê tổng quan</p>
-                                </a>
-                            </li>
-                        </ul>
                     </li>
 
                     <li class="nav-item has-treeview {% if request.endpoint == 'orders_manager' or request.endpoint == 'admin_create_order' or request.endpoint == 'admin_order_qr_payment' %} menu-open {% endif %}">

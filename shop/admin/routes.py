@@ -84,24 +84,18 @@ def admin():
 
 @app.route('/admin_manager')
 def admin_manager():
-    """Trang thống kê tổng quan cho admin - thay thế dashboard cũ"""
+    """Trang quản lý tài khoản admin"""
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
     user = Admin.query.filter_by(email=session['email']).first()
+    admins = Admin.query.order_by(Admin.id.desc()).all()
 
-    # Lấy thống kê tổng quan
-    stats = get_overview_stats()
-
-    # Lấy dữ liệu cho biểu đồ
-    chart_data = get_chart_data()
-
-    return render_template('admin/statistics.html',
-                         title='Thống kê tổng quan',
+    return render_template('admin/admin_manager.html',
+                         title='Quản lý tài khoản admin',
                          user=user,
-                         stats=stats,
-                         chart_data=chart_data)
+                         admins=admins)
 
 
 @app.route('/customer_manager')
@@ -390,13 +384,30 @@ def delete_admin(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
+
     admin = Admin.query.get_or_404(id)
-    if request.method == "POST":
-        db.session.delete(admin)
-        db.session.commit()
-        flash(f"The admin {admin.name} was deleted from your database", "success")
+
+    # Prevent admin from deleting themselves
+    current_admin = Admin.query.filter_by(email=session['email']).first()
+    if admin.id == current_admin.id:
+        flash(f"Không thể xóa tài khoản admin hiện tại đang đăng nhập", "danger")
         return redirect(url_for('admin_manager'))
-    flash(f"The admin {admin.name} can't be  deleted from your database", "warning")
+
+    if request.method == "POST":
+        try:
+            # Delete associated articles first
+            articles = Article.query.filter_by(admin_id=admin.id).all()
+            for article in articles:
+                db.session.delete(article)
+
+            # Delete the admin
+            db.session.delete(admin)
+            db.session.commit()
+            flash(f"Tài khoản admin {admin.name} đã được xóa thành công", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Lỗi khi xóa tài khoản admin: {str(e)}", "danger")
+
     return redirect(url_for('admin_manager'))
 
 
