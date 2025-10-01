@@ -1,10 +1,51 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class=flashes>
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-      </div>
+    <div class="flashes" style="margin-bottom: 20px;">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="margin-bottom: 10px;" data-auto-dismiss="true">
+          <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% elif category == 'info' %}info-circle{% else %}bell{% endif %}"></i>
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        const alerts = document.querySelectorAll('.flashes .alert[data-auto-dismiss="true"]');
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                if (alert && alert.parentNode) {
+                    alert.classList.add('fade');
+                    setTimeout(function() {
+                        if (alert.parentNode) {
+                            alert.parentNode.removeChild(alert);
+                        }
+                    }, 500);
+                }
+            }, 5000);
+        });
+        
+        // Handle manual close button clicks
+        const closeButtons = document.querySelectorAll('.flashes .alert .close');
+        closeButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const alert = button.closest('.alert');
+                if (alert) {
+                    alert.classList.add('fade');
+                    setTimeout(function() {
+                        if (alert.parentNode) {
+                            alert.parentNode.removeChild(alert);
+                        }
+                    }, 500);
+                }
+            });
+        });
+    });
+    </script>
   {% endif %}
 {% endwith %}
 {% block body %}{% endblock %}

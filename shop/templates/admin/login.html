@@ -259,7 +259,6 @@
     }
 </style>
 <div class="hold-transition login-page">
-    {% include '_messages.html'%}
     <div class="login-box">
         <div class="login-logo">
             <a href="{{ url_for('home') }}" class="text-white"><b>BELLUNI</b> ONLINE</a>
@@ -267,6 +266,7 @@
         <!-- /.login-logo -->
         <div class="card">
             <div class="card-body login-card-body">
+                {% include '_messages.html'%}
                 <p class="login-box-msg">ĐĂNG NHẬP VỚI TÀI KHOẢN ADMIN</p>
                 <form method=post enctype="multipart/form-data">
                     {{form.csrf_token}}
