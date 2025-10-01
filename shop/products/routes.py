@@ -262,7 +262,7 @@ def addproduct():
             name = form.name.data
             price = form.price.data
             discount = form.discount.data or 0
-            stock = form.stock.data
+            stock = 0  # Force initial stock = 0. Stock will be updated via purchases.
             colors = form.colors.data
             desc = form.description.data
             brand = request.form.get('brand')
@@ -360,7 +360,7 @@ def updateproduct(id):
             product.name = form.name.data
             product.price = form.price.data
             product.discount = form.discount.data
-            product.stock = form.stock.data
+            # Do not allow direct stock editing here; stock is managed via purchases
             product.colors = form.colors.data
             product.desc = form.description.data
             product.category_id = category

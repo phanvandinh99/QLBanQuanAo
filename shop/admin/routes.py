@@ -18,7 +18,7 @@ except ImportError:
 from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Product, Customer, Admin, Order, OrderItem, Rating, Article
+from shop.models import Brand, Category, Product, Customer, Admin, Order, OrderItem, Rating, Article, Purchase, PurchaseItem, Supplier
 from shop.email_utils import send_order_confirmation_email, send_new_customer_account_email, send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
@@ -36,6 +36,7 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     print("Warning: ReportLab not available. Invoice export will not work.")
 from .forms import LoginForm, RegistrationForm
+from .forms import PurchaseForm, PurchaseItemForm, SupplierForm
 from shop.customers.forms import CustomerRegisterForm
 
 
@@ -419,6 +420,218 @@ def product():
     products = Product.query.all()
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('admin/index.html', title='Product page', products=products, user=user[0])
+
+
+# ================= INVENTORY (PURCHASE) ROUTES =================
+@app.route('/admin/purchases', methods=['GET'])
+def purchases_list():
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+    user = Admin.query.filter_by(email=session['email']).first()
+    purchases = Purchase.query.order_by(Purchase.created_at.desc()).all()
+    return render_template('admin/purchases_list.html', title='Nhập hàng', user=user, purchases=purchases)
+
+
+@app.route('/admin/purchases/create', methods=['GET', 'POST'])
+def purchases_create():
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+
+    user = Admin.query.filter_by(email=session['email']).first()
+    form = PurchaseForm()
+    item_form = PurchaseItemForm()
+
+    if 'purchase_cart' not in session:
+        session['purchase_cart'] = {}
+    purchase_cart = session['purchase_cart']
+
+    # Build cart items for display
+    cart_items = []
+    total_quantity = 0
+    total_cost = 0
+    for product_id, item in purchase_cart.items():
+        product = Product.query.get(int(product_id))
+        if product:
+            quantity = int(item.get('quantity', 0))
+            unit_cost = float(item.get('unit_cost', 0) or 0)
+            cost = unit_cost * quantity
+            cart_items.append({'product': product, 'quantity': quantity, 'unit_cost': unit_cost, 'cost': cost})
+            total_quantity += quantity
+            total_cost += cost
+
+    if request.method == 'POST':
+        # Add item to purchase cart
+        if 'add_item' in request.form:
+            if item_form.validate_on_submit():
+                product_id = str(item_form.product_id.data)
+                quantity = int(item_form.quantity.data)
+                unit_cost = float(item_form.unit_cost.data or 0)
+                product = Product.query.get(product_id)
+                if not product:
+                    flash('Sản phẩm không tồn tại!', 'danger')
+                    return redirect(url_for('purchases_create'))
+                purchase_cart[product_id] = {'quantity': quantity, 'unit_cost': unit_cost}
+                session['purchase_cart'] = purchase_cart
+                flash('Đã thêm sản phẩm vào phiếu nhập!', 'success')
+                return redirect(url_for('purchases_create'))
+
+        # Remove item from purchase cart
+        elif 'remove_item' in request.form:
+            product_id = request.form.get('product_id')
+            if product_id in purchase_cart:
+                del purchase_cart[product_id]
+                session['purchase_cart'] = purchase_cart
+                flash('Đã xóa sản phẩm khỏi phiếu nhập!', 'success')
+            return redirect(url_for('purchases_create'))
+
+        # Create purchase receipt
+        elif 'create_purchase' in request.form:
+            if not purchase_cart:
+                flash('Vui lòng thêm sản phẩm vào phiếu nhập!', 'danger')
+                return redirect(url_for('purchases_create'))
+            if form.validate_on_submit():
+                try:
+                    invoice = secrets.token_hex(5)
+                    supplier_id_raw = request.form.get('supplier_id')
+                    supplier_obj = None
+                    if supplier_id_raw and supplier_id_raw.isdigit():
+                        supplier_obj = Supplier.query.get(int(supplier_id_raw))
+                        if not supplier_obj:
+                            flash('Nhà cung cấp không tồn tại', 'danger')
+                            return redirect(url_for('purchases_create'))
+                    purchase = Purchase(
+                        invoice_number=invoice,
+                        supplier_name=(supplier_obj.name if supplier_obj else None),
+                        supplier_id=(supplier_obj.id if supplier_obj else None),
+                        notes=form.notes.data or None,
+                        admin_id=user.id
+                    )
+                    db.session.add(purchase)
+                    db.session.flush()
+
+                    # Create items and update stock
+                    for product_id, item in purchase_cart.items():
+                        product = Product.query.get(int(product_id))
+                        if not product:
+                            continue
+                        quantity = int(item.get('quantity', 0))
+                        unit_cost = float(item.get('unit_cost', 0) or 0)
+
+                        db.session.add(PurchaseItem(
+                            purchase_id=purchase.id,
+                            product_id=product.id,
+                            quantity=quantity,
+                            unit_cost=unit_cost
+                        ))
+
+                        # Increase stock
+                        product.stock = (product.stock or 0) + quantity
+
+                    db.session.commit()
+                    session.pop('purchase_cart', None)
+                    flash(f'Đã tạo phiếu nhập #{purchase.invoice_number} thành công!', 'success')
+                    return redirect(url_for('purchases_list'))
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Error creating purchase: {str(e)}")
+                    flash('Có lỗi xảy ra khi tạo phiếu nhập!', 'danger')
+                    return redirect(url_for('purchases_create'))
+
+    products = Product.query.order_by(Product.name.asc()).all()
+    suppliers = Supplier.query.order_by(Supplier.name.asc()).all()
+    return render_template('admin/purchases_create.html',
+                           title='Tạo phiếu nhập',
+                           user=user,
+                           form=form,
+                           item_form=item_form,
+                           products=products,
+                           suppliers=suppliers,
+                           cart_items=cart_items,
+                           total_quantity=total_quantity,
+                           total_cost=total_cost)
+
+
+# ================= SUPPLIER CRUD =================
+@app.route('/admin/suppliers')
+def suppliers_list():
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+    user = Admin.query.filter_by(email=session['email']).first()
+    suppliers = Supplier.query.order_by(Supplier.name.asc()).all()
+    return render_template('admin/suppliers_list.html', title='Nhà cung cấp', user=user, suppliers=suppliers)
+
+
+@app.route('/admin/suppliers/create', methods=['GET', 'POST'])
+def suppliers_create():
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+    user = Admin.query.filter_by(email=session['email']).first()
+    form = SupplierForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        try:
+            supplier = Supplier(
+                name=form.name.data.strip(),
+                contact_name=form.contact_name.data or None,
+                phone=form.phone.data or None,
+                email=form.email.data or None,
+                address=form.address.data or None,
+            )
+            db.session.add(supplier)
+            db.session.commit()
+            flash('Đã thêm nhà cung cấp!', 'success')
+            return redirect(url_for('suppliers_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Có lỗi xảy ra khi thêm nhà cung cấp', 'danger')
+    return render_template('admin/suppliers_form.html', title='Thêm nhà cung cấp', user=user, form=form)
+
+
+@app.route('/admin/suppliers/<int:id>/edit', methods=['GET', 'POST'])
+def suppliers_edit(id):
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+    user = Admin.query.filter_by(email=session['email']).first()
+    supplier = Supplier.query.get_or_404(id)
+    form = SupplierForm(obj=supplier)
+    if request.method == 'POST' and form.validate_on_submit():
+        try:
+            supplier.name = form.name.data.strip()
+            supplier.contact_name = form.contact_name.data or None
+            supplier.phone = form.phone.data or None
+            supplier.email = form.email.data or None
+            supplier.address = form.address.data or None
+            db.session.commit()
+            flash('Đã cập nhật nhà cung cấp!', 'success')
+            return redirect(url_for('suppliers_list'))
+        except Exception:
+            db.session.rollback()
+            flash('Có lỗi xảy ra khi cập nhật nhà cung cấp', 'danger')
+    return render_template('admin/suppliers_form.html', title='Sửa nhà cung cấp', user=user, form=form, supplier=supplier)
+
+
+@app.route('/admin/suppliers/<int:id>/delete', methods=['POST'])
+def suppliers_delete(id):
+    if 'email' not in session:
+        flash('Yêu cầu đăng nhập', 'danger')
+        return redirect(url_for('login'))
+    supplier = Supplier.query.get_or_404(id)
+    try:
+        # Prevent delete if referenced by purchases
+        if supplier.purchases.count() > 0:
+            flash('Không thể xóa nhà cung cấp đã có phiếu nhập!', 'warning')
+            return redirect(url_for('suppliers_list'))
+        db.session.delete(supplier)
+        db.session.commit()
+        flash('Đã xóa nhà cung cấp!', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi xóa nhà cung cấp', 'danger')
+    return redirect(url_for('suppliers_list'))
 
 
 @app.route('/brands')

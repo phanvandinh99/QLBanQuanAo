@@ -1,0 +1,129 @@
+{% extends 'admin/layout.html' %}
+{% block content %}
+{% include 'admin/header.html' %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6"><h1>Tạo phiếu nhập</h1></div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_manager') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('purchases_list') }}">Phiếu nhập</a></li>
+            <li class="breadcrumb-item active">Tạo mới</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="content">
+    <div class="container-fluid">
+      {% include '_messages.html' %}
+
+      <div class="row">
+        <div class="col-md-7">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Chọn sản phẩm nhập</h3></div>
+            <div class="card-body">
+              <form method="post">
+                {{ item_form.csrf_token }}
+                <div class="form-row">
+                  <div class="form-group col-md-7">
+                    <label for="product_id">Chọn sản phẩm (nhập ID hoặc chọn theo tên)</label>
+                    <input type="text" name="product_id" id="product_id" class="form-control"
+                           list="product_options" placeholder="Ví dụ: 12 hoặc chọn từ danh sách" autocomplete="off">
+                    <small class="form-text text-muted">Gợi ý theo tên hiển thị bên dưới, giá trị gửi đi là ID sản phẩm.</small>
+                    <datalist id="product_options">
+                      {% for p in products %}
+                      <option value="{{ p.id }}">{{ p.name }} — Tồn: {{ p.stock }}</option>
+                      {% endfor %}
+                    </datalist>
+                  </div>
+                  <div class="form-group col-md-2">
+                    <label for="quantity">Số lượng</label>
+                    {{ item_form.quantity(class='form-control') }}
+                  </div>
+                  <div class="form-group col-md-3">
+                    <label for="unit_cost">Giá nhập</label>
+                    {{ item_form.unit_cost(class='form-control') }}
+                  </div>
+                </div>
+                <button class="btn btn-primary" name="add_item">Thêm dòng</button>
+              </form>
+
+              <hr />
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Sản phẩm</th>
+                    <th>SL</th>
+                    <th>Giá nhập</th>
+                    <th>Thành tiền</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in cart_items %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_cost | vnd }}</td>
+                    <td>{{ item.cost | vnd }}</td>
+                    <td>
+                      <form method="post" style="display:inline">
+                        <input type="hidden" name="product_id" value="{{ item.product.id }}" />
+                        <button class="btn btn-danger btn-sm" name="remove_item">Xóa</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <div class="d-flex justify-content-end">
+                <div>
+                  <div><strong>Tổng số lượng:</strong> {{ total_quantity }}</div>
+                  <div><strong>Tổng chi phí:</strong> {{ total_cost | vnd }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-5">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Thông tin phiếu nhập</h3></div>
+            <div class="card-body">
+              <form method="post">
+                {{ form.csrf_token }}
+                <div class="form-group">
+                  <label>Nhà cung cấp</label>
+                  <select name="supplier_id" class="form-control" required>
+                    <option value="">-- Chọn nhà cung cấp --</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <small class="form-text text-muted">
+                    <a href="{{ url_for('suppliers_create') }}" target="_blank">Thêm nhà cung cấp mới</a>
+                  </small>
+                </div>
+                <div class="form-group">
+                  <label>Ghi chú</label>
+                  {{ form.notes(class='form-control', rows=5) }}
+                </div>
+                <button class="btn btn-success" name="create_purchase">Tạo phiếu nhập</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% include 'admin/footer.html' %}
+{% endblock content %}
+
+

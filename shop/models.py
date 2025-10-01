@@ -62,6 +62,20 @@ class Product(db.Model):
         """Check if product is available for purchase"""
         return self.stock > 0
 
+
+class Supplier(db.Model):
+    __tablename__ = 'supplier'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    contact_name = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
+    email = db.Column(db.String(120))
+    address = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<Supplier {self.name}>'
+
 class Customer(db.Model, UserMixin):
     __tablename__ = 'customer'
     id = db.Column(db.Integer, primary_key=True)
@@ -198,3 +212,38 @@ class Article(db.Model):
     def is_published(self):
         """Check if article is published"""
         return self.status == 'published'
+
+
+# ================= INVENTORY (PURCHASE) MODELS =================
+class Purchase(db.Model):
+    __tablename__ = 'purchase'
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_number = db.Column(db.String(30), unique=True, index=True)
+    supplier_name = db.Column(db.String(120))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), index=True)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), index=True)
+
+    # Relationships
+    admin = db.relationship('Admin', backref=db.backref('purchases', lazy='dynamic'))
+    supplier = db.relationship('Supplier', backref=db.backref('purchases', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<Purchase #{self.id} - {self.invoice_number}>'
+
+
+class PurchaseItem(db.Model):
+    __tablename__ = 'purchase_item'
+    id = db.Column(db.Integer, primary_key=True)
+    purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'), nullable=False, index=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_cost = db.Column(db.Numeric(10,2), nullable=False, default=0)
+
+    # Relationships
+    purchase = db.relationship('Purchase', backref=db.backref('items', lazy='dynamic', cascade='all, delete-orphan'))
+    product = db.relationship('Product', backref=db.backref('purchase_items', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<PurchaseItem P{self.product_id} x{self.quantity}>'

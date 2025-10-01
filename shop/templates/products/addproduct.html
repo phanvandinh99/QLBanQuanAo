@@ -41,7 +41,7 @@
                                         {{ render_field(form.name, class="form-control") }}
                                         {{ render_field(form.price, class="form-control") }}
                                         {{ render_field(form.discount, class="form-control") }}
-                                        {{ render_field(form.stock, class="form-control") }}
+                                        <div class="alert alert-warning">Số lượng sẽ được cập nhật khi nhập hàng. Lúc tạo mới mặc định là 0.</div>
                                         <label for="category">Loại sản phẩm</label>
                                         <select name="category" id="category" class="form-control"
                                                 onchange='myFunction()' required>

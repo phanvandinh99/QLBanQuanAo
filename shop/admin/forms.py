@@ -62,3 +62,23 @@ class AdminOrderItemForm(FlaskForm):
     discount = IntegerField('Giảm giá (%)',
                            validators=[Optional(), NumberRange(min=0, max=100, message='Giảm giá phải từ 0-100%')],
                            default=0)
+
+
+# ================= INVENTORY (PURCHASE) FORMS =================
+class PurchaseForm(FlaskForm):
+    supplier_name = StringField('Nhà cung cấp', validators=[Optional(), Length(max=120)])
+    notes = TextAreaField('Ghi chú', validators=[Optional(), Length(max=1000)])
+
+
+class PurchaseItemForm(FlaskForm):
+    product_id = IntegerField('Mã sản phẩm', validators=[DataRequired(message='Vui lòng chọn sản phẩm')])
+    quantity = IntegerField('Số lượng nhập', validators=[DataRequired(message='Vui lòng nhập số lượng'), NumberRange(min=1)])
+    unit_cost = DecimalField('Giá nhập', validators=[Optional(), NumberRange(min=0)], default=0)
+
+
+class SupplierForm(FlaskForm):
+    name = StringField('Tên nhà cung cấp', validators=[DataRequired(), Length(max=120)])
+    contact_name = StringField('Người liên hệ', validators=[Optional(), Length(max=120)])
+    phone = StringField('Số điện thoại', validators=[Optional(), Length(max=50)])
+    email = StringField('Email', validators=[Optional(), Email(), Length(max=120)])
+    address = StringField('Địa chỉ', validators=[Optional(), Length(max=255)])

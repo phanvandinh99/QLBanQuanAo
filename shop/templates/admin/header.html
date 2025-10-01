@@ -81,6 +81,39 @@
                             </li>
                         </ul>
                     </li>
+                    <li class="nav-item has-treeview {% if request.endpoint == 'purchases_list' or request.endpoint == 'purchases_create' %} menu-open {% endif %}">
+                        <a href="{{ url_for('purchases_list') }}"
+                           class="nav-link {% if request.endpoint == 'purchases_list' or request.endpoint == 'purchases_create' %} active {% endif %}">
+                            <i class="nav-icon fas fa-warehouse"></i>
+                            <p>
+                                Nhập Hàng
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ url_for('purchases_list') }}"
+                                   class="nav-link {% if request.endpoint == 'purchases_list' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Danh Sách Phiếu Nhập</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('purchases_create') }}"
+                                   class="nav-link {% if request.endpoint == 'purchases_create' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Tạo Phiếu Nhập</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ url_for('suppliers_list') }}"
+                                   class="nav-link {% if request.endpoint == 'suppliers_list' or request.endpoint == 'suppliers_create' or request.endpoint == 'suppliers_edit' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Nhà Cung Cấp</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                     <li class="nav-item has-treeview {% if request.endpoint == 'customer_manager' or request.endpoint == 'admin_register_custormer' %} menu-open {% endif %}">
                         <a href="{{url_for('customer_manager')}}"
                            class="nav-link {% if request.endpoint == 'customer_manager' or request.endpoint == 'admin_register_custormer' %} active {% endif %}">
