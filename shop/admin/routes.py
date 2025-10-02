@@ -120,23 +120,45 @@ def orders_manager():
 
     orders = Order.query.filter(Order.status != None).order_by(Order.id.desc()).all()
 
-    # Update old statuses to new ones in memory (for display)
+    # Create display status without modifying the original order object
     for order in orders:
-        if order.status == 'Pending':
-            order.status = 'Đang xác nhận'
-        elif order.status == 'Accepted':
-            order.status = 'Đã giao'
-        elif order.status == 'Cancelled':
-            order.status = 'Hủy đơn'
+        # Store original status for template logic
+        order.original_status = order.status
+        
+        # Create display status
+        if order.status in ['pending', 'Pending']:
+            order.display_status = 'Đang xác nhận'
+        elif order.status in ['confirmed', 'Accepted']:
+            order.display_status = 'Đã xác nhận'
+        elif order.status in ['shipping']:
+            order.display_status = 'Đang giao'
+        elif order.status in ['delivered']:
+            order.display_status = 'Đã giao'
+        elif order.status in ['cancelled', 'Cancelled', 'Hủy đơn']:
+            order.display_status = 'Hủy đơn'
+        elif order.status in ['ready_for_pickup']:
+            order.display_status = 'Sẵn sàng nhận tại cửa hàng'
+        else:
+            order.display_status = order.status
 
         # Add payment status display
         if hasattr(order, 'payment_status'):
             if order.payment_method == 'cod':
-                order.display_payment_status = 'Chưa thanh toán'
+                # COD orders: paid when delivered, unpaid otherwise
+                if order.payment_status == 'paid':
+                    order.display_payment_status = 'Đã thanh toán'
+                else:
+                    order.display_payment_status = 'Chưa thanh toán'
             elif order.payment_method == 'vnpay':
                 order.display_payment_status = 'Đã thanh toán'
             else:
-                order.display_payment_status = order.payment_status or 'N/A'
+                # Map other payment statuses
+                status_map = {
+                    'paid': 'Đã thanh toán',
+                    'unpaid': 'Chưa thanh toán',
+                    'refunded': 'Đã hoàn tiền'
+                }
+                order.display_payment_status = status_map.get(order.payment_status, order.payment_status or 'N/A')
         else:
             order.display_payment_status = 'N/A'
 
@@ -259,7 +281,15 @@ def delivered_order(id):
     
     if request.method == "POST":
         customer_order = Order.query.get_or_404(id)
-        customer_order.status = 'Đã giao'
+        customer_order.status = 'delivered'
+        
+        # Update payment status for COD orders when delivered
+        if customer_order.payment_method == 'cod':
+            customer_order.payment_status = 'paid'
+            flash('Đơn hàng đã được cập nhật thành "Đã giao" và "Đã thanh toán"', 'success')
+        else:
+            flash('Đơn hàng đã được cập nhật thành "Đã giao"', 'success')
+        
         db.session.commit()
 
         # Send email notification to customer
@@ -267,7 +297,6 @@ def delivered_order(id):
         if customer:
             send_order_status_update_email(customer, customer_order, action_by="admin")
 
-        flash('Đơn hàng đã được cập nhật thành "Đã giao"', 'success')
         return redirect(url_for('orders_manager'))
     
     return redirect(url_for('orders_manager'))
@@ -287,15 +316,21 @@ def ready_for_pickup(id):
             flash('Chỉ áp dụng cho đơn hàng nhận tại cửa hàng!', 'warning')
             return redirect(url_for('orders_manager'))
 
-        customer_order.status = 'Sẵn sàng nhận tại cửa hàng'
+        customer_order.status = 'ready_for_pickup'
+        
+        # Update payment status for COD orders when ready for pickup
+        if customer_order.payment_method == 'cod':
+            customer_order.payment_status = 'paid'
+            flash('Đơn hàng đã được cập nhật thành "Sẵn sàng nhận tại cửa hàng" và "Đã thanh toán"', 'success')
+        else:
+            flash('Đơn hàng đã được cập nhật thành "Sẵn sàng nhận tại cửa hàng"', 'success')
+        
         db.session.commit()
 
         # Send email notification to customer
         customer = Customer.query.get(customer_order.customer_id)
         if customer:
             send_order_status_update_email(customer, customer_order, action_by="admin")
-
-        flash('Đơn hàng đã được cập nhật thành "Sẵn sàng nhận tại cửa hàng"', 'success')
         return redirect(url_for('orders_manager'))
 
     return redirect(url_for('orders_manager'))
@@ -318,7 +353,7 @@ def delete_order(id):
                 if product.sold_quantity < 0:
                     product.sold_quantity = 0
 
-        order.status = "Hủy đơn"
+        order.status = "cancelled"
         db.session.commit()
 
         # Send email notification to customer

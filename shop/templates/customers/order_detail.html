@@ -356,7 +356,7 @@
         <div class="info-label">Trạng thái</div>
         <div class="info-value">
           <span
-            class="status-badge {% if order.status == 'pending' %}status-pending {% elif order.status == 'delivered' %}status-accepted {% elif order.status == 'cancelled' %}status-cancelled{% endif %}"
+            class="status-badge {% if order.status in ['pending', 'Pending'] %}status-pending {% elif order.status in ['delivered', 'confirmed', 'Accepted'] %}status-accepted {% elif order.status in ['cancelled', 'Cancelled'] %}status-cancelled{% endif %}"
           >
             {{order.status_display}}
           </span>
@@ -563,7 +563,7 @@
       ← Quay lại lịch sử đơn hàng
     </a>
 
-    {% if order.status == 'pending' %}
+    {% if order.status in ['pending', 'Pending'] %}
     <form
       method="POST"
       action="{{url_for('cancel_order', invoice=order.invoice)}}"

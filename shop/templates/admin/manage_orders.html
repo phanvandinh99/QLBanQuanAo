@@ -84,8 +84,8 @@
                     aria-selected="false">Đã giao</a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="custom-tabs-one-settings-tab" data-toggle="pill"
-                    href="#custom-tabs-one-settings" role="tab" aria-controls="custom-tabs-one-settings"
+                  <a class="nav-link" id="custom-tabs-one-cancelled-tab" data-toggle="pill"
+                    href="#custom-tabs-one-cancelled" role="tab" aria-controls="custom-tabs-one-cancelled"
                     aria-selected="false">Đã hủy</a>
                 </li>
               </ul>
@@ -120,7 +120,7 @@
                           </thead>
                           <tbody>
                             {% for order in orders %}
-                              {% if order.status == "pending" %}
+                              {% if order.original_status in ["pending", "Pending"] %}
                                 <tr>
                                   {% for customer in customers %}
                                     {% if customer.id == order.customer_id %}
@@ -130,7 +130,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -158,12 +158,12 @@
                                   </td>
                                   <td>
                                     <div class="btn-group-vertical btn-group-sm">
-                                      {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
+                                      {% if order.delivery_method == 'instore_pickup' and order.original_status in ['pending', 'Pending'] %}
                                         <button type="button" class="btn btn-warning btn-sm mb-1" data-toggle="modal"
                                           data-target="#ready-{{ order.id }}" title="Đánh dấu sẵn sàng nhận tại cửa hàng">
                                           <i class="fas fa-store"></i> Sẵn sàng nhận
                                         </button>
-                                      {% elif order.status == 'pending' %}
+                                      {% elif order.original_status in ['pending', 'Pending'] %}
                                         <button type="button" class="btn btn-success btn-sm mb-1" data-toggle="modal"
                                           data-target="#accept-{{ order.id }}" title="Xác nhận giao hàng">
                                           <i class="fas fa-truck"></i> Xác nhận giao
@@ -178,7 +178,7 @@
                                 </tr>
 
                                 <!-- Accept Order Modal -->
-                                {% if order.status == 'pending' and order.delivery_method == 'home_delivery' %}
+                                {% if order.original_status in ['pending', 'Pending'] and order.delivery_method == 'home_delivery' %}
                                   <div class="modal fade" id="accept-{{ order.id }}" data-backdrop="static"
                                     data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
                                     aria-hidden="true">
@@ -211,7 +211,7 @@
                                 {% endif %}
 
                                 <!-- Ready for Pickup Modal -->
-                                {% if order.delivery_method == 'instore_pickup' and order.status == 'pending' %}
+                                {% if order.delivery_method == 'instore_pickup' and order.original_status in ['pending', 'Pending'] %}
                                   <div class="modal fade" id="ready-{{ order.id }}" data-backdrop="static"
                                     data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel"
                                     aria-hidden="true">
@@ -309,7 +309,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-warning badge-sm">
                                                         <i class="fas fa-clock mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -577,14 +577,15 @@
                               <th>Tên khách hàng</th>
                               <th>Tổng sản phẩm</th>
                               <th>Tổng giá tiền</th>
-                              <th>Trạng thái</th>
+                              <th>Trạng thái ĐH</th>
+                              <th>Trạng thái TH</th>
                               <th>Ngày mua</th>
                               <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
                             {% for order in orders %}
-                              {% if order.status == "shipping" %}
+                              {% if order.original_status in ["shipping"] %}
                                 <tr>
                                   <td>{{ loop.index }}</td>
                                   {% for customer in customers %}
@@ -595,7 +596,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -715,7 +716,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-warning badge-sm">
                                                         <i class="fas fa-truck mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -983,14 +984,15 @@
                               <th>Tên khách hàng</th>
                               <th>Tổng sản phẩm</th>
                               <th>Tổng giá tiền</th>
-                              <th>Trạng thái</th>
+                               <th>Trạng thái ĐH</th>
+                              <th>Trạng thái TH</th>
                               <th>Ngày mua</th>
                               <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
                             {% for order in orders %}
-                              {% if order.status == "delivered" %}
+                              {% if order.original_status in ["delivered"] %}
                                 <tr>
                                   <td>{{ loop.index }}</td>
                                   {% for customer in customers %}
@@ -1001,7 +1003,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -1051,7 +1053,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-success badge-sm">
                                                         <i class="fas fa-check-circle mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -1316,14 +1318,15 @@
                               <th>Tên khách hàng</th>
                               <th>Tổng sản phẩm</th>
                               <th>Tổng giá tiền</th>
-                              <th>Trạng thái</th>
+                             <th>Trạng thái ĐH</th>
+                              <th>Trạng thái TH</th>
                               <th>Ngày mua</th>
                               <th>Thao tác</th>
                             </tr>
                           </thead>
                           <tbody>
                             {% for order in orders %}
-                              {% if order.status == "cancelled" %}
+                              {% if order.original_status in ["cancelled", "Cancelled", "Hủy đơn"] %}
                                 <tr>
                                   <td>{{ loop.index }}</td>
                                   {% for customer in customers %}
@@ -1334,7 +1337,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -1384,7 +1387,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-danger badge-sm">
                                                         <i class="fas fa-times-circle mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">

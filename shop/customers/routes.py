@@ -547,13 +547,20 @@ def order_detail(invoice):
 
     final_total = total_before_discount - total_discount
     
-    # Update old statuses to new ones in memory (for display)
-    if order.status == 'Pending':
-        order.status = 'Đang xác nhận'
-    elif order.status == 'Accepted':
-        order.status = 'Đã giao'
-    elif order.status == 'Cancelled':
-        order.status = 'Hủy đơn'
+    # Create display status without modifying the original order object
+    display_status = order.status
+    if order.status == 'pending' or order.status == 'Pending':
+        display_status = 'Đang xác nhận'
+    elif order.status == 'confirmed' or order.status == 'Accepted':
+        display_status = 'Đã giao'
+    elif order.status == 'cancelled' or order.status == 'Cancelled':
+        display_status = 'Hủy đơn'
+    elif order.status == 'delivered':
+        display_status = 'Đã giao'
+    elif order.status == 'shipping':
+        display_status = 'Đang giao'
+    elif order.status == 'ready_for_pickup':
+        display_status = 'Sẵn sàng nhận tại cửa hàng'
     
     # Get customer info
     customer = Customer.query.filter_by(id=current_user.id).first()
@@ -566,7 +573,8 @@ def order_detail(invoice):
                          get_order_data=get_order_data,
                          total_before_discount=total_before_discount,
                          total_discount=total_discount,
-                         final_total=final_total)
+                         final_total=final_total,
+                         display_status=display_status)
 
 
 @app.route('/cancel_order/<invoice>', methods=['POST'])
@@ -587,7 +595,8 @@ def cancel_order(invoice):
         return redirect(url_for('payment_history'))
     
     # Check if order can be cancelled (only pending orders)
-    if order.status != 'Đang xác nhận':
+    # Use database status values, not display values
+    if order.status not in ['pending', 'Pending']:
         flash('Chỉ có thể hủy đơn hàng đang xác nhận!', 'warning')
         return redirect(url_for('order_detail', invoice=invoice))
     
@@ -602,8 +611,8 @@ def cancel_order(invoice):
                 if product.sold_quantity < 0:
                     product.sold_quantity = 0
 
-        # Update order status to cancelled
-        order.status = 'Hủy đơn'
+        # Update order status to cancelled (use database value)
+        order.status = 'cancelled'
         db.session.commit()
 
         # Send email notification to customer

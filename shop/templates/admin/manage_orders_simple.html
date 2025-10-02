@@ -130,7 +130,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -309,7 +309,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-warning badge-sm">
                                                         <i class="fas fa-clock mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -595,7 +595,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -715,7 +715,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-warning badge-sm">
                                                         <i class="fas fa-truck mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -1001,7 +1001,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -1051,7 +1051,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-success badge-sm">
                                                         <i class="fas fa-check-circle mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -1323,7 +1323,7 @@
                           </thead>
                           <tbody>
                             {% for order in orders %}
-                              {% if order.status == "cancelled" %}
+                              {% if order.original_status in ["cancelled", "Cancelled", "Hủy đơn"] %}
                                 <tr>
                                   <td>{{ loop.index }}</td>
                                   {% for customer in customers %}
@@ -1334,7 +1334,7 @@
                                   {% endfor %}
                                   <td><strong>{{ order.total_quantity or 0 }}</strong></td>
                                   <td><strong>{{ order.total_price | vnd if order.total_price and order.total_price > 0 else '0 ₫' }}</strong></td>
-                                  <td>{{ order.status }}</td>
+                                  <td>{{ order.display_status }}</td>
                                   <td>
                                     {% if order.display_payment_status == 'Đã thanh toán' %}
                                       <span class="badge badge-success">{{ order.display_payment_status }}</span>
@@ -1384,7 +1384,7 @@
                                                       <span class="text-muted">Trạng Thái:</span>
                                                       <span class="badge badge-danger badge-sm">
                                                         <i class="fas fa-times-circle mr-1"></i>
-                                                        {{ order.status }}
+                                                        {{ order.display_status }}
                                                       </span>
                                                     </div>
                                                     <div class="d-flex justify-content-between align-items-center">

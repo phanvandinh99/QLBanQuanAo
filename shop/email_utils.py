@@ -159,11 +159,11 @@ def send_order_confirmation_email(customer, order):
         # Gửi email
         mail.send(msg)
 
-        print(f"✅ Email xác nhận đơn hàng đã gửi thành công đến {customer.email}")
+        print(f"SUCCESS: Email xac nhan don hang da gui thanh cong den {customer.email}")
         return True
 
     except Exception as e:
-        print(f"❌ Lỗi khi gửi email xác nhận đơn hàng: {e}")
+        print(f"ERROR: Loi khi gui email xac nhan don hang: {e}")
         return False
 
 
@@ -185,14 +185,14 @@ def send_order_status_update_email(customer, order, action_by="system"):
                 status_color = "#d4edda"  # xanh lá nhạt
                 status_border = "#c3e6cb"
                 status_text_color = "#155724"
-                icon = "✅"
+                icon = "[OK]"
             else:
                 status_title = "Đơn hàng đang được xử lý"
                 status_message = "Đơn hàng của quý khách đang được chúng tôi xác nhận."
                 status_color = "#fff3cd"  # vàng nhạt
                 status_border = "#ffeaa7"
                 status_text_color = "#856404"
-                icon = "⏳"
+                icon = "[WAIT]"
 
         elif order.status == 'Đang giao':
             status_title = "Đơn hàng đang được giao"
@@ -200,7 +200,7 @@ def send_order_status_update_email(customer, order, action_by="system"):
             status_color = "#cce5ff"  # xanh dương nhạt
             status_border = "#99d6ff"
             status_text_color = "#004085"
-            icon = "🚚"
+            icon = "[SHIP]"
 
         elif order.status == 'Sẵn sàng nhận tại cửa hàng':
             status_title = "Đơn hàng sẵn sàng nhận tại cửa hàng"
@@ -208,7 +208,7 @@ def send_order_status_update_email(customer, order, action_by="system"):
             status_color = "#cce5ff"  # xanh dương nhạt
             status_border = "#99d6ff"
             status_text_color = "#004085"
-            icon = "🏪"
+            icon = "[STORE]"
 
         elif order.status == 'Đã giao':
             status_title = "Đơn hàng đã giao thành công"
@@ -216,7 +216,7 @@ def send_order_status_update_email(customer, order, action_by="system"):
             status_color = "#d4edda"  # xanh lá nhạt
             status_border = "#c3e6cb"
             status_text_color = "#155724"
-            icon = "🎉"
+            icon = "[DONE]"
 
         elif order.status == 'Hủy đơn':
             if action_by == 'customer':
@@ -225,21 +225,21 @@ def send_order_status_update_email(customer, order, action_by="system"):
                 status_color = "#f8d7da"  # đỏ nhạt
                 status_border = "#f5c6cb"
                 status_text_color = "#721c24"
-                icon = "❌"
+                icon = "[CANCEL]"
             else:  # admin hoặc system
                 status_title = "Đơn hàng đã bị hủy"
                 status_message = "Đơn hàng của quý khách đã bị hủy do một số lý do. Chúng tôi xin lỗi về sự bất tiện này."
                 status_color = "#f8d7da"  # đỏ nhạt
                 status_border = "#f5c6cb"
                 status_text_color = "#721c24"
-                icon = "⚠️"
+                icon = "[WARN]"
         else:
             status_title = f"Đơn hàng cập nhật trạng thái: {order.status}"
             status_message = "Đơn hàng của quý khách đã được cập nhật trạng thái."
             status_color = "#e2e3e5"  # xám nhạt
             status_border = "#d6d8db"
             status_text_color = "#383d41"
-            icon = "📋"
+            icon = "[INFO]"
 
         subject = f"{icon} {status_title} #{order.invoice} - Belluni"
 
@@ -311,11 +311,11 @@ def send_order_status_update_email(customer, order, action_by="system"):
 
         mail.send(msg)
 
-        print(f"✅ Email cập nhật trạng thái '{order.status}' đã gửi đến {customer.email} (action by: {action_by})")
+        print(f"SUCCESS: Email cap nhat trang thai '{order.status}' da gui den {customer.email} (action by: {action_by})")
         return True
 
     except Exception as e:
-        print(f"❌ Lỗi khi gửi email cập nhật trạng thái: {e}")
+        print(f"ERROR: Loi khi gui email cap nhat trang thai: {e}")
         return False
 
 
@@ -411,10 +411,10 @@ def send_new_customer_account_email(customer):
         # Gửi email
         mail.send(msg)
 
-        print(f"✅ Email thông tin tài khoản đã gửi thành công đến {customer.email}")
+        print(f"SUCCESS: Email thong tin tai khoan da gui thanh cong den {customer.email}")
         return True
 
     except Exception as e:
-        print(f"❌ Lỗi khi gửi email thông tin tài khoản: {e}")
+        print(f"ERROR: Loi khi gui email thong tin tai khoan: {e}")
         return False
 
