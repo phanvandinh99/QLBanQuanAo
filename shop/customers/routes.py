@@ -7,7 +7,7 @@ from .forms import CustomerRegisterForm, CustomerLoginFrom
 from shop.models import Category, Brand, Product
 from shop.carts.routes import clearcart, MagerDicts
 from shop.email_utils import send_order_confirmation_email, send_order_status_update_email
-from flask import Markup
+from markupsafe import Markup
 import secrets
 import os
 import json

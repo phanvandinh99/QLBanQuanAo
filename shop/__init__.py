@@ -13,7 +13,7 @@ except ImportError:
         FLASK_UPLOADS_AVAILABLE = True
     except ImportError:
         FLASK_UPLOADS_AVAILABLE = False
-        print("⚠️ Flask-Uploads not available, using fallback")
+        print("WARNING: Flask-Uploads not available, using fallback")
 
 import pymysql
 pymysql.install_as_MySQLdb()
