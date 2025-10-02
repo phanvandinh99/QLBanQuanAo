@@ -2,6 +2,16 @@ from shop import db
 from flask_login import UserMixin
 from datetime import datetime
 
+class Role(db.Model):
+    __tablename__ = 'role'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Role {self.name}>'
+
 class Admin(db.Model):
     __tablename__ = 'admin'
     id = db.Column(db.Integer, primary_key=True)
@@ -10,9 +20,39 @@ class Admin(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(180), nullable=False)
     profile = db.Column(db.String(180), default='profile.jpg')
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False, default=2)  # Default to 'nhanvien'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    role = db.relationship('Role', backref=db.backref('admins', lazy='dynamic'))
 
     def __repr__(self):
         return f'<Admin {self.username}>'
+
+    @property
+    def is_admin(self):
+        """Check if user has admin role"""
+        return self.role and self.role.name == 'admin'
+
+    @property
+    def is_nhanvien(self):
+        """Check if user has nhanvien role"""
+        return self.role and self.role.name == 'nhanvien'
+
+    def has_permission(self, permission):
+        """Check if user has specific permission"""
+        if self.is_admin:
+            return True  # Admin has all permissions
+        
+        # Define permissions for nhanvien
+        nhanvien_permissions = [
+            'view_inventory',      # Nhập hàng
+            'manage_products',     # Sản phẩm
+            'manage_articles',     # Bài viết
+            'view_orders'          # Đơn hàng
+        ]
+        
+        return permission in nhanvien_permissions if self.is_nhanvien else False
 
 class Brand(db.Model):
     __tablename__ = 'brand'

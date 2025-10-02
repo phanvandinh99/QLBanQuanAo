@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 18, 2025 at 06:13 PM
+-- Generation Time: Oct 02, 2025 at 11:46 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -33,15 +33,19 @@ CREATE TABLE `admin` (
   `username` varchar(80) NOT NULL,
   `email` varchar(120) NOT NULL,
   `password` varchar(180) NOT NULL,
-  `profile` varchar(180) NOT NULL
+  `profile` varchar(180) NOT NULL,
+  `role_id` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
 
 --
 -- Dumping data for table `admin`
 --
 
-INSERT INTO `admin` (`id`, `name`, `username`, `email`, `password`, `profile`) VALUES
-(1, 'Việt Hoàng', 'viethoang', 'viethoang@gmail.com', '$2a$12$x7wBbhJ3u0Dqn9PlNbW1mOyP6yUJWRdjJpKV1Q1jPMWqPZAEQmLV6', 'profile.jpg');
+INSERT INTO `admin` (`id`, `name`, `username`, `email`, `password`, `profile`, `role_id`, `created_at`) VALUES
+(1, 'Việt Hoàng', 'viethoang', 'viethoang@gmail.com', '$2a$12$x7wBbhJ3u0Dqn9PlNbW1mOyP6yUJWRdjJpKV1Q1jPMWqPZAEQmLV6', 'profile.jpg', 1, '2025-10-02 16:29:36'),
+(4, 'Test Admin', 'testadmin', 'admin@gmail.com', '$2a$12$x7wBbhJ3u0Dqn9PlNbW1mOyP6yUJWRdjJpKV1Q1jPMWqPZAEQmLV6', 'profile.jpg', 1, '2025-10-02 09:34:51'),
+(5, 'Test Nhan Vien', 'testnhanvien', 'nhanvien@gmail.com', '$2a$12$x7wBbhJ3u0Dqn9PlNbW1mOyP6yUJWRdjJpKV1Q1jPMWqPZAEQmLV6', 'profile.jpg', 2, '2025-10-02 09:34:51');
 
 -- --------------------------------------------------------
 
@@ -149,8 +153,8 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`id`, `username`, `first_name`, `last_name`, `email`, `phone_number`, `gender`, `password`, `date_created`, `is_active`, `last_login`) VALUES
-(1, 'VietHoang', 'Trương Việt', 'Hoàn', 'Hoang@gmail.com', '0971010281', 'F', '$2b$12$mGgkL2qb2NC7tMPjvbqhyencLhax6EHxnkF0KUX9Gtz8yHYCSTtaq', '2025-08-19 10:41:26', 1, NULL),
-(2, 'Bieu', 'Bieu', 'IT', 'BieuIT123@gmail.com', '0971234567', 'Nam', '$2b$12$1izz8H8QF/NyAM2rzgXTqe1nyqxP/EbFxbX8cvZLKOlzPeOGqCWZq', '2025-09-17 04:06:25', 1, NULL);
+(2, 'Bieu', 'Bieu', 'IT', 'BieuIT123@gmail.com', '0971234567', 'F', '$2b$12$1izz8H8QF/NyAM2rzgXTqe1nyqxP/EbFxbX8cvZLKOlzPeOGqCWZq', '2025-09-17 04:06:25', 1, NULL),
+(9, 'Hoang123', 'Trương Việt', 'Hoàng', 'Kemhi88@gmail.com', '0977777777', 'Nam', '$2b$12$jJUbTPRaRRLxq2QCx0nHhuIbP/KOSnUBmYUrRhE6sVLukj.tkY7Ou', '2025-09-18 17:04:43', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -201,6 +205,7 @@ CREATE TABLE `product` (
   `price` decimal(10,2) NOT NULL,
   `discount` int(11) DEFAULT NULL,
   `stock` int(11) NOT NULL,
+  `sold_quantity` int(11) NOT NULL DEFAULT 0,
   `description` text NOT NULL,
   `pub_date` datetime NOT NULL,
   `brand_id` int(11) NOT NULL,
@@ -215,15 +220,59 @@ CREATE TABLE `product` (
 -- Dumping data for table `product`
 --
 
-INSERT INTO `product` (`id`, `name`, `price`, `discount`, `stock`, `description`, `pub_date`, `brand_id`, `category_id`, `image_1`, `image_2`, `image_3`, `colors`) VALUES
-(18, 'Áo Khoác Kid Giả Lông Cừu Cổ Cao', 300000.00, 10, 50, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:00:39', 18, 1, 'b049ba18ceb5c823e3c3.webp', 'c003be7e9f81506ca887.webp', 'f8b1c80e7e963c580b98.webp', 'Ghi, Nâu, Trắng'),
-(19, 'Áo Phông Bé Trai Túi Hộp', 100000.00, 5, 29, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:04:37', 31, 4, 'cf147d1dcbfa817b90e7.webp', 'baad677191558e6fe4f1.webp', 'd46eb8c82bde557eedfa.webp', 'Cam, Đen, Đỏ'),
-(20, 'Áo Khoác Nam Bomber Da', 1000000.00, 10, 26, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:07:55', 18, 1, 'b8cdab1235885a900230.webp', 'f65574c452f2845052f2.webp', '99649d47f5166ff9cd20.webp', 'Ghi Đậm, Đen'),
-(21, 'Phao Vip Lông Vũ Nam', 1500000.00, 5, 7, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:10:06', 19, 1, '9f509199a14affdad942.webp', '6326a17e8d0a9f30c054.webp', '21403909ab050330735c.webp', 'Ghi Nhạt, Ghi Đậm, Tím Than'),
-(22, 'Giày Cao Gót Cơ Bản Đế Nhỏ', 200000.00, 10, 40, 'Description here', '2025-09-08 02:19:34', 34, 3, 'f57b6d09d24147449976.webp', 'e05b2efa57ab2f0ea450.webp', '715773296d04d1bc11ea.webp', 'Trắng, Nâu, Đen'),
-(23, 'Quần Shorts Lơ Vê Nắp Túi', 450000.00, 35, 3, 'Description here', '2025-09-08 02:25:52', 24, 2, '6f42ccd138e4c556ae45.webp', '2b98f4865f6b8c47c6f3.webp', '03832a5d679159fead28.webp', 'Oliu, Trắng, Be'),
-(24, 'Mũ Lưỡi Trai Thêu Space (MUU6008)', 100000.00, 3, 57, 'Description here', '2025-09-08 02:27:42', 21, 1, '06490661fadf0aded8ee.webp', 'e3fa5d0944c5c73027da.webp', 'd5105a92f6e92e2d4ef1.webp', 'Navy, Xám, Đen'),
-(25, 'Bộ Đồ Vải Hiệu Ứng', 200000.00, 2, 18, 'Description here', '2025-09-08 02:29:49', 19, 1, '271ea0d5b2a5c7c1c408.webp', '70c2c2ad159119d84745.webp', '9752dce96f8de7af1c4d.webp', 'Be, Xám, Xanh');
+INSERT INTO `product` (`id`, `name`, `price`, `discount`, `stock`, `sold_quantity`, `description`, `pub_date`, `brand_id`, `category_id`, `image_1`, `image_2`, `image_3`, `colors`) VALUES
+(18, 'Áo Khoác Kid Giả Lông Cừu Cổ Cao', 300000.00, 10, 50, 0, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:00:39', 18, 1, 'b049ba18ceb5c823e3c3.webp', 'c003be7e9f81506ca887.webp', 'f8b1c80e7e963c580b98.webp', 'Ghi, Nâu, Trắng'),
+(19, 'Áo Phông Bé Trai Túi Hộp', 100000.00, 5, 23, 0, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:04:37', 31, 4, 'cf147d1dcbfa817b90e7.webp', 'baad677191558e6fe4f1.webp', 'd46eb8c82bde557eedfa.webp', 'Cam, Đen, Đỏ'),
+(20, 'Áo Khoác Nam Bomber Da', 1000000.00, 10, 25, 0, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:07:55', 18, 1, 'b8cdab1235885a900230.webp', 'f65574c452f2845052f2.webp', '99649d47f5166ff9cd20.webp', 'Ghi Đậm, Đen'),
+(21, 'Phao Vip Lông Vũ Nam', 1500000.00, 5, 6, 0, 'Giao trong 3-5 ngày và freeship đơn từ 498k.\\r\\nĐổi trả trong vòng 15 ngày.\\r\\nCam kết bảo mật thông tin khách hàng.', '2025-08-29 09:10:06', 19, 1, '9f509199a14affdad942.webp', '6326a17e8d0a9f30c054.webp', '21403909ab050330735c.webp', 'Ghi Nhạt, Ghi Đậm, Tím Than'),
+(22, 'Giày Cao Gót Cơ Bản Đế Nhỏ', 200000.00, 10, 40, 0, 'Description here', '2025-09-08 02:19:34', 34, 3, 'f57b6d09d24147449976.webp', 'e05b2efa57ab2f0ea450.webp', '715773296d04d1bc11ea.webp', 'Trắng, Nâu, Đen'),
+(23, 'Quần Shorts Lơ Vê Nắp Túi', 450000.00, 35, 1, 0, 'Description here', '2025-09-08 02:25:52', 24, 2, '6f42ccd138e4c556ae45.webp', '2b98f4865f6b8c47c6f3.webp', '03832a5d679159fead28.webp', 'Oliu, Trắng, Be'),
+(24, 'Mũ Lưỡi Trai Thêu Space (MUU6008)', 100000.00, 3, 57, 0, 'Description here', '2025-09-08 02:27:42', 21, 1, '06490661fadf0aded8ee.webp', 'e3fa5d0944c5c73027da.webp', 'd5105a92f6e92e2d4ef1.webp', 'Navy, Xám, Đen'),
+(25, 'Bộ Đồ Vải Hiệu Ứng', 200000.00, 2, 17, 0, 'Description here', '2025-09-08 02:29:49', 19, 1, '271ea0d5b2a5c7c1c408.webp', '70c2c2ad159119d84745.webp', '9752dce96f8de7af1c4d.webp', 'Be, Xám, Xanh');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase`
+--
+
+CREATE TABLE `purchase` (
+  `id` int(11) NOT NULL,
+  `invoice_number` varchar(30) DEFAULT NULL,
+  `supplier_name` varchar(120) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `admin_id` int(11) DEFAULT NULL,
+  `supplier_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
+-- Dumping data for table `purchase`
+--
+
+INSERT INTO `purchase` (`id`, `invoice_number`, `supplier_name`, `notes`, `created_at`, `admin_id`, `supplier_id`) VALUES
+(1, '0231a045bb', 'ABC', 'ABCD', '2025-10-01 07:53:33', 1, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_item`
+--
+
+CREATE TABLE `purchase_item` (
+  `id` int(11) NOT NULL,
+  `purchase_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_cost` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
+-- Dumping data for table `purchase_item`
+--
+
+INSERT INTO `purchase_item` (`id`, `purchase_id`, `product_id`, `quantity`, `unit_cost`) VALUES
+(1, 1, 18, 6, 10000.00);
 
 -- --------------------------------------------------------
 
@@ -239,6 +288,50 @@ CREATE TABLE `rating` (
   `comment` text NOT NULL,
   `rating` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `role`
+--
+
+CREATE TABLE `role` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
+-- Dumping data for table `role`
+--
+
+INSERT INTO `role` (`id`, `name`, `description`, `created_at`) VALUES
+(1, 'admin', 'Administrator - Full access', '2025-10-02 09:30:11'),
+(2, 'nhanvien', 'Employee - Limited access: Inventory, Products, Articles, Orders', '2025-10-02 09:30:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `supplier`
+--
+
+CREATE TABLE `supplier` (
+  `id` int(11) NOT NULL,
+  `name` varchar(120) NOT NULL,
+  `contact_name` varchar(120) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `email` varchar(120) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_vietnamese_ci;
+
+--
+-- Dumping data for table `supplier`
+--
+
+INSERT INTO `supplier` (`id`, `name`, `contact_name`, `phone`, `email`, `address`, `created_at`) VALUES
+(1, 'Hoàng Việt', 'Nguyễn Văn A', '0981234321', 'A@gmail.com', 'Huế', '2025-10-01 11:00:36');
 
 --
 -- Indexes for dumped tables
@@ -319,6 +412,23 @@ ALTER TABLE `product`
   ADD KEY `idx_product_pub_date` (`pub_date`);
 
 --
+-- Indexes for table `purchase`
+--
+ALTER TABLE `purchase`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ix_purchase_invoice_number` (`invoice_number`),
+  ADD KEY `ix_purchase_created_at` (`created_at`),
+  ADD KEY `ix_purchase_admin_id` (`admin_id`);
+
+--
+-- Indexes for table `purchase_item`
+--
+ALTER TABLE `purchase_item`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ix_purchase_item_product_id` (`product_id`),
+  ADD KEY `ix_purchase_item_purchase_id` (`purchase_id`);
+
+--
 -- Indexes for table `rating`
 --
 ALTER TABLE `rating`
@@ -329,6 +439,21 @@ ALTER TABLE `rating`
   ADD KEY `idx_rating_customer` (`customer_id`);
 
 --
+-- Indexes for table `role`
+--
+ALTER TABLE `role`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `supplier`
+--
+ALTER TABLE `supplier`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ix_supplier_name` (`name`),
+  ADD KEY `ix_supplier_created_at` (`created_at`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -336,7 +461,7 @@ ALTER TABLE `rating`
 -- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `article`
@@ -366,13 +491,13 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT for table `order`
 --
 ALTER TABLE `order`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- AUTO_INCREMENT for table `order_item`
 --
 ALTER TABLE `order_item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `product`
@@ -381,10 +506,34 @@ ALTER TABLE `product`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
+-- AUTO_INCREMENT for table `purchase`
+--
+ALTER TABLE `purchase`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `purchase_item`
+--
+ALTER TABLE `purchase_item`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `rating`
 --
 ALTER TABLE `rating`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `role`
+--
+ALTER TABLE `role`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `supplier`
+--
+ALTER TABLE `supplier`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -421,6 +570,19 @@ ALTER TABLE `order_item`
 ALTER TABLE `product`
   ADD CONSTRAINT `product_ibfk_1` FOREIGN KEY (`brand_id`) REFERENCES `brand` (`id`),
   ADD CONSTRAINT `product_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`);
+
+--
+-- Constraints for table `purchase`
+--
+ALTER TABLE `purchase`
+  ADD CONSTRAINT `purchase_ibfk_1` FOREIGN KEY (`admin_id`) REFERENCES `admin` (`id`);
+
+--
+-- Constraints for table `purchase_item`
+--
+ALTER TABLE `purchase_item`
+  ADD CONSTRAINT `purchase_item_ibfk_1` FOREIGN KEY (`purchase_id`) REFERENCES `purchase` (`id`),
+  ADD CONSTRAINT `purchase_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`);
 
 --
 -- Constraints for table `rating`

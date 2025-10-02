@@ -1,18 +1,28 @@
-from wtforms import Form, BooleanField, StringField, PasswordField, validators, TextAreaField, RadioField, IntegerField, DecimalField
+from wtforms import Form, BooleanField, StringField, PasswordField, validators, TextAreaField, RadioField, IntegerField, DecimalField, SelectField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, Email, Length, NumberRange, Optional
-from shop.models import Product, Customer
+from shop.models import Product, Customer, Role
 
 class RegistrationForm(FlaskForm):
-    name = StringField('Name', [validators.Length(min=4, max=25)])
-    username = StringField('Username', [validators.Length(min=4, max=25)])
-    email = StringField('Email Address', [validators.Length(min=6, max=35),
+    name = StringField('Tên', [validators.Length(min=4, max=25)])
+    username = StringField('Tên đăng nhập', [validators.Length(min=4, max=25)])
+    email = StringField('Email', [validators.Length(min=6, max=35),
                                         validators.Email()])
-    password = PasswordField('Password', [
+    password = PasswordField('Mật khẩu', [
         validators.DataRequired(),
-        validators.EqualTo('confirm', message='Passwords must match')
+        validators.EqualTo('confirm', message='Mật khẩu không khớp')
     ])
-    confirm = PasswordField('Repeat Password')
+    confirm = PasswordField('Xác nhận mật khẩu')
+    role_id = SelectField('Quyền', coerce=int, validators=[DataRequired()])
+    
+    def __init__(self, *args, **kwargs):
+        super(RegistrationForm, self).__init__(*args, **kwargs)
+        # Populate role choices with Vietnamese labels
+        role_labels = {
+            'admin': 'Quản trị viên - có toàn quyền truy cập',
+            'nhanvien': 'Nhân viên - quyền hạn chế: Nhập hàng, Sản phẩm, Bài viết, Đơn hàng'
+        }
+        self.role_id.choices = [(role.id, role_labels.get(role.name, role.description)) for role in Role.query.all()]
 
 class LoginForm(FlaskForm):
     email = StringField('Email Address', [validators.Length(min=6, max=35),

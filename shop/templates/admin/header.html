@@ -11,7 +11,7 @@
                 <a href="{{url_for('home')}}" class="nav-link">Trang khách</a>
             </li>
             <li class="nav-item d-none d-sm-inline-block">
-                <a href="{{url_for('admin_manager')}}" class="nav-link">Trang Admin</a>
+                <a href="{{url_for('admin')}}" class="nav-link">Trang Admin</a>
             </li>
             <li class="nav-item d-none d-sm-inline-block">
                 <a href="{{url_for('product')}}" class="nav-link">Sản phẩm</a>
@@ -33,7 +33,7 @@
     <!-- Main Sidebar Container -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
         <!-- Brand Logo -->
-        <a href="{{url_for('admin_manager')}}" class="brand-link text-center">
+        <a href="{{url_for('admin')}}" class="brand-link text-center">
             <span class="brand-text font-weight-light">Admin Belluni</span>
         </a>
         <!-- Sidebar -->
@@ -47,7 +47,7 @@
                          alt="Admin Image">
                 </div>
                 <div class="info">
-                    <a href="{{url_for('admin_manager')}}" class="d-block">{{user.name}}</a>
+                    <a href="{{url_for('admin')}}" class="d-block">{{user.name}}</a>
                 </div>
                 {% endif%}
             </div>
@@ -56,6 +56,7 @@
                     data-accordion="false">
                     <!-- Add icons to the links using the .nav-icon class
                         with font-awesome or any other icon font library -->
+                    {% if is_admin %}
                     <li class="nav-item has-treeview {% if request.endpoint == 'admin_manager' or request.endpoint == 'register' %} menu-open {% endif %} ">
                         <a href="{{url_for('admin_manager')}}"
                            class="nav-link {% if request.endpoint == 'admin_manager' or request.endpoint == 'register' %} active {% endif %}">
@@ -81,6 +82,7 @@
                             </li>
                         </ul>
                     </li>
+                    {% endif %}
                     <li class="nav-item has-treeview {% if request.endpoint == 'purchases_list' or request.endpoint == 'purchases_create' %} menu-open {% endif %}">
                         <a href="{{ url_for('purchases_list') }}"
                            class="nav-link {% if request.endpoint == 'purchases_list' or request.endpoint == 'purchases_create' %} active {% endif %}">
@@ -114,6 +116,7 @@
                             </li>
                         </ul>
                     </li>
+                    {% if is_admin %}
                     <li class="nav-item has-treeview {% if request.endpoint == 'customer_manager' or request.endpoint == 'admin_register_custormer' %} menu-open {% endif %}">
                         <a href="{{url_for('customer_manager')}}"
                            class="nav-link {% if request.endpoint == 'customer_manager' or request.endpoint == 'admin_register_custormer' %} active {% endif %}">
@@ -140,6 +143,8 @@
                             </li>
                         </ul>
                     </li>
+                    {% endif %}
+                    {% if is_admin %}
                     <li class="nav-item has-treeview {% if request.endpoint == 'brands' or request.endpoint == 'addbrand' %} menu-open {% endif %}">
                         <a href="#"
                            class="nav-link {% if request.endpoint == 'brands' or request.endpoint == 'addbrand' %} active {% endif %}">
@@ -192,6 +197,7 @@
                             </li>
                         </ul>
                     </li>
+                    {% endif %}
                     <li class="nav-item has-treeview {% if request.endpoint == 'product' or request.endpoint == 'addproduct' %} menu-open {% endif %}">
                         <a href="{{url_for('product')}}"
                            class="nav-link {% if request.endpoint == 'product' or request.endpoint == 'addproduct' %} active {% endif %}">
@@ -245,6 +251,7 @@
                             </li>
                         </ul>
                     </li>
+                    {% if is_admin %}
                     <li class="nav-item">
                         <a href="{{url_for('statistics')}}"
                            class="nav-link {% if request.endpoint == 'statistics' %} active {% endif %}">
@@ -254,6 +261,7 @@
                             </p>
                         </a>
                     </li>
+                    {% endif %}
 
                     <li class="nav-item has-treeview {% if request.endpoint == 'orders_manager' or request.endpoint == 'admin_create_order' or request.endpoint == 'admin_order_qr_payment' %} menu-open {% endif %}">
                         <a href="{{ url_for('orders_manager')}}"

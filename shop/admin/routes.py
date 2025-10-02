@@ -38,15 +38,14 @@ except ImportError:
 from .forms import LoginForm, RegistrationForm
 from .forms import PurchaseForm, PurchaseItemForm, SupplierForm
 from shop.customers.forms import CustomerRegisterForm
+from shop.admin_decorators import admin_required, role_required, admin_only, get_current_admin, check_menu_permission
 
 
 
 
 @app.route('/admin/customer_register', methods=['GET', 'POST'])
+@admin_only
 def admin_register_custormer():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     form = CustomerRegisterForm()
     if form.validate_on_submit():
         if Admin.query.filter_by(email=form.email.data).first():
@@ -76,20 +75,20 @@ def admin_register_custormer():
 
 
 @app.route('/admin')
+@admin_required
 def admin():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
-    return redirect(url_for('admin_manager'))
+    # Redirect based on user role
+    current_user = get_current_admin()
+    if current_user and current_user.is_nhanvien:
+        return redirect(url_for('orders_manager'))
+    else:
+        return redirect(url_for('admin_manager'))
 
 
 @app.route('/admin_manager')
+@admin_only
 def admin_manager():
-    """Trang quản lý tài khoản admin"""
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
-
+    """Trang quản lý tài khoản admin - chỉ admin mới được truy cập"""
     user = Admin.query.filter_by(email=session['email']).first()
     admins = Admin.query.order_by(Admin.id.desc()).all()
 
@@ -100,10 +99,8 @@ def admin_manager():
 
 
 @app.route('/customer_manager')
+@admin_only
 def customer_manager():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Customer.query.all()
     
@@ -116,10 +113,8 @@ def customer_manager():
 
 
 @app.route('/admin/orders')
+@role_required('view_orders')
 def orders_manager():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).all()
     customers = Customer.query.all()
 
@@ -424,10 +419,8 @@ def delete_admin(id):
 
 
 @app.route('/product')
+@role_required('manage_products')
 def product():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     products = Product.query.all()
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('admin/index.html', title='Product page', products=products, user=user[0])
@@ -435,10 +428,8 @@ def product():
 
 # ================= INVENTORY (PURCHASE) ROUTES =================
 @app.route('/admin/purchases', methods=['GET'])
+@role_required('view_inventory')
 def purchases_list():
-    if 'email' not in session:
-        flash('Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     user = Admin.query.filter_by(email=session['email']).first()
     purchases = Purchase.query.order_by(Purchase.created_at.desc()).all()
     return render_template('admin/purchases_list.html', title='Nhập hàng', user=user, purchases=purchases)
@@ -689,20 +680,47 @@ def changes_password():
 
 
 @app.route('/admin/register', methods=['GET', 'POST'])
+@admin_only
 def register():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
+        # Check if email already exists
+        if Admin.query.filter_by(email=form.email.data).first():
+            flash('Email đã được sử dụng', 'danger')
+            return render_template('admin/admin_register.html', form=form, title='Đăng ký tài khoản admin', user=get_current_admin())
+        
+        if Admin.query.filter_by(username=form.username.data).first():
+            flash('Tên đăng nhập đã được sử dụng', 'danger')
+            return render_template('admin/admin_register.html', form=form, title='Đăng ký tài khoản admin', user=get_current_admin())
+        
         hash_password = bcrypt.generate_password_hash(form.password.data).decode('utf8')
-        user = Admin(name=form.name.data, username=form.username.data, email=form.email.data, password=hash_password)
+        user = Admin(
+            name=form.name.data, 
+            username=form.username.data, 
+            email=form.email.data, 
+            password=hash_password,
+            role_id=form.role_id.data
+        )
         db.session.add(user)
         db.session.commit()
-        flash(f' Wellcom {form.name.data} Thanks for registering', 'success')
-        return redirect(url_for('register'))
-    user = Admin.query.filter_by(email=session['email']).all()
-    return render_template('admin/admin_register.html', form=form, title='Registration page', user=user[0])
+        flash(f'Tài khoản {form.name.data} đã được tạo thành công', 'success')
+        return redirect(url_for('admin_manager'))
+    
+    user = get_current_admin()
+    return render_template('admin/admin_register.html', form=form, title='Đăng ký tài khoản admin', user=user)
+
+
+# ============= CONTEXT PROCESSORS =============
+@app.context_processor
+def inject_admin_permissions():
+    """Inject admin role and permissions into all templates"""
+    current_admin = get_current_admin()
+    return {
+        'current_admin': current_admin,
+        'check_menu_permission': check_menu_permission,
+        'is_admin': current_admin.is_admin if current_admin else False,
+        'is_nhanvien': current_admin.is_nhanvien if current_admin else False
+    }
 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -721,7 +739,14 @@ def login():
                 session['email'] = form.email.data
                 print(f"Session set, email: {session.get('email')}")
                 flash(f'welcome {form.email.data} you are logedin now', 'success')
-                return redirect(url_for('admin'))
+                
+                # Redirect based on user role
+                if user.is_nhanvien:
+                    print(f"User is nhanvien, redirecting to orders")
+                    return redirect(url_for('orders_manager'))
+                else:
+                    print(f"User is admin, redirecting to admin panel")
+                    return redirect(url_for('admin'))
             else:
                 print("Password invalid")
         else:
@@ -770,10 +795,8 @@ def get_order_data(order):
 # ============= ARTICLE MANAGEMENT ROUTES =============
 
 @app.route('/admin/articles')
+@role_required('manage_articles')
 def articles_manager():
-    if 'email' not in session:
-        flash(f'Yêu cầu đăng nhập', 'danger')
-        return redirect(url_for('login'))
 
     user = Admin.query.filter_by(email=session['email']).first()
     articles = Article.query.order_by(Article.created_at.desc()).all()
