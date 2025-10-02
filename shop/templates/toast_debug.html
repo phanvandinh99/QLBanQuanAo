@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Debug</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast-animations.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .error-btn {
+            background: #dc3545;
+        }
+        .error-btn:hover {
+            background: #c82333;
+        }
+        .warning-btn {
+            background: #ffc107;
+            color: #212529;
+        }
+        .warning-btn:hover {
+            background: #e0a800;
+        }
+        #log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="global-toast-container"></div>
+
+    <div class="debug-panel">
+        <h1>🧪 Toast System Debug</h1>
+        
+        <div>
+            <h3>Test Direct Toast Creation:</h3>
+            <button onclick="testDirectToast('success')">Success Toast</button>
+            <button onclick="testDirectToast('error')" class="error-btn">Error Toast</button>
+            <button onclick="testDirectToast('warning')" class="warning-btn">Warning Toast</button>
+        </div>
+
+        <div>
+            <h3>Test Add to Cart Form:</h3>
+            <form class="ajax-form" action="/addcart" method="post">
+                <input type="hidden" name="product_id" value="18">
+                <input type="hidden" name="quantity" value="1">
+                <input type="hidden" name="colors" value="red">
+                <button type="submit">Add to Cart (AJAX)</button>
+            </form>
+        </div>
+
+        <div>
+            <h3>Console Log:</h3>
+            <div id="log"></div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <!-- Load JavaScript files -->
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/simple-cart-updater.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toast-notifications.js') }}"></script>
+
+    <script>
+        // Override console.log to show in page
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logDiv = document.getElementById('log');
+
+        function addToLog(message, type = 'log') {
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : 'black';
+            logDiv.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToLog(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToLog(args.join(' '), 'error');
+        };
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        function testDirectToast(type) {
+            const messages = {
+                success: '✅ Test success toast!',
+                error: '❌ Test error toast!',
+                warning: '⚠️ Test warning toast!'
+            };
+            
+            console.log(`Testing ${type} toast...`);
+            
+            // Try to call the function directly
+            if (window.showUniqueToast) {
+                window.showUniqueToast(messages[type], type);
+            } else {
+                console.error('showUniqueToast function not found!');
+            }
+        }
+
+        // Log when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Toast Debug page loaded');
+            console.log('Available functions:');
+            console.log('- window.showUniqueToast:', typeof window.showUniqueToast);
+            console.log('- window.toast:', typeof window.toast);
+            console.log('- window.showToast:', typeof window.showToast);
+        });
+    </script>
+</body>
+</html>

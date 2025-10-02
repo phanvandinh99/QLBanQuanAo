@@ -299,8 +299,9 @@
             name="form2"
             id="ff2"
             method="post"
+            class="ajax-form"
             action="{{ url_for('customer_register') }}"
-            onsubmit="return validateForm()"
+            onsubmit="return validateForm(event)"
           >
             {{ form.hidden_tag() }}
             <div class="form-group">
@@ -428,10 +429,15 @@
 {% include 'footer.html' %} 
 
 <script>
-function validateForm() {
+function validateForm(event) {
     // Check if checkbox is checked
     if (!document.getElementById('agree').checked) {
-        alert('Vui lòng cho biết bạn đã đọc và đồng ý với Điều khoản và Điều kiện và Chính sách Bảo mật');
+        if (window.toast) {
+            window.toast.error('Vui lòng đọc và đồng ý với Điều khoản và Điều kiện!');
+        } else {
+            alert('Vui lòng cho biết bạn đã đọc và đồng ý với Điều khoản và Điều kiện và Chính sách Bảo mật');
+        }
+        if (event) event.preventDefault();
         return false;
     }
     
@@ -445,7 +451,12 @@ function validateForm() {
     });
     
     if (!genderSelected) {
-        alert('Vui lòng chọn giới tính');
+        if (window.toast) {
+            window.toast.error('Vui lòng chọn giới tính!');
+        } else {
+            alert('Vui lòng chọn giới tính');
+        }
+        if (event) event.preventDefault();
         return false;
     }
     
@@ -454,16 +465,27 @@ function validateForm() {
     const confirm = document.querySelector('input[name="confirm"]').value;
     
     if (password !== confirm) {
-        alert('Mật khẩu xác nhận không khớp');
+        if (window.toast) {
+            window.toast.error('Mật khẩu xác nhận không khớp!');
+        } else {
+            alert('Mật khẩu xác nhận không khớp');
+        }
+        if (event) event.preventDefault();
         return false;
     }
     
     // Check password length
     if (password.length < 6) {
-        alert('Mật khẩu phải có ít nhất 6 ký tự');
+        if (window.toast) {
+            window.toast.error('Mật khẩu phải có ít nhất 6 ký tự!');
+        } else {
+            alert('Mật khẩu phải có ít nhất 6 ký tự');
+        }
+        if (event) event.preventDefault();
         return false;
     }
     
+    // Validation passed - let AJAX form handler take over
     return true;
 }
 

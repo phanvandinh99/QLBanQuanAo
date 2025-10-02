@@ -94,7 +94,7 @@
                 {% endfor %} (0) {% endif %}
               </div>
               <div>
-                <form action="{{url_for('AddCart')}}" method="post">
+                <form action="{{url_for('AddCart')}}" method="post" class="ajax-form">
                   <input hidden name="product_id" value="{{product.id}}" />
                   <div>
                     <label>Số lượng:</label>
@@ -322,7 +322,7 @@
                     </div>
 
                     <div class="shopping-btn">
-                      <form action="{{url_for('AddCart')}}" method="post">
+                      <form action="{{url_for('AddCart')}}" method="post" class="ajax-form">
                         <a href="#" class="product-btn btn-like"
                           ><i class="fa fa-heart"></i
                         ></a>

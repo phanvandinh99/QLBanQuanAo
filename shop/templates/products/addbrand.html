@@ -42,7 +42,7 @@
                             <div class="card-body">
                                 {% include "_messages.html" %}
                                 {%if brands %}
-                                <form action="" method='POST'>
+                                <form action="" method='POST' class="ajax-form">
                                     <div class="form-group">
                                         <div>
                                             <span>Loại sản phẩm</span>
@@ -57,7 +57,7 @@
                                                 </select>
                                             </div>
                                             <div class="col ml-auto">
-                                                <button class="btn btn-block bg-gradient-info" onclick="window.location.href='{{url_for('addcat')}}'">
+                                                <button type="button" class="btn btn-block bg-gradient-info" onclick="window.location.href='{{url_for('addcat')}}'">
                                                     Thêm mới Loại SP
                                                 </button>
                                             </div>
@@ -66,20 +66,23 @@
                                     </div>
                                     <div class="form-group">
                                         <span>Tên Thương Hiệu</span>
-                                        <input type="text" name="brand" class="form-control">
+                                        <input type="text" name="brand" class="form-control" required>
                                     </div>
                                     <div class="form-group">
-                                        <input type="submit" value="Thêm Mới" class="btn btn-primary">
-
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fa fa-plus"></i> Thêm Mới
+                                        </button>
                                     </div>
                                 </form>
                                 {% else %}
-                                <form action="" method='POST'>
+                                <form action="" method='POST' class="ajax-form">
                                     <div class="form-group">
-                                        <span>Name category</span>
-                                        <input type="text" name="category" class="form-control">
+                                        <span>Tên danh mục</span>
+                                        <input type="text" name="category" class="form-control" required>
                                     </div>
-                                    <input type="submit" value="Add category" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa fa-plus"></i> Thêm danh mục
+                                    </button>
                                 </form>
                                 {% endif %}
                             </div>

@@ -1,11 +1,17 @@
 import urllib
 import os
 import secrets
-from flask import render_template, request, redirect, url_for, flash, session, current_app
+from flask import render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from flask_login import current_user
 from shop import app, db, photos
 from shop.models import Brand, Category, Product, Rating, Customer, Admin, Article
+from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from .forms import Rates, Addproducts
+
+@app.route('/toast-debug')
+def toast_debug():
+    """Debug page for toast system"""
+    return render_template('toast_debug.html')
 
 @app.route('/')
 def home():
@@ -57,15 +63,21 @@ def get_category(name):
 @app.route('/addbrand', methods=['GET', 'POST'])
 def addbrand():
     if 'email' not in session:
+        if is_ajax_request():
+            return error_response('Yêu cầu đăng nhập')
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
+        
     if request.method == "POST":
         try:
             getbrand = request.form.get('brand')
             category = request.form.get('category')
             
             if not getbrand or not category:
-                flash('Vui lòng điền đầy đủ thông tin thương hiệu và danh mục', 'danger')
+                error_msg = 'Vui lòng điền đầy đủ thông tin thương hiệu và danh mục'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
                 user = Admin.query.filter_by(email=session['email']).all()
                 categories = Category.query.all()
                 return render_template('products/addbrand.html', title='Add brand', categories=categories, brands='brands',
@@ -74,12 +86,19 @@ def addbrand():
             brand = Brand(name=getbrand, category_id=category)
             db.session.add(brand)
             db.session.commit()
-            flash(f'Thương hiệu {getbrand} đã thêm thành công', 'success')
+            
+            success_msg = f'Thương hiệu {getbrand} đã thêm thành công'
+            if is_ajax_request():
+                return success_response(success_msg, reset_form=True)
+            flash(success_msg, 'success')
             return redirect(url_for('addbrand'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Lỗi khi thêm thương hiệu: {str(e)}', 'danger')
+            error_msg = f'Lỗi khi thêm thương hiệu: {str(e)}'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             user = Admin.query.filter_by(email=session['email']).all()
             categories = Category.query.all()
             return render_template('products/addbrand.html', title='Add brand', categories=categories, brands='brands',
@@ -137,26 +156,39 @@ def deletebrand(id):
 @app.route('/addcat', methods=['GET', 'POST'])
 def addcat():
     if 'email' not in session:
+        if is_ajax_request():
+            return error_response('Yêu cầu đăng nhập')
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
+        
     if request.method == "POST":
         try:
             getcat = request.form.get('category')
             
             if not getcat:
-                flash('Vui lòng nhập tên danh mục', 'danger')
+                error_msg = 'Vui lòng nhập tên danh mục'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
                 user = Admin.query.filter_by(email=session['email']).all()
                 return render_template('products/addbrand.html', title='Add category', user=user[0])
             
             cat = Category(name=getcat)
             db.session.add(cat)
             db.session.commit()
-            flash(f'Danh mục {getcat} đã được thêm thành công', 'success')
+            
+            success_msg = f'Danh mục {getcat} đã được thêm thành công'
+            if is_ajax_request():
+                return success_response(success_msg, reset_form=True)
+            flash(success_msg, 'success')
             return redirect(url_for('addcat'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Lỗi khi thêm danh mục: {str(e)}', 'danger')
+            error_msg = f'Lỗi khi thêm danh mục: {str(e)}'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             user = Admin.query.filter_by(email=session['email']).all()
             return render_template('products/addbrand.html', title='Add category', user=user[0])
     
@@ -342,9 +374,14 @@ def addproduct():
                            categories=categories, user=user[0])
 
 
+
+
+
 @app.route('/updateproduct/<int:id>', methods=['GET', 'POST'])
 def updateproduct(id):
     if 'email' not in session:
+        if is_ajax_request():
+            return error_response('Yêu cầu đăng nhập')
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
 
@@ -374,7 +411,10 @@ def updateproduct(id):
                     os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_1))
                     product.image_1 = photos.save(image_1, name=name_random_1)
                 except Exception as img_error:
-                    flash(f'Lỗi khi cập nhật ảnh 1: {str(img_error)}', 'warning')
+                    if is_ajax_request():
+                        current_app.logger.warning(f'Lỗi khi cập nhật ảnh 1: {str(img_error)}')
+                    else:
+                        flash(f'Lỗi khi cập nhật ảnh 1: {str(img_error)}', 'warning')
                     product.image_1 = photos.save(image_1, name=name_random_1)
             
             if request.files.get('image_2'):
@@ -385,7 +425,10 @@ def updateproduct(id):
                     os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_2))
                     product.image_2 = photos.save(image_2, name=name_random_2)
                 except Exception as img_error:
-                    flash(f'Lỗi khi cập nhật ảnh 2: {str(img_error)}', 'warning')
+                    if is_ajax_request():
+                        current_app.logger.warning(f'Lỗi khi cập nhật ảnh 2: {str(img_error)}')
+                    else:
+                        flash(f'Lỗi khi cập nhật ảnh 2: {str(img_error)}', 'warning')
                     product.image_2 = photos.save(image_2, name=name_random_2)
             
             if request.files.get('image_3'):
@@ -396,17 +439,28 @@ def updateproduct(id):
                     os.unlink(os.path.join(current_app.root_path, "static/images/" + product.image_3))
                     product.image_3 = photos.save(image_3, name=name_random_3)
                 except Exception as img_error:
-                    flash(f'Lỗi khi cập nhật ảnh 3: {str(img_error)}', 'warning')
+                    if is_ajax_request():
+                        current_app.logger.warning(f'Lỗi khi cập nhật ảnh 3: {str(img_error)}')
+                    else:
+                        flash(f'Lỗi khi cập nhật ảnh 3: {str(img_error)}', 'warning')
                     product.image_3 = photos.save(image_3, name=name_random_3)
             
             db.session.commit()
-            flash(f'Sản phẩm {product.name} đã được cập nhật thành công', 'success')
+            success_msg = f'Sản phẩm {product.name} đã được cập nhật thành công'
+            
+            if is_ajax_request():
+                return success_response(success_msg, redirect_url=url_for('product'))
+            flash(success_msg, 'success')
             return redirect(url_for('product'))
             
-        except Exception:
+        except Exception as e:
             # Rollback session nếu có lỗi
             db.session.rollback()
-            flash(f'Lỗi khi cập nhật sản phẩm: {str(e)}', 'danger')
+            error_msg = f'Lỗi khi cập nhật sản phẩm: {str(e)}'
+            
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             user = Admin.query.filter_by(email=session['email']).all()
             return render_template('products/updateproduct.html', form=form, product=product, title='Update Product', brands=brands,
                                    categories=categories, user=user[0])
@@ -415,14 +469,25 @@ def updateproduct(id):
     form.price.data = product.price
     form.discount.data = product.discount
     form.stock.data = product.stock
-    form.sold_quantity.data = getattr(product, 'sold_quantity', 0)
     form.colors.data = product.colors
     form.description.data = product.description
-    brand = product.brand.name
-    category = product.category.name
     user = Admin.query.filter_by(email=session['email']).all()
-    return render_template('products/updateproduct.html', form=form, title='Update Product', product=product,
-                           brands=brands, categories=categories, user=user[0])
+    return render_template('products/updateproduct.html', form=form, product=product, title='Update Product', brands=brands,
+                           categories=categories, user=user[0])
+
+
+
+
+@app.route('/simple-test')
+def simple_test():
+    """Simple test page cho toast system"""
+    return render_template('simple_test.html')
+
+
+@app.route('/test-real-forms')
+def test_real_forms():
+    """Test real forms với toast system"""
+    return render_template('test_real_forms.html')
 
 
 @app.route('/deleteproduct/<int:id>', methods=['POST'])

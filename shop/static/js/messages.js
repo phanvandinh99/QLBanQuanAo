@@ -65,63 +65,68 @@
         });
     }
 
-    // Function to update cart count
+    // DISABLED: Function to update cart count (handled by simple-cart-updater.js)
     function updateCartCount(count) {
-        const cartElements = document.querySelectorAll('.cart-quantity');
-        cartElements.forEach(element => {
-            element.textContent = count;
-        });
+        console.log('ℹ️ updateCartCount in messages.js is disabled - using simple-cart-updater instead');
+        // const cartElements = document.querySelectorAll('.cart-quantity');
+        // cartElements.forEach(element => {
+        //     element.textContent = count;
+        // });
     }
 
-    // Function to handle add to cart form submission
+    // DISABLED: Function to handle add to cart form submission (handled by simple-cart-updater.js)
     function handleAddToCart(form) {
-        const formData = new FormData(form);
+        console.log('ℹ️ handleAddToCart in messages.js is disabled - using simple-cart-updater instead');
+        return; // Exit early
         
-        // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang thêm...';
-        submitBtn.disabled = true;
+        // const formData = new FormData(form);
+        // 
+        // // Show loading state
+        // const submitBtn = form.querySelector('button[type="submit"]');
+        // const originalText = submitBtn.innerHTML;
+        // submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang thêm...';
+        // submitBtn.disabled = true;
 
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast(data.message, 'success');
-                if (data.cart_count !== undefined) {
-                    updateCartCount(data.cart_count);
-                }
-            } else {
-                showToast(data.message, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'danger');
-        })
-        .finally(() => {
-            // Restore button state
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
+        // fetch(form.action, {
+        //     method: 'POST',
+        //     body: formData,
+        //     headers: {
+        //         'X-Requested-With': 'XMLHttpRequest'
+        //     }
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     if (data.success) {
+        //         showToast(data.message, 'success');
+        //         if (data.cart_count !== undefined) {
+        //             updateCartCount(data.cart_count);
+        //         }
+        //     } else {
+        //         showToast(data.message, 'danger');
+        //     }
+        // })
+        // .catch(error => {
+        //     console.error('Error:', error);
+        //     showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'danger');
+        // })
+        // .finally(() => {
+        //     // Restore button state
+        //     submitBtn.innerHTML = originalText;
+        //     submitBtn.disabled = false;
+        // });
     }
 
-    // Initialize when DOM is loaded
+    // DISABLED: Initialize when DOM is loaded (handled by simple-cart-updater.js)
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle all add to cart forms
-        const addToCartForms = document.querySelectorAll('form[action*="AddCart"]');
-        addToCartForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                handleAddToCart(this);
-            });
-        });
+        console.log('ℹ️ messages.js cart handling is disabled - using simple-cart-updater instead');
+        // // Handle all add to cart forms
+        // const addToCartForms = document.querySelectorAll('form[action*="AddCart"]');
+        // addToCartForms.forEach(form => {
+        //     form.addEventListener('submit', function(e) {
+        //         e.preventDefault();
+        //         handleAddToCart(this);
+        //     });
+        // });
 
         // Add CSS animations
         const style = document.createElement('style');
@@ -165,8 +170,59 @@
         document.head.appendChild(style);
     });
 
+    // Simple cart count updater as backup
+    function updateCartCountFromAPI() {
+        fetch('/api/cart-count')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    setCartCountInDOM(data.cart_count);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating cart count:', error);
+            });
+    }
+
+    function setCartCountInDOM(count) {
+        // Find cart count element with multiple fallbacks
+        let cartElement = document.getElementById('header-cart-count');
+        if (!cartElement) {
+            cartElement = document.querySelector('.cart-quantity');
+        }
+        if (!cartElement) {
+            const cartLink = document.querySelector('a[href*="cart"]');
+            if (cartLink) {
+                cartElement = cartLink.querySelector('sup');
+            }
+        }
+
+        if (cartElement) {
+            cartElement.textContent = count;
+            
+            // Simple animation
+            cartElement.style.transition = 'all 0.3s ease';
+            cartElement.style.transform = 'scale(1.2)';
+            cartElement.style.background = '#28a745';
+            cartElement.style.color = 'white';
+            cartElement.style.borderRadius = '50%';
+            cartElement.style.padding = '2px 6px';
+            
+            setTimeout(() => {
+                cartElement.style.transform = 'scale(1)';
+                cartElement.style.background = '';
+                cartElement.style.color = '';
+            }, 500);
+            
+            return true;
+        }
+        return false;
+    }
+
     // Export functions for global use
     window.showToast = showToast;
     window.updateCartCount = updateCartCount;
+    window.updateCartCountFromAPI = updateCartCountFromAPI;
+    window.setCartCountInDOM = setCartCountInDOM;
 
 })();

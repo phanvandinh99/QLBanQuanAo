@@ -7,6 +7,7 @@ from flask import render_template, session, request, redirect, url_for, flash, j
 from flask_login import current_user, login_required
 from shop import app, db
 from shop.models import Order, OrderItem, Category, Brand, Product, Customer
+from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from shop.email_utils import send_order_confirmation_email
 
 
@@ -36,9 +37,10 @@ def AddCart():
         product = Product.query.filter_by(id=product_id).first()
         
         if not product:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': False, 'message': 'Sản phẩm không tồn tại'})
-            flash('Sản phẩm không tồn tại', 'danger')
+            error_msg = 'Sản phẩm không tồn tại'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             return redirect(request.referrer)
         
         # Check current quantity in cart
@@ -49,10 +51,10 @@ def AddCart():
         # Check if total quantity (cart + new) exceeds stock
         total_requested_quantity = current_cart_quantity + quantity
         if total_requested_quantity > product.stock:
-            error_message = 'Số lượng sản phẩm trong kho không đáp ứng'
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'success': False, 'message': error_message})
-            flash(error_message, 'danger')
+            error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.stock})'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             return redirect(request.referrer)
         
         brand = Brand.query.filter_by(id=product.brand_id).first().name
@@ -76,20 +78,18 @@ def AddCart():
             # Calculate cart count
             cart_count = sum(item['quantity'] for item in session['Shoppingcart'].values())
             
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    'success': True, 
-                    'message': f'Sản phẩm {product.name} đã được thêm vào giỏ hàng!',
-                    'cart_count': cart_count
-                })
+            success_msg = f'🛒 Sản phẩm {product.name} đã được thêm vào giỏ hàng!'
+            if is_ajax_request():
+                return success_response(success_msg, data={'cart_count': cart_count})
             
-            flash(f'Sản phẩm {product.name} đã được thêm vào giỏ hàng!', 'success')
+            flash(success_msg, 'success')
             return redirect(request.referrer)
 
-    except Exception:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Có lỗi xảy ra khi thêm sản phẩm'})
-        flash('Có lỗi xảy ra khi thêm sản phẩm', 'danger')
+    except Exception as e:
+        error_msg = 'Có lỗi xảy ra khi thêm sản phẩm'
+        if is_ajax_request():
+            return error_response(error_msg)
+        flash(error_msg, 'danger')
         return redirect(request.referrer)
 
 
@@ -182,6 +182,27 @@ def clearcart():
         return redirect(url_for('getCart'))
     except Exception:
         pass
+
+
+@app.route('/api/cart-count')
+def get_cart_count():
+    """API endpoint to get current cart count"""
+    try:
+        if 'Shoppingcart' in session and session['Shoppingcart']:
+            cart_count = sum(item['quantity'] for item in session['Shoppingcart'].values())
+        else:
+            cart_count = 0
+        
+        return jsonify({
+            'success': True,
+            'cart_count': cart_count
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'cart_count': 0,
+            'error': str(e)
+        })
 
 
 @app.route('/cart')

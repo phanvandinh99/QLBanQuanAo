@@ -1,6 +1,7 @@
-from flask import render_template, session, request, redirect, url_for, flash
+from flask import render_template, session, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user, logout_user, login_user
 from shop import app, db, bcrypt
+from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from shop.models import Customer, Admin, Order, OrderItem
 from .forms import CustomerRegisterForm, CustomerLoginFrom
 from shop.models import Category, Brand, Product
@@ -101,7 +102,10 @@ def customer_register():
     if form.validate_on_submit():
         # Only check for admin email conflict (since admin and customer might share emails)
         if Admin.query.filter_by(email=form.email.data).first():
-            flash(f'Email đã được sử dụng bởi quản trị viên!', 'danger')
+            error_msg = 'Email đã được sử dụng bởi quản trị viên!'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             return redirect(url_for('customer_register'))
 
         try:
@@ -118,12 +122,18 @@ def customer_register():
             db.session.add(customer)
             db.session.commit()
 
-            flash(f'Chào mừng {form.first_name.data} {form.last_name.data}! Cảm ơn bạn đã đăng ký', 'success')
+            success_msg = f'🎉 Chào mừng {form.first_name.data} {form.last_name.data}! Cảm ơn bạn đã đăng ký'
+            if is_ajax_request():
+                return success_response(success_msg, redirect_url=url_for('customer_login'))
+            flash(success_msg, 'success')
             return redirect(url_for('customer_login'))
 
         except Exception as e:
             db.session.rollback()
-            flash(f'Có lỗi xảy ra khi đăng ký! Vui lòng thử lại.', 'danger')
+            error_msg = 'Có lỗi xảy ra khi đăng ký! Vui lòng thử lại.'
+            if is_ajax_request():
+                return error_response(error_msg)
+            flash(error_msg, 'danger')
             return redirect(url_for('customer_register'))
 
     return render_template('customers/register.html', form=form, brands=brands(), categories=categories())
@@ -138,16 +148,40 @@ def customer_login():
         user = Customer.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data.encode('utf8')):
             if not user.is_active:
-                flash(Markup(
-                    "Account has been locked ! <a href='mailto: viethoang@gmail.com' class='alert-link' >Help here</a>"),
-                    'danger')
+                error_msg = "Tài khoản đã bị khóa! Liên hệ viethoang@gmail.com để được hỗ trợ"
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
                 return redirect(url_for('customer_login'))
+            
             login_user(user)
-
-            next = request.args.get('next')
-            return redirect(next or url_for('home'))
-        flash('Email hoặc mật khẩu không đúng', 'danger')
+            success_msg = f'🎉 Chào mừng {user.first_name} {user.last_name} quay trở lại!'
+            next_url = request.args.get('next') or url_for('home')
+            
+            if is_ajax_request():
+                return success_response(success_msg, redirect_url=next_url)
+            flash(success_msg, 'success')
+            return redirect(next_url)
+            
+        error_msg = 'Email hoặc mật khẩu không đúng'
+        if is_ajax_request():
+            return error_response(error_msg)
+        flash(error_msg, 'danger')
         return redirect(url_for('customer_login'))
+    
+    # Handle form validation errors for AJAX requests
+    elif request.method == 'POST' and is_ajax_request():
+        # Collect all form errors
+        error_messages = []
+        for field, errors in form.errors.items():
+            for error in errors:
+                error_messages.append(f"{getattr(form, field).label.text}: {error}")
+        
+        if error_messages:
+            return error_response('; '.join(error_messages))
+        else:
+            return error_response('Dữ liệu form không hợp lệ')
+    
     return render_template('customers/login.html', form=form, brands=brands(), categories=categories())
 
 

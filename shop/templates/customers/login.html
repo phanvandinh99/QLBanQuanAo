@@ -191,7 +191,7 @@
                 </div>
                 <div class="login-form-container">
                     {% include '_messages.html' %}
-                    <form action="" method="post" name="form1" id="ff1">
+                    <form action="" method="post" name="form1" id="ff1" class="ajax-form">
                         {{form.csrf_token}}
                         <div class="form-group">
                             {{ render_field(form.email, class="form-control", placeholder="Nhập email của bạn")}}
