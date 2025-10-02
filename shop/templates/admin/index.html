@@ -52,7 +52,8 @@
                                     <th>Sản Phẩm</th>
                                     <th>Giá</th>
                                     <th>Giảm Giá</th>
-                                    <th>Số Lượng</th>
+                                    <th>Tồn Kho</th>
+                                    <th>Đã Bán</th>
                                     <th>Loại</th>
                                     <th>Thương Hiệu</th>
                                     <th colspan="2">Thao Tác</th>
@@ -68,8 +69,17 @@
                                     <td>{{product.name}}</td>
                                     <td>{{product.price | vnd}}</td>
                                     <td>{{product.discount}} %</td>
-                                    <td>{{product.stock}}</td>
-                                    <td>{{product.category_id}}</td>
+                                    <td>
+                                        <span class="badge badge-{% if product.stock > 10 %}success{% elif product.stock > 0 %}warning{% else %}danger{% endif %}">
+                                            {{product.stock}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">
+                                            {{product.sold_quantity or 0}}
+                                        </span>
+                                    </td>
+                                    <td>{{product.category.name}}</td>
                                     <td>{{product.brand.name}}</td>
                                     <td>
                                         <a href="{{url_for('updateproduct',id=product.id)}}"

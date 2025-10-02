@@ -12,7 +12,25 @@
                 {{ render_field(form.name, class="form-control") }}
                 {{ render_field(form.price, class="form-control") }}
                 {{ render_field(form.discount, class="form-control") }}
-                <div class="alert alert-warning">Số lượng chỉ được thay đổi qua phiếu nhập.</div>
+                
+                <!-- Stock and Sold Quantity - Read Only -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="stock">Tồn Kho</label>
+                        <input type="number" class="form-control" id="stock" name="stock" 
+                               value="{{ product.stock }}" readonly 
+                               style="background-color: #f8f9fa;">
+                        <small class="text-muted">Chỉ thay đổi qua phiếu nhập hàng</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sold_quantity">Đã Bán</label>
+                        <input type="number" class="form-control" id="sold_quantity" name="sold_quantity" 
+                               value="{{ product.sold_quantity or 0 }}" readonly 
+                               style="background-color: #f8f9fa;">
+                        <small class="text-muted">Tự động cập nhật khi có đơn hàng</small>
+                    </div>
+                </div>
+                <br>
                 <label for="category">Add a category</label>
                 <select name="category" id="category" class="form-control" onchange='myFunction()' required>
                     <option value="{{product.category_id}}">{{product.category.name}}</option>

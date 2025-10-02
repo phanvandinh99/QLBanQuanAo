@@ -235,6 +235,7 @@ def accept_order(id):
             product = order_item.product
             if (product.stock - order_item.quantity) >= 0:
                 product.stock -= order_item.quantity
+                product.sold_quantity += order_item.quantity
                 customer_order.status = 'shipping'  # Use English status
                 db.session.commit()
             else:
@@ -310,15 +311,25 @@ def delete_order(id):
     if 'email' not in session:
         flash(f'Yêu cầu đăng nhập', 'danger')
         return redirect(url_for('login'))
-    customer = Order.query.get_or_404(id)
+    order = Order.query.get_or_404(id)
     if request.method == "POST":
-        customer.status = "Hủy đơn"
+        # Restore stock and reduce sold quantity for each order item
+        for order_item in order.items:
+            product = order_item.product
+            if product:
+                product.stock += order_item.quantity
+                product.sold_quantity -= order_item.quantity
+                # Ensure sold_quantity doesn't go negative
+                if product.sold_quantity < 0:
+                    product.sold_quantity = 0
+
+        order.status = "Hủy đơn"
         db.session.commit()
 
         # Send email notification to customer
-        customer_info = Customer.query.get(customer.customer_id)
+        customer_info = Customer.query.get(order.customer_id)
         if customer_info:
-            send_order_status_update_email(customer_info, customer, action_by="admin")
+            send_order_status_update_email(customer_info, order, action_by="admin")
 
         flash('Đơn hàng đã được hủy thành công', 'success')
         return redirect(url_for('orders_manager'))
@@ -1428,10 +1439,11 @@ def admin_create_order():
                             db.session.add(order_item)
                             current_app.logger.info(f"Order item created for product {product_id}")
 
-                            # Update product stock
+                            # Update product stock and sold quantity
                             old_stock = product.stock
                             product.stock -= quantity
-                            current_app.logger.info(f"Stock updated for product {product_id}: {old_stock} -> {product.stock}")
+                            product.sold_quantity += quantity
+                            current_app.logger.info(f"Stock updated for product {product_id}: {old_stock} -> {product.stock}, sold_quantity: {product.sold_quantity}")
 
                     current_app.logger.info("Committing transaction...")
                     db.session.commit()

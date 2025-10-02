@@ -318,7 +318,7 @@ def addproduct():
                                        categories=categories, user=user[0])
 
             try:
-                product = Addproduct(name=name, price=price, discount=discount, stock=stock, colors=colors, desc=desc,
+                product = Product(name=name, price=price, discount=discount, stock=stock, sold_quantity=0, colors=colors, description=desc,
                                      category_id=category, brand_id=brand, image_1=image_1, image_2=image_2, image_3=image_3)
                 db.session.add(product)
                 db.session.commit()
@@ -362,7 +362,7 @@ def updateproduct(id):
             product.discount = form.discount.data
             # Do not allow direct stock editing here; stock is managed via purchases
             product.colors = form.colors.data
-            product.desc = form.description.data
+            product.description = form.description.data
             product.category_id = category
             product.brand_id = brand
             
@@ -415,8 +415,9 @@ def updateproduct(id):
     form.price.data = product.price
     form.discount.data = product.discount
     form.stock.data = product.stock
+    form.sold_quantity.data = getattr(product, 'sold_quantity', 0)
     form.colors.data = product.colors
-    form.description.data = product.desc
+    form.description.data = product.description
     brand = product.brand.name
     category = product.category.name
     user = Admin.query.filter_by(email=session['email']).all()

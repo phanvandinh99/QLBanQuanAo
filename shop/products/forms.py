@@ -12,6 +12,14 @@ class Addproducts(Form):
         validators.NumberRange(min=0, max=100, message='Discount must be between 0 and 100'),
         validators.Optional()
     ], default=0)
+    stock = IntegerField('Stock', [
+        validators.NumberRange(min=0, message='Stock must be 0 or greater'),
+        validators.Optional()
+    ], default=0)
+    sold_quantity = IntegerField('Sold Quantity', [
+        validators.NumberRange(min=0, message='Sold quantity must be 0 or greater'),
+        validators.Optional()
+    ], default=0)
     colors = StringField('Colors', [validators.DataRequired()])
     description = TextAreaField('Description', [validators.DataRequired()])
 

@@ -123,6 +123,42 @@ def update_product_stock(product_id, quantity_change):
         return True
     return False
 
+def restore_order_stock(order):
+    """Restore stock and reduce sold quantity when order is cancelled"""
+    try:
+        for order_item in order.items:
+            product = order_item.product
+            if product:
+                # Restore stock
+                product.stock += order_item.quantity
+                # Reduce sold quantity
+                product.sold_quantity -= order_item.quantity
+                # Ensure sold_quantity doesn't go negative
+                if product.sold_quantity < 0:
+                    product.sold_quantity = 0
+        return True
+    except Exception as e:
+        print(f"Error restoring stock for order {order.id}: {str(e)}")
+        return False
+
+def process_order_stock(order_items):
+    """Process stock reduction and sold quantity increase for order items"""
+    try:
+        for order_item in order_items:
+            product = order_item.product
+            if product:
+                # Check stock availability
+                if order_item.quantity > product.stock:
+                    raise ValueError(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.')
+                
+                # Update stock and sold quantity
+                product.stock -= order_item.quantity
+                product.sold_quantity += order_item.quantity
+        return True
+    except Exception as e:
+        print(f"Error processing order stock: {str(e)}")
+        raise
+
 def get_customer_orders(customer_id, page=1, per_page=10):
     """Get paginated orders for a customer"""
     from shop.models import Order

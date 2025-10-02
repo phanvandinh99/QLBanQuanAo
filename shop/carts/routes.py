@@ -41,6 +41,20 @@ def AddCart():
             flash('Sản phẩm không tồn tại', 'danger')
             return redirect(request.referrer)
         
+        # Check current quantity in cart
+        current_cart_quantity = 0
+        if 'Shoppingcart' in session and product_id in session['Shoppingcart']:
+            current_cart_quantity = session['Shoppingcart'][product_id]['quantity']
+        
+        # Check if total quantity (cart + new) exceeds stock
+        total_requested_quantity = current_cart_quantity + quantity
+        if total_requested_quantity > product.stock:
+            error_message = 'Số lượng sản phẩm trong kho không đáp ứng'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': error_message})
+            flash(error_message, 'danger')
+            return redirect(request.referrer)
+        
         brand = Brand.query.filter_by(id=product.brand_id).first().name
         if request.method == "POST":
             # if product_id in orders
@@ -127,8 +141,15 @@ def updatecart(code):
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return redirect(url_for('getCart'))
     if request.method == "POST":
-        quantity = request.form.get('quantity')
+        quantity = int(request.form.get('quantity'))
         color = request.form.get('color')
+        
+        # Check stock availability
+        product = Product.query.get(code)
+        if product and quantity > product.stock:
+            flash('Số lượng sản phẩm trong kho không đáp ứng', 'danger')
+            return redirect(url_for('getCart'))
+        
         try:
             session.modified = True
             for key, item in session['Shoppingcart'].items():

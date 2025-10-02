@@ -259,12 +259,22 @@ def checkout():
             db.session.add(order)
             db.session.flush()  # Get order ID for OrderItems
 
-            # Create OrderItem objects for each cart item
+            # Create OrderItem objects for each cart item and update stock
             for product_id, item in session['Shoppingcart'].items():
                 product = Product.query.get(int(product_id))
                 if product:
                     quantity = int(item.get('quantity', 0))
                     discount = float(item.get('discount', 0))
+
+                    # Check stock availability before processing
+                    if quantity > product.stock:
+                        db.session.rollback()
+                        flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.', 'danger')
+                        return redirect(url_for('getCart'))
+
+                    # Update product stock and sold quantity
+                    product.stock -= quantity
+                    product.sold_quantity += quantity
 
                     order_item = OrderItem(
                         order_id=order.id,
@@ -343,12 +353,22 @@ def submit_order():
                 db.session.add(order)
                 db.session.flush()  # Get order ID
 
-                # Create OrderItem objects
+                # Create OrderItem objects and update stock
                 for product_id, item in session['Shoppingcart'].items():
                     product = Product.query.get(int(product_id))
                     if product:
                         quantity = int(item.get('quantity', 0))
                         discount = float(item.get('discount', 0))
+
+                        # Check stock availability before processing
+                        if quantity > product.stock:
+                            db.session.rollback()
+                            flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.', 'danger')
+                            return redirect(url_for('getCart'))
+
+                        # Update product stock and sold quantity
+                        product.stock -= quantity
+                        product.sold_quantity += quantity
 
                         order_item = OrderItem(
                             order_id=order.id,
@@ -498,6 +518,16 @@ def cancel_order(invoice):
         return redirect(url_for('order_detail', invoice=invoice))
     
     try:
+        # Restore stock and reduce sold quantity for each order item
+        for order_item in order.items:
+            product = order_item.product
+            if product:
+                product.stock += order_item.quantity
+                product.sold_quantity -= order_item.quantity
+                # Ensure sold_quantity doesn't go negative
+                if product.sold_quantity < 0:
+                    product.sold_quantity = 0
+
         # Update order status to cancelled
         order.status = 'Hủy đơn'
         db.session.commit()
