@@ -1,16 +1,16 @@
 # Core Flask Framework
-Flask==2.3.3
-Werkzeug==2.3.7
-Jinja2==3.1.6
+Flask==2.0.3
+Werkzeug==2.0.3
+Jinja2==3.0.3
 MarkupSafe==2.1.5
 click==8.1.8
 itsdangerous==2.2.0
 blinker==1.8.2
 
 # Flask Extensions
-Flask-SQLAlchemy==3.1.1
+Flask-SQLAlchemy==2.5.1
 Flask-Login==0.6.3
-Flask-WTF==1.1.1
+Flask-WTF==0.14.3
 Flask-Mail==0.9.1
 Flask-Bcrypt==1.0.1
 Flask-Migrate==2.5.3
@@ -18,13 +18,13 @@ Flask-Caching==2.1.0
 Flask-Reuploaded==1.4.0
 
 # Database
-SQLAlchemy==2.0.43
+SQLAlchemy==1.4.46
 PyMySQL==1.0.2
 alembic==1.4.3
 greenlet==3.1.1
 
 # Forms and Validation
-WTForms==3.1.2
+WTForms==2.3.3
 email-validator==1.1.1
 
 # Security & Authentication

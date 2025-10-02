@@ -238,8 +238,14 @@ def get_order():
 @app.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
+    print(f"DEBUG: Checkout function called, method: {request.method}")
+    print(f"DEBUG: Current user: {current_user.id}")
+    cart_info = session.get('Shoppingcart', {})
+    print(f"DEBUG: Session cart items count: {len(cart_info) if cart_info else 0}")
+    
     from shop.customers.forms import CheckoutForm
     form = CheckoutForm()
+    print(f"DEBUG: Form created")
 
     if 'Shoppingcart' in session:
         subtotal = 0
@@ -252,12 +258,16 @@ def checkout():
                 discount += (float(item['discount']) / 100) * (float(item['price']) * int(item['quantity']))
 
         total = subtotal - discount
+        print(f"DEBUG: Cart totals - subtotal: {subtotal}, discount: {discount}, total: {total}")
     else:
         subtotal = 0
         discount = 0
         total = 0
+        print("DEBUG: No cart in session")
 
+    print(f"DEBUG: Form validation - is_submitted: {form.is_submitted()}, errors: {form.errors}")
     if form.validate_on_submit():
+        print("DEBUG: Form validation passed")
         if 'Shoppingcart' not in session or not session['Shoppingcart']:
             flash('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng trước khi đặt hàng.', 'warning')
             return redirect(url_for('carts'))
@@ -290,15 +300,19 @@ def checkout():
         )
 
         try:
+            print(f"DEBUG: Starting checkout process for customer {current_user.id}")
             db.session.add(order)
             db.session.flush()  # Get order ID for OrderItems
+            print(f"DEBUG: Order created with ID {order.id}")
 
             # Create OrderItem objects for each cart item and update stock
             for product_id, item in session['Shoppingcart'].items():
+                print(f"DEBUG: Processing product {product_id}")
                 product = Product.query.get(int(product_id))
                 if product:
                     quantity = int(item.get('quantity', 0))
                     discount = float(item.get('discount', 0))
+                    print(f"DEBUG: Product ID {product.id}, quantity: {quantity}, stock: {product.stock}")
 
                     # Check stock availability before processing
                     if quantity > product.stock:
@@ -318,11 +332,15 @@ def checkout():
                         discount=discount
                     )
                     db.session.add(order_item)
+                    print(f"DEBUG: OrderItem created for product {product_id}")
 
+            print("DEBUG: About to commit transaction")
             db.session.commit()
+            print("DEBUG: Transaction committed successfully")
 
             # Handle payment method
             if payment_method == 'vnpay':
+                print("DEBUG: Processing VNPAY payment")
                 # For VNPAY, create a temporary form submission to vnpay_payment
                 # We need to redirect to a page that will auto-submit the form
                 session['vnpay_pending_order'] = invoice
@@ -333,21 +351,40 @@ def checkout():
                                      customer_name=f"{current_user.first_name} {current_user.last_name}",
                                      customer_phone=current_user.phone_number)
             else:
+                print("DEBUG: Processing COD payment")
                 # COD - Send confirmation email and redirect to payment history
                 customer = Customer.query.get(current_user.id)
                 if customer and customer.email:
-                    send_order_confirmation_email(customer, order)
+                    print(f"DEBUG: Sending email to customer ID {customer.id}")
+                    try:
+                        send_order_confirmation_email(customer, order)
+                        print("DEBUG: Email sent successfully")
+                    except Exception as email_error:
+                        print(f"DEBUG: Email error occurred")
+                        # Don't fail the order if email fails
+                        pass
 
                 # Clear cart
                 session.pop('Shoppingcart', None)
+                print("DEBUG: Cart cleared")
 
                 flash('Đơn hàng đã được đặt thành công! Email xác nhận đã được gửi đến địa chỉ email của bạn.', 'success')
+                print("DEBUG: About to redirect to payment_history")
                 return redirect(url_for('payment_history'))
 
-        except Exception:
+        except Exception as e:
             db.session.rollback()
+            print(f"ERROR during checkout occurred")
+            import traceback
+            traceback.print_exc()
             flash('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.', 'danger')
+    else:
+        if request.method == 'POST':
+            print("DEBUG: Form validation failed")
+            print(f"DEBUG: Form errors: {form.errors}")
+            print(f"DEBUG: Form data: {form.data}")
 
+    print("DEBUG: Rendering checkout template")
     return render_template('customers/checkout.html', form=form, subtotal=subtotal, discount=discount, total=total)
 
 
@@ -430,7 +467,10 @@ def submit_order():
             else:
                 flash('Giỏ hàng trống!', 'danger')
 
-        except Exception:
+        except Exception as e:
+            print(f"Error during submit_order: {str(e)}")
+            import traceback
+            traceback.print_exc()
             flash('Có lỗi xảy ra khi đặt hàng', 'danger')
 
     return redirect(url_for('payment_history'))
