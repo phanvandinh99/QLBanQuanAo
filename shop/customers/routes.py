@@ -341,6 +341,19 @@ def checkout():
             # Handle payment method
             if payment_method == 'vnpay':
                 print("DEBUG: Processing VNPAY payment")
+                
+                # Gửi email xác nhận đơn hàng ngay khi chọn VNPay
+                customer = Customer.query.get(current_user.id)
+                if customer and customer.email:
+                    print(f"DEBUG: Sending VNPay confirmation email to customer ID {customer.id}")
+                    try:
+                        send_order_confirmation_email(customer, order)
+                        print("DEBUG: VNPay confirmation email sent successfully")
+                    except Exception as email_error:
+                        print(f"DEBUG: VNPay email error occurred: {email_error}")
+                        # Don't fail the order if email fails
+                        pass
+                
                 # For VNPAY, create a temporary form submission to vnpay_payment
                 # We need to redirect to a page that will auto-submit the form
                 session['vnpay_pending_order'] = invoice
