@@ -323,13 +323,13 @@
                 <tbody>
                     {% set cart_items = session.get('Shoppingcart', {}) %}
                     {% for key, product in cart_items.items() %}
-                    {% set discount =(product.discount/100) * product.price |float %}
-                    {% set subtotal = product.quantity|int * product.price|float %}
+                    {% set discount =(product.discount/100) * product.current_price |float %}
+                    {% set subtotal = product.quantity|int * product.current_price|float %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td class="product-name">{{product.name}}</td>
                         <td><span class="product-color">{{product.color|capitalize}}</span></td>
-                        <td class="price">{{product.price | vnd}}</td>
+                        <td class="price">{{product.current_price | vnd}}</td>
                         <td>{{product.quantity}}</td>
                         <td class="discount">{% if product.discount %}-{{product.discount}}%{% else %}-{% endif %}</td>
                         <td class="price">{{(subtotal - discount|round(1,'floor')) | vnd}}</td>

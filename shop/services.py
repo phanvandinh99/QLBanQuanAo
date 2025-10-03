@@ -68,11 +68,11 @@ class ProductService:
             if 'name' in data:
                 product.name = validate_product_name(data['name'])
             if 'price' in data:
-                product.price = validate_price(data['price'])
+                product.current_price = validate_price(data['price'])
             if 'discount' in data:
                 product.discount = validate_discount(data['discount'])
             if 'stock' in data:
-                product.stock = validate_stock(data['stock'])
+                product.total_stock = validate_stock(data['stock'])
             if 'colors' in data:
                 product.colors = data['colors'].strip()
             if 'description' in data:
@@ -223,13 +223,13 @@ class OrderService:
                     order_id=order.id,
                     product_id=cart_item.product.id,
                     quantity=cart_item.quantity,
-                    unit_price=cart_item.product.price,
+                    unit_price=cart_item.product.current_price,
                     discount=cart_item.product.discount
                 )
                 db.session.add(order_item)
 
                 # Update product stock
-                cart_item.product.stock -= cart_item.quantity
+                cart_item.product.total_stock -= cart_item.quantity
 
             db.session.commit()
             return order
@@ -288,7 +288,11 @@ class SearchService:
         """Advanced product search"""
         try:
             # Base query
-            products_query = Product.query.filter(Product.stock > 0)
+            products_query = Product.query.join(ProductVariant).filter(
+                ProductVariant.product_id == Product.id,
+                ProductVariant.is_active == True,
+                ProductVariant.stock > 0
+            ).distinct()
 
             # Text search
             if query:

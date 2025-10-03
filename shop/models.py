@@ -69,11 +69,19 @@ class Product(db.Model):
     __tablename__ = 'product'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False, index=True)
-    price = db.Column(db.Numeric(10,2), nullable=False)
+    
+    # Tất cả sản phẩm đều có variants - bỏ price và stock
+    # price = db.Column(db.Numeric(10,2), nullable=False)  # Đã bỏ - lấy từ variants
+    # stock = db.Column(db.Integer, nullable=False, default=0)  # Đã bỏ - lấy từ variants
+    sold_quantity = db.Column(db.Integer, nullable=False, default=0)  # Tự động cập nhật từ variants  
+    colors = db.Column(db.Text, nullable=True)  # Không còn cần thiết vì có variants
+    
+    # Tất cả sản phẩm đều có variants
+    has_variants = db.Column(db.Boolean, default=True)  # Luôn True - tất cả sản phẩm có variants
+    min_price = db.Column(db.Numeric(10,2))  # Giá thấp nhất từ variants
+    max_price = db.Column(db.Numeric(10,2))  # Giá cao nhất từ variants
+    
     discount = db.Column(db.Integer, default=0)
-    stock = db.Column(db.Integer, nullable=False, default=0)
-    sold_quantity = db.Column(db.Integer, nullable=False, default=0)
-    colors = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text, nullable=False)
     pub_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False, index=True)
@@ -92,16 +100,100 @@ class Product(db.Model):
         return f'<Product {self.name}>'
 
     @property
+    def current_price(self):
+        """Get current price from variants"""
+        if self.min_price is not None:
+            if self.min_price == self.max_price:
+                # Nếu tất cả variants có cùng giá
+                if self.discount > 0:
+                    return self.min_price * (100 - self.discount) / 100
+                return self.min_price
+            else:
+                # Nếu có nhiều giá khác nhau, trả về range
+                min_price = self.min_price
+                max_price = self.max_price
+                if self.discount > 0:
+                    min_price = min_price * (100 - self.discount) / 100
+                    max_price = max_price * (100 - self.discount) / 100
+                return f"{min_price:,.0f}đ - {max_price:,.0f}đ"
+        return 0  # Chưa có variants
+
+    @property
     def discounted_price(self):
-        """Calculate discounted price"""
-        if self.discount > 0:
-            return self.price * (100 - self.discount) / 100
-        return self.price
+        """Calculate discounted price - for backward compatibility"""
+        return self.current_price
 
     @property
     def is_available(self):
         """Check if product is available for purchase"""
-        return self.stock > 0
+        # Kiểm tra xem có variant nào có stock > 0 không
+        return any(variant.stock > 0 for variant in self.variants if variant.is_active)
+
+    @property
+    def price_range(self):
+        """Get price range for products with variants - for backward compatibility"""
+        return self.current_price
+
+    @property
+    def display_price(self):
+        """Get formatted display price"""
+        current_price = self.current_price
+        if isinstance(current_price, str):
+            return current_price  # Already formatted as range
+        else:
+            return f"{current_price:,.0f}đ"
+    
+    @property
+    def total_stock(self):
+        """Get total stock from all variants"""
+        total = sum(variant.stock for variant in self.variants if variant.is_active)
+        return total if total is not None else 0
+    
+    @property
+    def stock(self):
+        """Backward compatibility - get total stock from variants"""
+        return self.total_stock
+
+    @property
+    def total_sold_quantity(self):
+        """Get total sold quantity from all variants"""
+        return sum(variant.sold_quantity for variant in self.variants.filter_by(is_active=True))
+
+    def get_available_sizes(self):
+        """Get available sizes for this product"""
+        return db.session.query(Size).join(ProductVariant).filter(
+            ProductVariant.product_id == self.id,
+            ProductVariant.is_active == True,
+            ProductVariant.stock > 0
+        ).order_by(Size.sort_order).all()
+
+    def get_available_colors(self):
+        """Get available colors for this product"""
+        return db.session.query(Color).join(ProductVariant).filter(
+            ProductVariant.product_id == self.id,
+            ProductVariant.is_active == True,
+            ProductVariant.stock > 0
+        ).all()
+    
+    def get_cheapest_variant(self):
+        """Get the cheapest available variant"""
+        
+        return self.variants.filter_by(is_active=True).filter(
+            ProductVariant.stock > 0
+        ).order_by(ProductVariant.price.asc()).first()
+
+    def get_variant_by_attributes(self, size_id=None, color_id=None):
+        """Get variant by size and color"""
+        if not self.has_variants:
+            return None
+        
+        query = self.variants.filter_by(is_active=True)
+        if size_id:
+            query = query.filter_by(size_id=size_id)
+        if color_id:
+            query = query.filter_by(color_id=color_id)
+        
+        return query.first()
 
 
 class Supplier(db.Model):
@@ -199,6 +291,7 @@ class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, index=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    product_variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), index=True)
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Numeric(10,2), nullable=False)
     discount = db.Column(db.Integer, default=0)
@@ -206,8 +299,11 @@ class OrderItem(db.Model):
     # Relationships
     order = db.relationship('Order', backref=db.backref('items', lazy='dynamic'))
     product = db.relationship('Product', backref=db.backref('order_items', lazy='dynamic'))
+    product_variant = db.relationship('ProductVariant', backref=db.backref('order_items', lazy='dynamic'))
 
     def __repr__(self):
+        if self.product_variant:
+            return f'<OrderItem {self.product_variant.display_name} x{self.quantity}>'
         return f'<OrderItem {self.product.name} x{self.quantity}>'
 
     @property
@@ -215,6 +311,13 @@ class OrderItem(db.Model):
         """Calculate total price for this item"""
         discounted_price = self.unit_price * (100 - self.discount) / 100
         return discounted_price * self.quantity
+
+    @property
+    def item_display_name(self):
+        """Get display name for order item"""
+        if self.product_variant:
+            return self.product_variant.display_name
+        return self.product.name
 
 class Article(db.Model):
     __tablename__ = 'article'
@@ -279,12 +382,123 @@ class PurchaseItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'), nullable=False, index=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    product_variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), index=True)
     quantity = db.Column(db.Integer, nullable=False)
     unit_cost = db.Column(db.Numeric(10,2), nullable=False, default=0)
 
     # Relationships
     purchase = db.relationship('Purchase', backref=db.backref('items', lazy='dynamic', cascade='all, delete-orphan'))
     product = db.relationship('Product', backref=db.backref('purchase_items', lazy='dynamic'))
+    product_variant = db.relationship('ProductVariant', backref=db.backref('purchase_items', lazy='dynamic'))
 
     def __repr__(self):
         return f'<PurchaseItem P{self.product_id} x{self.quantity}>'
+
+
+# ================= NEW MODELS FOR VARIANTS =================
+
+class Size(db.Model):
+    __tablename__ = 'size'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(10), nullable=False, unique=True)
+    display_name = db.Column(db.String(20), nullable=False)
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Size {self.name}>'
+
+
+class Color(db.Model):
+    __tablename__ = 'color'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    hex_code = db.Column(db.String(7))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Color {self.name}>'
+
+
+class ProductVariant(db.Model):
+    __tablename__ = 'product_variant'
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False, index=True)
+    size_id = db.Column(db.Integer, db.ForeignKey('size.id'), index=True)
+    color_id = db.Column(db.Integer, db.ForeignKey('color.id'), index=True)
+    sku = db.Column(db.String(100), unique=True)
+    price = db.Column(db.Numeric(10,2), nullable=False)
+    stock = db.Column(db.Integer, nullable=False, default=0)
+    sold_quantity = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    product = db.relationship('Product', backref=db.backref('variants', lazy='dynamic'))
+    size = db.relationship('Size', backref=db.backref('variants', lazy='dynamic'))
+    color = db.relationship('Color', backref=db.backref('variants', lazy='dynamic'))
+
+    # Unique constraint
+    __table_args__ = (
+        db.UniqueConstraint('product_id', 'size_id', 'color_id', name='unique_variant'),
+    )
+
+    def __repr__(self):
+        size_name = self.size.name if self.size else 'No Size'
+        color_name = self.color.name if self.color else 'No Color'
+        return f'<ProductVariant {self.product.name} - {size_name} - {color_name}>'
+
+    @property
+    def display_name(self):
+        """Get display name for variant"""
+        parts = [self.product.name]
+        if self.color:
+            parts.append(self.color.name)
+        if self.size:
+            parts.append(f"Size {self.size.name}")
+        return " - ".join(parts)
+
+    @property
+    def discounted_price(self):
+        """Calculate discounted price based on product discount"""
+        if self.product.discount > 0:
+            return self.price * (100 - self.product.discount) / 100
+        return self.price
+
+    @property
+    def is_available(self):
+        """Check if variant is available for purchase"""
+        return self.is_active and self.stock > 0
+
+    def generate_sku(self):
+        """Generate SKU for this variant"""
+        if self.sku:
+            return self.sku
+            
+        product_prefix = ''.join([c.upper() for c in self.product.name.replace(' ', '') if c.isalnum()])[:3]
+        product_id_str = f"{self.product_id:03d}"
+        size_str = self.size.name if self.size else 'OS'
+        color_prefix = ''.join([c.upper() for c in self.color.name.replace(' ', '') if c.isalnum()])[:3] if self.color else 'DEF'
+        
+        return f"{product_prefix}-{product_id_str}-{size_str}-{color_prefix}"
+
+
+class StockMovement(db.Model):
+    __tablename__ = 'stock_movement'
+    id = db.Column(db.Integer, primary_key=True)
+    product_variant_id = db.Column(db.Integer, db.ForeignKey('product_variant.id'), nullable=False, index=True)
+    movement_type = db.Column(db.Enum('in', 'out', 'adjustment'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    reference_type = db.Column(db.Enum('purchase', 'order', 'adjustment', 'return'))
+    reference_id = db.Column(db.Integer)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), index=True)
+
+    # Relationships
+    product_variant = db.relationship('ProductVariant', backref=db.backref('stock_movements', lazy='dynamic'))
+    admin = db.relationship('Admin', backref=db.backref('stock_movements', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<StockMovement {self.movement_type} {self.quantity} for Variant {self.product_variant_id}>'

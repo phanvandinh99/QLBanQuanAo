@@ -312,23 +312,23 @@ def checkout():
                 if product:
                     quantity = int(item.get('quantity', 0))
                     discount = float(item.get('discount', 0))
-                    print(f"DEBUG: Product ID {product.id}, quantity: {quantity}, stock: {product.stock}")
+                    print(f"DEBUG: Product ID {product.id}, quantity: {quantity}, stock: {product.total_stock}")
 
                     # Check stock availability before processing
-                    if quantity > product.stock:
+                    if quantity > product.total_stock:
                         db.session.rollback()
-                        flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.', 'danger')
+                        flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
                         return redirect(url_for('getCart'))
 
                     # Update product stock and sold quantity
-                    product.stock -= quantity
+                    product.total_stock -= quantity
                     product.sold_quantity += quantity
 
                     order_item = OrderItem(
                         order_id=order.id,
                         product_id=int(product_id),
                         quantity=quantity,
-                        unit_price=product.price,
+                        unit_price=product.current_price,
                         discount=discount
                     )
                     db.session.add(order_item)
@@ -432,20 +432,20 @@ def submit_order():
                         discount = float(item.get('discount', 0))
 
                         # Check stock availability before processing
-                        if quantity > product.stock:
+                        if quantity > product.total_stock:
                             db.session.rollback()
-                            flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.', 'danger')
+                            flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
                             return redirect(url_for('getCart'))
 
                         # Update product stock and sold quantity
-                        product.stock -= quantity
+                        product.total_stock -= quantity
                         product.sold_quantity += quantity
 
                         order_item = OrderItem(
                             order_id=order.id,
                             product_id=int(product_id),
                             quantity=quantity,
-                            unit_price=product.price,
+                            unit_price=product.current_price,
                             discount=discount
                         )
                         db.session.add(order_item)
@@ -605,7 +605,7 @@ def cancel_order(invoice):
         for order_item in order.items:
             product = order_item.product
             if product:
-                product.stock += order_item.quantity
+                product.total_stock += order_item.quantity
                 product.sold_quantity -= order_item.quantity
                 # Ensure sold_quantity doesn't go negative
                 if product.sold_quantity < 0:

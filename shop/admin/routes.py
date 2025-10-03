@@ -18,7 +18,7 @@ except ImportError:
 from flask import render_template, session, request, redirect, url_for, flash, current_app, jsonify
 from shop import app, db, bcrypt
 import json
-from shop.models import Brand, Category, Product, Customer, Admin, Order, OrderItem, Rating, Article, Purchase, PurchaseItem, Supplier
+from shop.models import Brand, Category, Product, Customer, Admin, Order, OrderItem, Rating, Article, Purchase, PurchaseItem, Supplier, ProductVariant, Size, Color, StockMovement
 from shop.email_utils import send_order_confirmation_email, send_new_customer_account_email, send_order_status_update_email
 
 # Import reportlab modules at module level to avoid import errors
@@ -36,7 +36,7 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
     print("Warning: ReportLab not available. Invoice export will not work.")
 from .forms import LoginForm, RegistrationForm
-from .forms import PurchaseForm, PurchaseItemForm, SupplierForm
+from .forms import PurchaseForm, PurchaseItemForm, SupplierForm, PurchaseItemVariantForm
 from shop.customers.forms import CustomerRegisterForm
 from shop.admin_decorators import admin_required, role_required, admin_only, get_current_admin, check_menu_permission
 
@@ -250,8 +250,8 @@ def accept_order(id):
 
         for order_item in order_items:
             product = order_item.product
-            if (product.stock - order_item.quantity) >= 0:
-                product.stock -= order_item.quantity
+            if (product.total_stock - order_item.quantity) >= 0:
+                product.total_stock -= order_item.quantity
                 product.sold_quantity += order_item.quantity
                 customer_order.status = 'shipping'  # Use English status
                 db.session.commit()
@@ -347,7 +347,7 @@ def delete_order(id):
         for order_item in order.items:
             product = order_item.product
             if product:
-                product.stock += order_item.quantity
+                product.total_stock += order_item.quantity
                 product.sold_quantity -= order_item.quantity
                 # Ensure sold_quantity doesn't go negative
                 if product.sold_quantity < 0:
@@ -488,13 +488,24 @@ def purchases_create():
     cart_items = []
     total_quantity = 0
     total_cost = 0
-    for product_id, item in purchase_cart.items():
-        product = Product.query.get(int(product_id))
+    for cart_key, item in purchase_cart.items():
+        product_id = item.get('product_id')
+        product_variant_id = item.get('product_variant_id')
+        product = Product.query.get(int(product_id)) if product_id else None
+        variant = ProductVariant.query.get(int(product_variant_id)) if product_variant_id else None
+        
         if product:
             quantity = int(item.get('quantity', 0))
             unit_cost = float(item.get('unit_cost', 0) or 0)
             cost = unit_cost * quantity
-            cart_items.append({'product': product, 'quantity': quantity, 'unit_cost': unit_cost, 'cost': cost})
+            cart_items.append({
+                'product': product, 
+                'variant': variant,
+                'quantity': quantity, 
+                'unit_cost': unit_cost, 
+                'cost': cost,
+                'key': cart_key
+            })
             total_quantity += quantity
             total_cost += cost
 
@@ -503,13 +514,27 @@ def purchases_create():
         if 'add_item' in request.form:
             if item_form.validate_on_submit():
                 product_id = str(item_form.product_id.data)
+                product_variant_id = request.form.get('product_variant_id')
                 quantity = int(item_form.quantity.data)
                 unit_cost = float(item_form.unit_cost.data or 0)
                 product = Product.query.get(product_id)
                 if not product:
                     flash('Sản phẩm không tồn tại!', 'danger')
                     return redirect(url_for('purchases_create'))
-                purchase_cart[product_id] = {'quantity': quantity, 'unit_cost': unit_cost}
+                
+                # Check if product has variants and variant is required
+                if product.has_variants and (not product_variant_id or product_variant_id == ''):
+                    flash('Vui lòng chọn biến thể sản phẩm!', 'danger')
+                    return redirect(url_for('purchases_create'))
+                
+                # Create unique key for cart item
+                cart_key = f"{product_id}_{product_variant_id or '0'}"
+                purchase_cart[cart_key] = {
+                    'product_id': product_id,
+                    'product_variant_id': product_variant_id,
+                    'quantity': quantity, 
+                    'unit_cost': unit_cost
+                }
                 session['purchase_cart'] = purchase_cart
                 flash('Đã thêm sản phẩm vào phiếu nhập!', 'success')
                 return redirect(url_for('purchases_create'))
@@ -517,8 +542,10 @@ def purchases_create():
         # Remove item from purchase cart
         elif 'remove_item' in request.form:
             product_id = request.form.get('product_id')
-            if product_id in purchase_cart:
-                del purchase_cart[product_id]
+            product_variant_id = request.form.get('product_variant_id')
+            cart_key = f"{product_id}_{product_variant_id or '0'}"
+            if cart_key in purchase_cart:
+                del purchase_cart[cart_key]
                 session['purchase_cart'] = purchase_cart
                 flash('Đã xóa sản phẩm khỏi phiếu nhập!', 'success')
             return redirect(url_for('purchases_create'))
@@ -549,8 +576,12 @@ def purchases_create():
                     db.session.flush()
 
                     # Create items and update stock
-                    for product_id, item in purchase_cart.items():
-                        product = Product.query.get(int(product_id))
+                    for cart_key, item in purchase_cart.items():
+                        product_id = item.get('product_id')
+                        product_variant_id = item.get('product_variant_id')
+                        product = Product.query.get(int(product_id)) if product_id else None
+                        variant = ProductVariant.query.get(int(product_variant_id)) if product_variant_id else None
+                        
                         if not product:
                             continue
                         quantity = int(item.get('quantity', 0))
@@ -559,12 +590,18 @@ def purchases_create():
                         db.session.add(PurchaseItem(
                             purchase_id=purchase.id,
                             product_id=product.id,
+                            product_variant_id=variant.id if variant else None,
                             quantity=quantity,
                             unit_cost=unit_cost
                         ))
 
                         # Increase stock
-                        product.stock = (product.stock or 0) + quantity
+                        if variant:
+                            # Update variant stock
+                            variant.stock = (variant.stock or 0) + quantity
+                        else:
+                            # Update product total stock
+                            product.total_stock = (product.total_stock or 0) + quantity
 
                     db.session.commit()
                     session.pop('purchase_cart', None)
@@ -1304,7 +1341,11 @@ def admin_create_order():
     item_form = AdminOrderItemForm()
 
     # Get all products for selection (products with stock > 0)
-    products = Product.query.filter(Product.stock > 0).all()
+    products = Product.query.join(ProductVariant).filter(
+        ProductVariant.product_id == Product.id,
+        ProductVariant.is_active == True,
+        ProductVariant.stock > 0
+    ).distinct().all()
 
     # Initialize cart for admin order
     if 'admin_cart' not in session:
@@ -1323,7 +1364,7 @@ def admin_create_order():
         if product:
             quantity = int(item.get('quantity', 0))
             discount_percent = float(item.get('discount', 0))
-            unit_price = float(product.price)
+            unit_price = float(product.current_price)
             discount_amount = (discount_percent / 100) * unit_price * quantity
             final_price = unit_price * quantity - discount_amount
 
@@ -1356,8 +1397,8 @@ def admin_create_order():
                     flash('Sản phẩm không tồn tại!', 'danger')
                     return redirect(url_for('admin_create_order'))
 
-                if quantity > product.stock:
-                    flash(f'Không đủ hàng trong kho. Chỉ còn {product.stock} sản phẩm!', 'danger')
+                if quantity > product.total_stock:
+                    flash(f'Không đủ hàng trong kho. Chỉ còn {product.total_stock} sản phẩm!', 'danger')
                     return redirect(url_for('admin_create_order'))
 
                 # Add to cart
@@ -1491,17 +1532,17 @@ def admin_create_order():
                                 order_id=order.id,
                                 product_id=int(product_id),
                                 quantity=quantity,
-                                unit_price=product.price,
+                                unit_price=product.current_price,
                                 discount=discount
                             )
                             db.session.add(order_item)
                             current_app.logger.info(f"Order item created for product {product_id}")
 
                             # Update product stock and sold quantity
-                            old_stock = product.stock
-                            product.stock -= quantity
+                            old_stock = product.total_stock
+                            product.total_stock -= quantity
                             product.sold_quantity += quantity
-                            current_app.logger.info(f"Stock updated for product {product_id}: {old_stock} -> {product.stock}, sold_quantity: {product.sold_quantity}")
+                            current_app.logger.info(f"Stock updated for product {product_id}: {old_stock} -> {product.total_stock}, sold_quantity: {product.sold_quantity}")
 
                     current_app.logger.info("Committing transaction...")
                     db.session.commit()
@@ -2181,3 +2222,135 @@ def get_chart_data_by_period(period):
             'top_products': [],
             'category_stats': []
         }
+
+
+# ================= VARIANT-ENABLED PURCHASE ROUTES =================
+
+
+
+# ================= AJAX ENDPOINTS FOR ADMIN =================
+
+@app.route('/admin/api/products/<int:product_id>/has-variants')
+@admin_required
+def check_product_has_variants(product_id):
+    """Check if product has variants (AJAX endpoint)"""
+    product = Product.query.get_or_404(product_id)
+    variants_count = product.variants.filter_by(is_active=True).count()
+    
+    # Debug logging
+    print(f"=== DEBUG: Product {product_id} ({product.name})")
+    print(f"=== DEBUG: has_variants field: {product.has_variants}")
+    print(f"=== DEBUG: actual variants count: {variants_count}")
+    print(f"=== DEBUG: all variants: {[v.id for v in product.variants.all()]}")
+    
+    return jsonify({
+        'has_variants': product.has_variants,
+        'variants_count': variants_count,
+        'product_name': product.name,
+        'debug_info': {
+            'has_variants_field': product.has_variants,
+            'actual_variants_count': variants_count,
+            'all_variants': [{'id': v.id, 'display_name': v.display_name, 'is_active': v.is_active} for v in product.variants.all()]
+        }
+    })
+
+
+@app.route('/admin/api/products/<int:product_id>/variants')
+@admin_required
+def get_product_variants(product_id):
+    """Get variants for a product (AJAX endpoint)"""
+    product = Product.query.get_or_404(product_id)
+    variants = product.variants.filter_by(is_active=True).all()
+    
+    print(f"=== DEBUG: Getting variants for product {product_id} ({product.name})")
+    print(f"=== DEBUG: Total variants: {product.variants.count()}")
+    print(f"=== DEBUG: Active variants: {len(variants)}")
+    
+    variants_data = []
+    for variant in variants:
+        print(f"=== DEBUG: Variant {variant.id}: {variant.display_name}, stock: {variant.stock}")
+        variants_data.append({
+            'id': variant.id,
+            'display_name': variant.display_name,
+            'sku': variant.sku,
+            'price': float(variant.price),
+            'stock': variant.stock,
+            'size': variant.size.display_name if variant.size else None,
+            'color': variant.color.name if variant.color else None
+        })
+    
+    print(f"=== DEBUG: Returning {len(variants_data)} variants")
+    return jsonify(variants_data)
+
+
+
+
+@app.route('/admin/api/variants/<int:variant_id>')
+@admin_required
+def get_variant_info(variant_id):
+    """Get variant information (AJAX endpoint)"""
+    variant = ProductVariant.query.get_or_404(variant_id)
+    return jsonify({
+        'id': variant.id,
+        'product_name': variant.product.name,
+        'display_name': variant.display_name,
+        'sku': variant.sku,
+        'price': float(variant.price),
+        'stock': variant.stock,
+        'is_active': variant.is_active,
+        'size': variant.size.display_name if variant.size else None,
+        'color': variant.color.name if variant.color else None
+    })
+
+
+@app.route('/admin/api/all-variants')
+@admin_required
+def get_all_variants():
+    """Get all active variants (AJAX endpoint)"""
+    try:
+        variants = ProductVariant.query.filter_by(is_active=True).all()
+        
+        variants_data = []
+        for variant in variants:
+            variants_data.append({
+                'id': variant.id,
+                'product_id': variant.product_id,
+                'display_name': variant.display_name,
+                'sku': variant.sku,
+                'price': float(variant.price),
+                'stock': variant.stock,
+                'size': variant.size.display_name if variant.size else None,
+                'color': variant.color.name if variant.color else None
+            })
+        
+        print(f"=== DEBUG: Returning {len(variants_data)} variants")
+        return jsonify(variants_data)
+    except Exception as e:
+        print(f"=== DEBUG: Error in get_all_variants: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/test-api/all-variants')
+def test_all_variants():
+    """Test endpoint without authentication"""
+    try:
+        variants = ProductVariant.query.filter_by(is_active=True).all()
+        
+        variants_data = []
+        for variant in variants:
+            variants_data.append({
+                'id': variant.id,
+                'product_id': variant.product_id,
+                'display_name': variant.display_name,
+                'sku': variant.sku,
+                'price': float(variant.price),
+                'stock': variant.stock,
+                'size': variant.size.display_name if variant.size else None,
+                'color': variant.color.name if variant.color else None
+            })
+        
+        print(f"=== DEBUG: Test endpoint returning {len(variants_data)} variants")
+        return jsonify(variants_data)
+    except Exception as e:
+        print(f"=== DEBUG: Error in test_all_variants: {e}")
+        return jsonify({'error': str(e)}), 500
+

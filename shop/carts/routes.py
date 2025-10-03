@@ -50,8 +50,8 @@ def AddCart():
         
         # Check if total quantity (cart + new) exceeds stock
         total_requested_quantity = current_cart_quantity + quantity
-        if total_requested_quantity > product.stock:
-            error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.stock})'
+        if total_requested_quantity > product.total_stock:
+            error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.total_stock})'
             if is_ajax_request():
                 return error_response(error_msg)
             flash(error_msg, 'danger')
@@ -60,7 +60,7 @@ def AddCart():
         brand = Brand.query.filter_by(id=product.brand_id).first().name
         if request.method == "POST":
             # if product_id in orders
-            DictItems = {product_id: {'name': product.name, 'price': float(product.price), 'discount': product.discount,
+            DictItems = {product_id: {'name': product.name, 'price': float(product.current_price), 'discount': product.discount,
                                       'color': color, 'quantity': quantity, 'image': product.image_1,
                                       'colors': product.colors, 'brand': brand}}
             if 'Shoppingcart' in session:
@@ -146,7 +146,7 @@ def updatecart(code):
         
         # Check stock availability
         product = Product.query.get(code)
-        if product and quantity > product.stock:
+        if product and quantity > product.total_stock:
             flash('Số lượng sản phẩm trong kho không đáp ứng', 'danger')
             return redirect(url_for('getCart'))
         
@@ -307,7 +307,7 @@ def vnpay_payment():
                         order_id=new_order.id,
                         product_id=int(product_id),
                         quantity=quantity,
-                        unit_price=product.price,
+                        unit_price=product.current_price,
                         discount=discount
                     )
                     db.session.add(order_item)

@@ -1,4 +1,9 @@
 {% extends 'admin/layout.html' %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
 {% block content %}
 {% include 'admin/header.html' %}
 <div class="content-wrapper">
@@ -29,16 +34,23 @@
               <form method="post">
                 {{ item_form.csrf_token }}
                 <div class="form-row">
-                  <div class="form-group col-md-7">
-                    <label for="product_id">Chọn sản phẩm (nhập ID hoặc chọn theo tên)</label>
-                    <input type="text" name="product_id" id="product_id" class="form-control"
-                           list="product_options" placeholder="Ví dụ: 12 hoặc chọn từ danh sách" autocomplete="off">
-                    <small class="form-text text-muted">Gợi ý theo tên hiển thị bên dưới, giá trị gửi đi là ID sản phẩm.</small>
-                    <datalist id="product_options">
+                  <div class="form-group col-md-4">
+                    <label for="product_id">Chọn sản phẩm</label>
+                    <select name="product_id" id="product_id" class="form-control" required>
+                      <option value="">-- Chọn sản phẩm --</option>
                       {% for p in products %}
-                      <option value="{{ p.id }}">{{ p.name }} — Tồn: {{ p.stock }}</option>
+                      <option value="{{ p.id }}">{{ p.name }}</option>
                       {% endfor %}
-                    </datalist>
+                    </select>
+                  </div>
+                  <div class="form-group col-md-3" id="variant_group">
+                    <label for="product_variant_id">Chọn biến thể</label>
+                    <select name="product_variant_id" id="product_variant_id" class="form-control" required>
+                      <option value="">-- Chọn sản phẩm trước --</option>
+                    </select>
+                    <small class="form-text text-muted" id="variant_help">
+                      Chọn sản phẩm để xem các biến thể có sẵn
+                    </small>
                   </div>
                   <div class="form-group col-md-2">
                     <label for="quantity">Số lượng</label>
@@ -58,6 +70,7 @@
                   <tr>
                     <th>#</th>
                     <th>Sản phẩm</th>
+
                     <th>SL</th>
                     <th>Giá nhập</th>
                     <th>Thành tiền</th>
@@ -68,13 +81,20 @@
                   {% for item in cart_items %}
                   <tr>
                     <td>{{ loop.index }}</td>
-                    <td>{{ item.product.name }}</td>
+                    <td>
+                      {% if item.variant %}
+                        <span>{{ item.variant.display_name }}</span>
+                      {% else %}
+                        <span class="text-muted">Không có biến thể</span>
+                      {% endif %}
+                    </td>
                     <td>{{ item.quantity }}</td>
                     <td>{{ item.unit_cost | vnd }}</td>
                     <td>{{ item.cost | vnd }}</td>
                     <td>
                       <form method="post" style="display:inline">
                         <input type="hidden" name="product_id" value="{{ item.product.id }}" />
+                        <input type="hidden" name="product_variant_id" value="{{ item.variant.id if item.variant else '' }}" />
                         <button class="btn btn-danger btn-sm" name="remove_item">Xóa</button>
                       </form>
                     </td>
@@ -123,7 +143,172 @@
     </div>
   </section>
 </div>
-{% include 'admin/footer.html' %}
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+
+window.addEventListener('load', function() {
+    const productSelect = document.getElementById('product_id');
+    const variantSelect = document.getElementById('product_variant_id');
+    const variantHelp = document.getElementById('variant_help');
+    
+    if (!productSelect || !variantSelect) {
+        console.error('Required elements not found!');
+        return;
+    }
+    
+    // Store all variants data
+    let allVariants = [];
+    let variantsLoaded = false;
+    
+    // Load all variants when page loads
+    
+    // Get all products first, then load variants for each
+    fetch('/api/test-variants')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.variants) {
+                allVariants = data.variants;
+                
+                // Show success message
+                if (allVariants.length > 0) {
+                    variantsLoaded = true;
+                    if (variantHelp) {
+                        variantHelp.textContent = `Đã tải ${allVariants.length} biến thể. Chọn sản phẩm để xem biến thể.`;
+                        variantHelp.className = 'form-text text-success';
+                    }
+                } else {
+                    variantsLoaded = true;
+                    if (variantHelp) {
+                        variantHelp.textContent = 'Không có biến thể nào trong cơ sở dữ liệu';
+                        variantHelp.className = 'form-text text-warning';
+                    }
+                }
+            } else {
+                console.error('❌ Invalid response format:', data);
+                throw new Error('Invalid response format');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading variants:', error);
+            // Show error in UI
+            variantSelect.innerHTML = '<option value="">-- Lỗi tải biến thể --</option>';
+            if (variantHelp) {
+                variantHelp.textContent = 'Lỗi khi tải biến thể. Vui lòng tải lại trang.';
+                variantHelp.className = 'form-text text-danger';
+            }
+            
+            // Try fallback method
+            loadVariantsFallback();
+        });
+    
+    // Fallback method to load variants
+    function loadVariantsFallback() {
+        fetch('/api/test-variants')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fallback failed: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.variants) {
+                    allVariants = data.variants;
+                    variantsLoaded = true;
+                    if (variantHelp) {
+                        variantHelp.textContent = `Đã tải ${allVariants.length} biến thể. Chọn sản phẩm để xem biến thể.`;
+                        variantHelp.className = 'form-text text-success';
+                    }
+                }
+            })
+            .catch(fallbackError => {
+                console.error('Fallback failed:', fallbackError);
+                variantsLoaded = true; // Mark as loaded even if failed
+                if (variantHelp) {
+                    variantHelp.textContent = 'Không thể tải biến thể. Vui lòng tải lại trang.';
+                    variantHelp.className = 'form-text text-danger';
+                }
+            });
+    }
+    
+    
+    // Add event listener
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            const productId = this.value;
+            
+            // Clear variants
+            variantSelect.innerHTML = '<option value="">-- Chọn biến thể --</option>';
+            
+            if (productId && allVariants.length > 0) {
+                // Filter variants by product ID
+                const productVariants = allVariants.filter(variant => variant.product_id == productId);
+                
+                if (productVariants.length > 0) {
+                    productVariants.forEach(function(variant) {
+                        const option = document.createElement('option');
+                        option.value = variant.id;
+                        // Chỉ hiển thị thông tin biến thể, không hiển thị tên sản phẩm
+                        let displayText = '';
+                        if (variant.size_name && variant.size_name !== 'No Size') {
+                            displayText += variant.size_name;
+                        }
+                        if (variant.color_name && variant.color_name !== 'No Color') {
+                            if (displayText) displayText += ' - ';
+                            displayText += variant.color_name;
+                        }
+                        if (!displayText) {
+                            displayText = variant.display_name || 'Biến thể ' + variant.id;
+                        }
+                        displayText += ' - ' + (variant.stock > 0 ? variant.stock + ' có sẵn' : 'Hết hàng');
+                        option.textContent = displayText;
+                        variantSelect.appendChild(option);
+                    });
+                    if (variantHelp) {
+                        variantHelp.textContent = `Tìm thấy ${productVariants.length} biến thể cho sản phẩm này`;
+                        variantHelp.className = 'form-text text-success';
+                    }
+                } else {
+                    variantSelect.innerHTML = '<option value="">-- Sản phẩm không có biến thể --</option>';
+                    if (variantHelp) {
+                        variantHelp.textContent = 'Sản phẩm này không có biến thể';
+                        variantHelp.className = 'form-text text-warning';
+                    }
+                }
+            } else if (productId) {
+                if (!variantsLoaded) {
+                    variantSelect.innerHTML = '<option value="">-- Đang tải biến thể... --</option>';
+                    if (variantHelp) {
+                        variantHelp.textContent = 'Đang tải biến thể...';
+                        variantHelp.className = 'form-text text-info';
+                    }
+                } else {
+                    variantSelect.innerHTML = '<option value="">-- Sản phẩm không có biến thể --</option>';
+                    if (variantHelp) {
+                        variantHelp.textContent = 'Sản phẩm này không có biến thể';
+                        variantHelp.className = 'form-text text-warning';
+                    }
+                }
+            } else {
+                variantSelect.innerHTML = '<option value="">-- Chọn sản phẩm trước --</option>';
+                if (variantHelp) {
+                    variantHelp.textContent = 'Chọn sản phẩm để xem các biến thể có sẵn';
+                    variantHelp.className = 'form-text text-muted';
+                }
+            }
+        });
+    } else {
+        console.error('Product select element not found!');
+    }
+    
+});
+</script>
+{% endblock %}
 
 

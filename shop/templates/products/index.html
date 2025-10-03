@@ -315,20 +315,20 @@
             </a>
             <div class="product-price">
               {% if product.discount > 0 %}
-              <span class="original-price">{{product.price | vnd}}</span>
+              <span class="original-price">{{product.current_price | vnd}}</span>
               <span class="current-price"
-                >{{(product.price * (100 - product.discount) / 100) |
+                >{{(product.current_price * (100 - product.discount) / 100) |
                 vnd}}</span
               >
               {% else %}
-              <span class="current-price">{{product.price | vnd}}</span>
+              <span class="current-price">{{product.current_price | vnd}}</span>
               {% endif %}
             </div>
             <div class="product-meta">
               <span
-                class="stock-status {% if product.stock > 0 %}in-stock{% else %}out-of-stock{% endif %}"
+                class="stock-status {% if product.total_stock > 0 %}in-stock{% else %}out-of-stock{% endif %}"
               >
-                {% if product.stock > 0 %}
+                {% if product.total_stock > 0 %}
                 <i class="fa fa-check-circle"></i> Còn hàng {% else %}
                 <i class="fa fa-times-circle"></i> Hết hàng {% endif %}
               </span>
@@ -336,7 +336,7 @@
             <div class="product-actions">
               <div class="row">
                 <div class="col-6">
-                  {% if product.stock > 0 %}
+                  {% if product.total_stock > 0 %}
                   <form
                     action="{{url_for('AddCart')}}"
                     method="post"

@@ -55,7 +55,7 @@
           </div>
           <div class="card-body p-0">
             {% for key, product in session['Shoppingcart'].items() %} {% set
-            discount =(product.discount/100) * product.price|float %}
+            discount =(product.discount/100) * product.current_price|float %}
             <div class="cart-item border-bottom p-4">
               <div class="row align-items-center">
                 <!-- Product Image -->
@@ -199,19 +199,19 @@
                     <div class="price-section">
                       {% if product.discount %}
                       <div class="current-price fw-bold text-primary fs-4">
-                        Giá bán: {{(product.price - discount) | vnd}}
+                        Giá bán: {{(product.current_price - discount) | vnd}}
                       </div>
                       <div
                         class="original-price text-muted text-decoration-line-through small"
                       >
-                        Giá gốc: {{product.price | vnd}}
+                        Giá gốc: {{product.current_price | vnd}}
                       </div>
                       <span class="badge bg-danger ms-2"
                         >-{{product.discount}}%</span
                       >
                       {% else %}
                       <div class="current-price fw-bold text-primary fs-4">
-                        {{product.price | vnd}}
+                        {{product.current_price | vnd}}
                       </div>
                       {% endif %}
                     </div>

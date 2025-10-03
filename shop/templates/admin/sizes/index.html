@@ -1,0 +1,110 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+{% include 'admin/header.html' %}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">{{ title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin') }}">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ title }}</h3>
+                            <div class="card-tools">
+                                <a href="{{ url_for('add_size') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Thêm kích thước mới
+                                </a>
+                            </div>
+                        </div>
+                <div class="card-body">
+                    {% if sizes %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên</th>
+                                    <th>Tên hiển thị</th>
+                                    <th>Thứ tự</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for size in sizes %}
+                                <tr>
+                                    <td>{{ size.id }}</td>
+                                    <td><strong>{{ size.name }}</strong></td>
+                                    <td>{{ size.display_name }}</td>
+                                    <td>{{ size.sort_order }}</td>
+                                    <td>{{ size.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('edit_size', id=size.id) }}" 
+                                           class="btn btn-info btn-sm">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </a>
+                                        <form method="POST" action="{{ url_for('delete_size', id=size.id) }}" 
+                                              style="display: inline-block;"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa kích thước này?')">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Xóa
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Chưa có kích thước nào. <a href="{{ url_for('add_size') }}">Thêm kích thước đầu tiên</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+</div>
+
+{% include 'admin/footer.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.table').DataTable({
+        "responsive": true,
+        "lengthChange": false,
+        "autoWidth": false,
+        "ordering": true,
+        "info": true,
+        "paging": true,
+        "searching": true,
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+        }
+    });
+});
+</script>
+{% endblock %}

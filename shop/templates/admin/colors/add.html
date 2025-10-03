@@ -1,0 +1,141 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+{% include 'admin/header.html' %}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">{{ title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin') }}">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('colors_list') }}">Quản lý màu sắc</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Thêm màu sắc mới</h3>
+                        </div>
+                <form method="POST">
+                    <div class="card-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control", placeholder="VD: Đỏ, Xanh Navy, Trắng") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.hex_code.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.hex_code(class="form-control", placeholder="#FF0000", id="color-input") }}
+                                <div class="input-group-append">
+                                    <input type="color" id="color-picker" class="form-control" style="width: 50px; padding: 0;">
+                                </div>
+                            </div>
+                            {% if form.hex_code.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.hex_code.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Tùy chọn: Mã màu hex (VD: #FF0000 cho màu đỏ)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Xem trước màu:</label>
+                            <div id="color-preview" style="width: 100px; height: 50px; border: 1px solid #ccc; border-radius: 4px; background-color: #ffffff;"></div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu
+                        </button>
+                        <a href="{{ url_for('manage_colors') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Hướng dẫn</h3>
+                </div>
+                <div class="card-body">
+                    <h5>Tên màu:</h5>
+                    <p>Tên màu sắc hiển thị cho khách hàng (VD: Đỏ, Xanh Navy, Trắng)</p>
+                    
+                    <h5>Mã màu (hex):</h5>
+                    <p>Mã màu hex để hiển thị màu sắc trực quan. Bạn có thể:</p>
+                    <ul>
+                        <li>Nhập trực tiếp mã hex (VD: #FF0000)</li>
+                        <li>Sử dụng color picker bên cạnh</li>
+                        <li>Để trống nếu không cần hiển thị màu</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Lưu ý:</strong> Tên màu phải là duy nhất.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+</div>
+
+{% include 'admin/footer.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Color picker functionality
+    $('#color-picker').on('change', function() {
+        var color = $(this).val();
+        $('#color-input').val(color.toUpperCase());
+        $('#color-preview').css('background-color', color);
+    });
+    
+    // Color input functionality
+    $('#color-input').on('input', function() {
+        var color = $(this).val();
+        if (color.match(/^#[0-9A-Fa-f]{6}$/)) {
+            $('#color-preview').css('background-color', color);
+            $('#color-picker').val(color);
+        }
+    });
+    
+    // Initialize preview
+    var initialColor = $('#color-input').val();
+    if (initialColor) {
+        $('#color-preview').css('background-color', initialColor);
+        $('#color-picker').val(initialColor);
+    }
+});
+</script>
+{% endblock %}

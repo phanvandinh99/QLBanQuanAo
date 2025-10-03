@@ -16,8 +16,8 @@
     {% for order in orders %}
     {% set order_data = get_order_data(order) %}
     {% for key, product in order_data.items() %}
-    {% set discount =(product.discount/100) * product.price |float %}
-    {% set subtotal = product.quantity|int * product.price|float %}
+    {% set discount =(product.discount/100) * product.current_price |float %}
+    {% set subtotal = product.quantity|int * product.current_price|float %}
     <tr>
         <td> {{order.invoice}}</td>
         <td>{{product.name}}</td>

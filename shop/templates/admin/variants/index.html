@@ -1,0 +1,202 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ title }}</h3>
+                    <div class="card-tools">
+                        <a href="{{ url_for('add_product_variant', product_id=product.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Thêm biến thể mới
+                        </a>
+                        <a href="{{ url_for('product') }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Quay lại danh sách sản phẩm
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Product Info -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <img src="{{ url_for('static', filename='images/' + product.image_1) }}" 
+                                 alt="{{ product.name }}" class="img-fluid rounded">
+                        </div>
+                        <div class="col-md-10">
+                            <h4>{{ product.name }}</h4>
+                            <p><strong>Danh mục:</strong> {{ product.category.name }} - {{ product.brand.name }}</p>
+                            <p><strong>Giá gốc:</strong> {{ "{:,.0f}".format(product.current_price) }}đ</p>
+                            <p><strong>Tổng tồn kho:</strong> {{ product.total_stock }} sản phẩm</p>
+                            {% if product.has_variants %}
+                                <span class="badge badge-success">Có biến thể</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Không có biến thể</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {% if variants %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>SKU</th>
+                                    <th>Kích thước</th>
+                                    <th>Màu sắc</th>
+                                    <th>Giá</th>
+                                    <th>Tồn kho</th>
+                                    <th>Đã bán</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for variant in variants %}
+                                <tr class="{% if not variant.is_active %}table-secondary{% endif %}">
+                                    <td>{{ variant.id }}</td>
+                                    <td>
+                                        {% if variant.sku %}
+                                            <code>{{ variant.sku }}</code>
+                                        {% else %}
+                                            <span class="text-muted">Chưa có</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if variant.size %}
+                                            <span class="badge badge-info">{{ variant.size.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Không có</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if variant.color %}
+                                            {% if variant.color.hex_code %}
+                                                <div style="display: inline-flex; align-items: center;">
+                                                    <div style="width: 20px; height: 20px; background-color: {{ variant.color.hex_code }}; border: 1px solid #ccc; border-radius: 3px; margin-right: 5px;"></div>
+                                                    {{ variant.color.name }}
+                                                </div>
+                                            {% else %}
+                                                {{ variant.color.name }}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Không có</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ "{:,.0f}".format(variant.price) }}đ</strong>
+                                        {% if product.discount > 0 %}
+                                            <br><small class="text-success">{{ "{:,.0f}".format(variant.discounted_price) }}đ</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if variant.stock > 10 %}badge-success{% elif variant.stock > 0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ variant.stock }}
+                                        </span>
+                                    </td>
+                                    <td>{{ variant.sold_quantity }}</td>
+                                    <td>
+                                        {% if variant.is_active %}
+                                            <span class="badge badge-success">Kích hoạt</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Vô hiệu</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('edit_product_variant', id=variant.id) }}" 
+                                               class="btn btn-info btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('variant_stock_movements', variant_id=variant.id) }}" 
+                                               class="btn btn-secondary btn-sm" title="Lịch sử xuất nhập">
+                                                <i class="fas fa-history"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('delete_product_variant', id=variant.id) }}" 
+                                                  style="display: inline-block;"
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa biến thể này?')">
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-boxes"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Tổng biến thể</span>
+                                    <span class="info-box-number">{{ variants|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Đang kích hoạt</span>
+                                    <span class="info-box-number">{{ variants|selectattr('is_active')|list|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-warehouse"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Tổng tồn kho</span>
+                                    <span class="info-box-number">{{ variants|sum(attribute='stock') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Hết hàng</span>
+                                    <span class="info-box-number">{{ variants|selectattr('stock', 'equalto', 0)|list|length }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Sản phẩm này chưa có biến thể nào. <a href="{{ url_for('add_product_variant', product_id=product.id) }}">Thêm biến thể đầu tiên</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.table').DataTable({
+        "responsive": true,
+        "lengthChange": false,
+        "autoWidth": false,
+        "ordering": true,
+        "info": true,
+        "paging": true,
+        "searching": true,
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+        }
+    });
+});
+</script>
+{% endblock %}

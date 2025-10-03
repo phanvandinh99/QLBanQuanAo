@@ -66,11 +66,11 @@
               </div>
               <div class="price">
                 <span class="product-price"
-                  >{{ (product.price - product.price*product.discount/100) | vnd
+                  >{{ (product.current_price - product.current_price*product.discount/100) | vnd
                   }}</span
                 >
                 {% if product.discount>0 %}
-                <span class="discounted-price">{{ product.price | vnd }}</span>
+                <span class="discounted-price">{{ product.current_price | vnd }}</span>
                 {% endif %} {% if product.discount >0 %}
                 <span class="offer-price">-{{product.discount}}%</span>
                 {% endif %}
@@ -307,12 +307,12 @@
                   <div class="product-meta">
                     <div style="height: 60px">
                       <a href="#" class="product-price"
-                        >{{ (product.price - product.price*product.discount/100)
+                        >{{ (product.current_price - product.current_price*product.discount/100)
                         | vnd }}</a
                       >
                       {% if product.discount>0 %}
                       <a href="#" class="discounted-price"
-                        >{{ product.price | vnd }}</a
+                        >{{ product.current_price | vnd }}</a
                       >
                       {% endif %} {% if product.discount >0 %}
                       <span class="offer-price">{{product.discount}}%off</span>
@@ -466,12 +466,12 @@
                 </h5>
                 <div class="product-meta">
                   <a href="#" class="product-price"
-                    >{{ (product.price - product.price*product.discount/100) |
+                    >{{ (product.current_price - product.current_price*product.discount/100) |
                     vnd }}</a
                   >
                   {% if product.discount>0 %}
                   <a href="#" class="discounted-price"
-                    >{{ product.price | vnd }}</a
+                    >{{ product.current_price | vnd }}</a
                   >
                   {% endif %}
                 </div>

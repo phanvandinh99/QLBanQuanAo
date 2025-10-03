@@ -1,0 +1,249 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Thêm biến thể cho: {{ product.name }}</h3>
+                </div>
+                <form method="POST">
+                    <div class="card-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.size_id.label(class="form-label") }}
+                                    {{ form.size_id(class="form-control select2") }}
+                                    {% if form.size_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.size_id.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.color_id.label(class="form-label") }}
+                                    {{ form.color_id(class="form-control select2") }}
+                                    {% if form.color_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.color_id.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.price.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.price(class="form-control", placeholder="0") }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">đ</span>
+                                        </div>
+                                    </div>
+                                    {% if form.price.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.price.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.stock.label(class="form-label") }}
+                                    {{ form.stock(class="form-control", placeholder="0") }}
+                                    {% if form.stock.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.stock.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    {{ form.sku.label(class="form-label") }}
+                                    {{ form.sku(class="form-control", placeholder="Để trống để tự động tạo") }}
+                                    {% if form.sku.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.sku.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">SKU sẽ được tự động tạo nếu để trống</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div class="form-check">
+                                        {{ form.is_active(class="form-check-input") }}
+                                        {{ form.is_active.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="form-group">
+                            <label>Xem trước biến thể:</label>
+                            <div class="card card-outline card-info">
+                                <div class="card-body">
+                                    <div id="variant-preview">
+                                        <strong id="preview-name">{{ product.name }}</strong>
+                                        <span id="preview-details"></span>
+                                        <br>
+                                        <span class="text-success" id="preview-price">0đ</span>
+                                        <span class="text-info" id="preview-stock">| Tồn kho: 0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu biến thể
+                        </button>
+                        <a href="{{ url_for('manage_product_variants', product_id=product.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Thông tin sản phẩm</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="{{ url_for('static', filename='images/' + product.image_1) }}" 
+                             alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Tên:</th>
+                            <td>{{ product.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Danh mục:</th>
+                            <td>{{ product.category.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Thương hiệu:</th>
+                            <td>{{ product.brand.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Giá gốc:</th>
+                            <td>{{ "{:,.0f}".format(product.current_price) }}đ</td>
+                        </tr>
+                        <tr>
+                            <th>Giảm giá:</th>
+                            <td>{{ product.discount }}%</td>
+                        </tr>
+                        <tr>
+                            <th>Tồn kho hiện tại:</th>
+                            <td>{{ product.total_stock }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card card-warning">
+                <div class="card-header">
+                    <h3 class="card-title">Hướng dẫn</h3>
+                </div>
+                <div class="card-body">
+                    <h6>Kích thước & Màu sắc:</h6>
+                    <p>Chọn kích thước và/hoặc màu sắc cho biến thể. Có thể chọn một hoặc cả hai.</p>
+                    
+                    <h6>Giá:</h6>
+                    <p>Giá riêng cho biến thể này. Có thể khác với giá gốc của sản phẩm.</p>
+                    
+                    <h6>Tồn kho:</h6>
+                    <p>Số lượng tồn kho riêng cho biến thể này.</p>
+                    
+                    <h6>SKU:</h6>
+                    <p>Mã định danh duy nhất. Để trống để hệ thống tự động tạo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2').select2({
+        theme: 'bootstrap4'
+    });
+    
+    // Update preview when form changes
+    function updatePreview() {
+        var sizeText = $('#id_size_id option:selected').text();
+        var colorText = $('#id_color_id option:selected').text();
+        var price = $('#id_price').val() || 0;
+        var stock = $('#id_stock').val() || 0;
+        
+        var details = [];
+        if (sizeText && sizeText !== 'Chọn kích thước') {
+            details.push('Size ' + sizeText);
+        }
+        if (colorText && colorText !== 'Chọn màu sắc') {
+            details.push(colorText);
+        }
+        
+        var detailsStr = details.length > 0 ? ' - ' + details.join(' - ') : '';
+        
+        $('#preview-details').text(detailsStr);
+        $('#preview-price').text(parseInt(price).toLocaleString('vi-VN') + 'đ');
+        $('#preview-stock').text('| Tồn kho: ' + stock);
+    }
+    
+    // Bind events
+    $('#id_size_id, #id_color_id, #id_price, #id_stock').on('change input', updatePreview);
+    
+    // Initial preview
+    updatePreview();
+    
+    // Auto-generate SKU suggestion
+    $('#id_size_id, #id_color_id').on('change', function() {
+        if (!$('#id_sku').val()) {
+            var productName = '{{ product.name }}';
+            var productId = '{{ product.id }}';
+            var sizeText = $('#id_size_id option:selected').text();
+            var colorText = $('#id_color_id option:selected').text();
+            
+            var prefix = productName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase();
+            var productIdStr = productId.padStart(3, '0');
+            var sizeStr = (sizeText && sizeText !== 'Chọn kích thước') ? sizeText : 'OS';
+            var colorStr = (colorText && colorText !== 'Chọn màu sắc') ? 
+                          colorText.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase() : 'DEF';
+            
+            var suggestedSku = prefix + '-' + productIdStr + '-' + sizeStr + '-' + colorStr;
+            $('#id_sku').attr('placeholder', 'Gợi ý: ' + suggestedSku);
+        }
+    });
+});
+</script>
+{% endblock %}
