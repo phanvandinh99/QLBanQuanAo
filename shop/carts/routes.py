@@ -33,7 +33,8 @@ def AddCart():
     try:
         product_id = request.form.get('product_id')
         quantity = int(request.form.get('quantity'))
-        color = request.form.get('colors')
+        variant_id = request.form.get('variant_id')
+        color = request.form.get('colors')  # Fallback for old system
         product = Product.query.filter_by(id=product_id).first()
         
         if not product:
@@ -43,34 +44,87 @@ def AddCart():
             flash(error_msg, 'danger')
             return redirect(request.referrer)
         
-        # Check current quantity in cart
-        current_cart_quantity = 0
-        if 'Shoppingcart' in session and product_id in session['Shoppingcart']:
-            current_cart_quantity = session['Shoppingcart'][product_id]['quantity']
-        
-        # Check if total quantity (cart + new) exceeds stock
-        total_requested_quantity = current_cart_quantity + quantity
-        if total_requested_quantity > product.total_stock:
-            error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.total_stock})'
-            if is_ajax_request():
-                return error_response(error_msg)
-            flash(error_msg, 'danger')
-            return redirect(request.referrer)
-        
-        brand = Brand.query.filter_by(id=product.brand_id).first().name
-        if request.method == "POST":
-            # if product_id in orders
+        # Handle variant-based products
+        if variant_id:
+            variant = ProductVariant.query.filter_by(id=variant_id).first()
+            if not variant:
+                error_msg = 'Biến thể sản phẩm không tồn tại'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            # Check stock for variant
+            if quantity > variant.stock:
+                error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {variant.stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            # Check current quantity in cart for this variant
+            cart_key = f"{product_id}_{variant_id}"
+            current_cart_quantity = 0
+            if 'Shoppingcart' in session and cart_key in session['Shoppingcart']:
+                current_cart_quantity = session['Shoppingcart'][cart_key]['quantity']
+            
+            # Check if total quantity (cart + new) exceeds variant stock
+            total_requested_quantity = current_cart_quantity + quantity
+            if total_requested_quantity > variant.stock:
+                error_msg = f'Số lượng biến thể trong kho không đáp ứng (còn lại: {variant.stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            brand = Brand.query.filter_by(id=product.brand_id).first().name
+            size_name = variant.size.display_name if variant.size else 'N/A'
+            color_name = variant.color.display_name if variant.color else 'N/A'
+            
+            # Create cart item for variant
+            DictItems = {cart_key: {
+                'name': product.name, 
+                'price': float(variant.price), 
+                'discount': product.discount,
+                'color': color_name, 
+                'size': size_name,
+                'quantity': quantity, 
+                'image': product.image_1,
+                'variant_id': variant_id,
+                'sku': variant.sku,
+                'brand': brand
+            }}
+        else:
+            # Fallback to old system for products without variants
+            # Check current quantity in cart
+            current_cart_quantity = 0
+            if 'Shoppingcart' in session and product_id in session['Shoppingcart']:
+                current_cart_quantity = session['Shoppingcart'][product_id]['quantity']
+            
+            # Check if total quantity (cart + new) exceeds stock
+            total_requested_quantity = current_cart_quantity + quantity
+            if total_requested_quantity > product.total_stock:
+                error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.total_stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            brand = Brand.query.filter_by(id=product.brand_id).first().name
             DictItems = {product_id: {'name': product.name, 'price': float(product.current_price), 'discount': product.discount,
                                       'color': color, 'quantity': quantity, 'image': product.image_1,
                                       'colors': product.colors, 'brand': brand}}
+        
+        if request.method == "POST":
             if 'Shoppingcart' in session:
-                # print(session['Shoppingcart'])
-                if product_id in session['Shoppingcart']:
-                    for key, item in session['Shoppingcart'].items():
-                        if int(key) == int(product_id):
-                            session.modified = True
-                            item['quantity'] += quantity;
+                # Check if this item (product or variant) already exists in cart
+                cart_key = list(DictItems.keys())[0]  # Get the key from DictItems
+                if cart_key in session['Shoppingcart']:
+                    # Update existing item quantity
+                    session.modified = True
+                    session['Shoppingcart'][cart_key]['quantity'] += quantity
                 else:
+                    # Add new item to cart
                     session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
             else:
                 session['Shoppingcart'] = DictItems

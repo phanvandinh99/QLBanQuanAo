@@ -35,7 +35,7 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">{{ (product.current_price - product.current_price*product.discount/100) | vnd }}</a>
+                                                    <a href="#" class="product-price">{{ (product.current_price | float - product.current_price | float * product.discount / 100) | vnd }}</a>
                                                     {% if product.discount>0 %}
                                                     <a href="#" class="discounted-price">{{ product.current_price | vnd }}</a>
                                                     {% endif %}
@@ -48,22 +48,9 @@
                                                 </div>
 
                                                 <div class="shopping-btn">
-                                                    <form action="{{url_for('AddCart')}}" method="post">
-                                                        <a href="#" class="product-btn btn-like"><i
-                                                                class="fa fa-heart"></i></a>
-                                                        <button href="#" class="product-btn btn-cart"><i
-                                                                class="fa fa-shopping-cart"></i></button>
-                                                        <BR>
-                                                        <input type="hidden" name="product_id" value="{{product.id}}">
-                                                        <input type="hidden" name="quantity" value="1" min="1" max="20">
-                                                        {% set colors = product.colors.split(',') %}
-                                                        <select name="colors" style="visibility: hidden;">
-                                                            {% for color in colors %}
-                                                            {% set col = color.split(':') %}
-                                                            <option value="{{col[0]}}">{{col[0] | capitalize }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </form>
+                                                    <a href="{{url_for('detail', id=product.id)}}" class="product-btn btn-primary">
+                                                        <i class="fa fa-eye"></i> Xem chi tiết
+                                                    </a>
                                                 </div>
                                                 <div>
                                                     <div class="rating pt-3" style="color: #FFC107; margin-top: -20;">
@@ -134,7 +121,7 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">{{ (product.current_price - product.current_price*product.discount/100) | vnd }}</a>
+                                                    <a href="#" class="product-price">{{ (product.current_price | float - product.current_price | float * product.discount / 100) | vnd }}</a>
                                                     {% if product.discount>0 %}
                                                     <a href="#" class="discounted-price">{{ product.current_price | vnd }}</a>
                                                     {% endif %}
@@ -146,22 +133,9 @@
                                                 </div>
 
                                                 <div class="shopping-btn">
-                                                    <form action="{{url_for('AddCart')}}" method="post">
-                                                        <a href="#" class="product-btn btn-like"><i
-                                                                class="fa fa-heart"></i></a>
-                                                        <button href="#" class="product-btn btn-cart"><i
-                                                                class="fa fa-shopping-cart"></i></button>
-                                                        <BR>
-                                                        <input type="hidden" name="product_id" value="{{product.id}}">
-                                                        <input type="hidden" name="quantity" value="1" min="1" max="20">
-                                                        {% set colors = product.colors.split(',') %}
-                                                        <select name="colors" style="visibility: hidden;">
-                                                            {% for color in colors %}
-                                                            {% set col = color.split(':') %}
-                                                            <option value="{{col[0]}}">{{col[0] | capitalize }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </form>
+                                                    <a href="{{url_for('detail', id=product.id)}}" class="product-btn btn-primary">
+                                                        <i class="fa fa-eye"></i> Xem chi tiết
+                                                    </a>
                                                 </div>
                                                 <div>
                                                     <div class="rating pt-3" style="color: #FFC107; margin-top: -20;">
@@ -226,7 +200,7 @@
                                             </div>
                                             <div class="product-meta">
                                                 <div style="height: 60px;">
-                                                    <a href="#" class="product-price">{{ (product.current_price - product.current_price*product.discount/100) | vnd }}</a>
+                                                    <a href="#" class="product-price">{{ (product.current_price | float - product.current_price | float * product.discount / 100) | vnd }}</a>
                                                     {% if product.discount>0 %}
                                                     <a href="#" class="discounted-price">{{ product.current_price | vnd }}</a>
                                                     {% endif %}
@@ -238,22 +212,9 @@
                                                 </div>
 
                                                 <div class="shopping-btn">
-                                                    <form action="{{url_for('AddCart')}}" method="post">
-                                                        <a href="#" class="product-btn btn-like"><i
-                                                                class="fa fa-heart"></i></a>
-                                                        <button href="#" class="product-btn btn-cart"><i
-                                                                class="fa fa-shopping-cart"></i></button>
-                                                        <BR>
-                                                        <input type="hidden" name="product_id" value="{{product.id}}">
-                                                        <input type="hidden" name="quantity" value="1" min="1" max="20">
-                                                        {% set colors = product.colors.split(',') %}
-                                                        <select name="colors" style="visibility: hidden;">
-                                                            {% for color in colors %}
-                                                            {% set col = color.split(':') %}
-                                                            <option value="{{col[0]}}">{{col[0] | capitalize }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    </form>
+                                                    <a href="{{url_for('detail', id=product.id)}}" class="product-btn btn-primary">
+                                                        <i class="fa fa-eye"></i> Xem chi tiết
+                                                    </a>
                                                 </div>
                                                 <div>
                                                     <div class="rating pt-3" style="color: #FFC107; margin-top: -20;">

@@ -1,17 +1,19 @@
 import urllib
 import os
 import secrets
-from flask import render_template, request, redirect, url_for, flash, session, current_app, jsonify
+from flask import render_template, request, redirect, url_for, flash, session, current_app, jsonify, Blueprint
 from flask_login import current_user
 from shop import app, db, photos
 from shop.models import Brand, Category, Product, Rating, Customer, Admin, Article, ProductVariant, Size, Color, StockMovement
 from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from .forms import Rates, Addproducts, AddProductsForm, ProductVariantRowForm
 
+# Tạo Blueprint
+products = Blueprint('products', __name__)
+
 def get_products_with_stock():
     """Helper function to get products that have variants with stock > 0"""
     return Product.query.join(ProductVariant).filter(
-        ProductVariant.product_id == Product.id,
         ProductVariant.is_active == True,
         ProductVariant.stock > 0
     ).distinct()
@@ -34,18 +36,22 @@ def home():
 
 @app.route('/category')
 def get_all_category():
-    page = request.args.get('page', 1, type=int)
-    products_all = get_products_with_stock().order_by(Product.id.desc()).paginate(page=page, per_page=9)
-    products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
-    products = {'all': products_all, 'new': products_new, 'average': medium()}
-    return render_template('products/category.html', products=products, brands=brands(), categories=categories())
+    try:
+        page = request.args.get('page', 1, type=int)
+        # Get all products for now
+        products_all = Product.query.order_by(Product.id.desc()).paginate(page=page, per_page=9)
+        products_new = Product.query.order_by(Product.id.desc()).limit(2).all()
+        products = {'all': products_all, 'new': products_new, 'average': {}}
+        return render_template('products/category.html', products=products, brands=brands(), categories=categories())
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 @app.route('/category/brand/<string:name>')
 def get_brand(name):
     page = request.args.get('page', 1, type=int)
     get_brand = Brand.query.filter_by(name=name).first_or_404()
-    brand = Product.query.filter_by(brand=get_brand).paginate(page=page, per_page=9)
+    brand = get_products_with_stock().filter(Product.brand_id == get_brand.id).paginate(page=page, per_page=9)
 
     products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': brand, 'new': products_new, 'average': medium()}
@@ -58,7 +64,7 @@ def get_brand(name):
 def get_category(name):
     page = request.args.get('page', 1, type=int)
     get_cat = Category.query.filter_by(name=name).first_or_404()
-    get_cat_prod = Product.query.filter_by(category=get_cat).paginate(page=page, per_page=9)
+    get_cat_prod = get_products_with_stock().filter(Product.category_id == get_cat.id).paginate(page=page, per_page=9)
     products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': get_cat_prod, 'new': products_new, 'average': medium()}
     get_cat_prod = {'name': name, 'id': get_cat.id}
@@ -702,7 +708,7 @@ def detail(id):
 @app.route('/category/discount/<int:start>-<int:end>')
 def get_discount(start, end):
     page = request.args.get('page', 1, type=int)
-    product_discount = Product.query.filter(Product.discount >= start, Product.discount < end) \
+    product_discount = get_products_with_stock().filter(Product.discount >= start, Product.discount < end) \
         .order_by(Product.id.desc()).paginate(page=page, per_page=9)
     products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': product_discount, 'new': products_new, 'average': medium()}
@@ -714,7 +720,7 @@ def search():
     value = request.form['search']
     search = "%{}%".format(value.lower())
     page = request.args.get('page', 1, type=int)
-    product = Product.query.filter(Product.name.ilike(search)).paginate(page=page, per_page=9)
+    product = get_products_with_stock().filter(Product.name.ilike(search)).paginate(page=page, per_page=9)
     products = {'all': product, 'average': medium()}
     return render_template('products/category.html', get_search=value, products=products, brands=brands(),
                            categories=categories())
@@ -778,3 +784,33 @@ def medium():
 def registers():
     # Get all registered users
     return Customer.query.all()
+
+@products.route('/api/product/<int:product_id>/variants')
+def get_product_variants(product_id):
+    """API endpoint to get variants for a product"""
+    try:
+        product = Product.query.get_or_404(product_id)
+        variants = []
+        
+        for variant in product.variants:
+            if variant.is_active:
+                variants.append({
+                    'id': variant.id,
+                    'size_id': variant.size.id if variant.size else None,
+                    'color_id': variant.color.id if variant.color else None,
+                    'size_name': variant.size.display_name if variant.size else '',
+                    'color_name': variant.color.name if variant.color else '',
+                    'price': float(variant.price),
+                    'stock': variant.stock,
+                    'sku': variant.sku
+                })
+        
+        return jsonify({
+            'success': True,
+            'variants': variants
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
