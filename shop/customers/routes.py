@@ -306,33 +306,62 @@ def checkout():
             print(f"DEBUG: Order created with ID {order.id}")
 
             # Create OrderItem objects for each cart item and update stock
-            for product_id, item in session['Shoppingcart'].items():
-                print(f"DEBUG: Processing product {product_id}")
-                product = Product.query.get(int(product_id))
-                if product:
-                    quantity = int(item.get('quantity', 0))
-                    discount = float(item.get('discount', 0))
-                    print(f"DEBUG: Product ID {product.id}, quantity: {quantity}, stock: {product.total_stock}")
+            from shop.models import ProductVariant
+            for key, item in session['Shoppingcart'].items():
+                print(f"DEBUG: Processing cart key {key}")
+                quantity = int(item.get('quantity', 0))
+                discount = float(item.get('discount', 0))
 
-                    # Check stock availability before processing
-                    if quantity > product.total_stock:
+                if '_' in key:
+                    product_id_str, variant_id_str = key.split('_', 1)
+                    product = Product.query.get(int(product_id_str))
+                    variant = ProductVariant.query.get(int(variant_id_str))
+                    if not product or not variant:
                         db.session.rollback()
-                        flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
+                        flash('Biến thể sản phẩm không tồn tại', 'danger')
                         return redirect(url_for('getCart'))
 
-                    # Update product stock and sold quantity
-                    product.total_stock -= quantity
+                    # Stock check for variant
+                    if quantity > variant.stock:
+                        db.session.rollback()
+                        flash(f'Số lượng biến thể "{product.name}" không đáp ứng. Còn {variant.stock}.', 'danger')
+                        return redirect(url_for('getCart'))
+
+                    # Decrement variant stock and increment sold
+                    variant.stock -= quantity
+                    variant.sold_quantity += quantity
                     product.sold_quantity += quantity
 
                     order_item = OrderItem(
                         order_id=order.id,
-                        product_id=int(product_id),
+                        product_id=product.id,
+                        product_variant_id=variant.id,
                         quantity=quantity,
-                        unit_price=product.current_price,
+                        unit_price=variant.price,
                         discount=discount
                     )
                     db.session.add(order_item)
-                    print(f"DEBUG: OrderItem created for product {product_id}")
+                    print(f"DEBUG: OrderItem created for variant {variant.id}")
+                else:
+                    product = Product.query.get(int(key))
+                    if product:
+                        # Check stock availability before processing (legacy simple path)
+                        if quantity > product.total_stock:
+                            db.session.rollback()
+                            flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
+                            return redirect(url_for('getCart'))
+
+                        product.sold_quantity += quantity
+
+                        order_item = OrderItem(
+                            order_id=order.id,
+                            product_id=product.id,
+                            quantity=quantity,
+                            unit_price=product.current_price,
+                            discount=discount
+                        )
+                        db.session.add(order_item)
+                        print(f"DEBUG: OrderItem created for product {product.id}")
 
             print("DEBUG: About to commit transaction")
             db.session.commit()
@@ -425,30 +454,56 @@ def submit_order():
                 db.session.flush()  # Get order ID
 
                 # Create OrderItem objects and update stock
-                for product_id, item in session['Shoppingcart'].items():
-                    product = Product.query.get(int(product_id))
-                    if product:
-                        quantity = int(item.get('quantity', 0))
-                        discount = float(item.get('discount', 0))
+                from shop.models import ProductVariant
+                for key, item in session['Shoppingcart'].items():
+                    quantity = int(item.get('quantity', 0))
+                    discount = float(item.get('discount', 0))
 
-                        # Check stock availability before processing
-                        if quantity > product.total_stock:
+                    if '_' in key:
+                        product_id_str, variant_id_str = key.split('_', 1)
+                        product = Product.query.get(int(product_id_str))
+                        variant = ProductVariant.query.get(int(variant_id_str))
+                        if not product or not variant:
                             db.session.rollback()
-                            flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
+                            flash('Biến thể sản phẩm không tồn tại', 'danger')
                             return redirect(url_for('getCart'))
 
-                        # Update product stock and sold quantity
-                        product.total_stock -= quantity
+                        if quantity > variant.stock:
+                            db.session.rollback()
+                            flash(f'Số lượng biến thể "{product.name}" không đáp ứng. Còn {variant.stock}.', 'danger')
+                            return redirect(url_for('getCart'))
+
+                        variant.stock -= quantity
+                        variant.sold_quantity += quantity
                         product.sold_quantity += quantity
 
                         order_item = OrderItem(
                             order_id=order.id,
-                            product_id=int(product_id),
+                            product_id=product.id,
+                            product_variant_id=variant.id,
                             quantity=quantity,
-                            unit_price=product.current_price,
+                            unit_price=variant.price,
                             discount=discount
                         )
                         db.session.add(order_item)
+                    else:
+                        product = Product.query.get(int(key))
+                        if product:
+                            if quantity > product.total_stock:
+                                db.session.rollback()
+                                flash(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.', 'danger')
+                                return redirect(url_for('getCart'))
+
+                            product.sold_quantity += quantity
+
+                            order_item = OrderItem(
+                                order_id=order.id,
+                                product_id=product.id,
+                                quantity=quantity,
+                                unit_price=product.current_price,
+                                discount=discount
+                            )
+                            db.session.add(order_item)
 
                 db.session.commit()
 

@@ -107,12 +107,10 @@
                         <label>Màu sắc:</label>
                         <select name="color_id" id="color_select" class="form-control" required>
                           <option value="">-- Chọn màu sắc --</option>
-                          {% for color in product.variants | map(attribute='color') | unique | list %}
-                          {% if color %}
-                          <option value="{{ color.id }}" data-color-id="{{ color.id }}">
-                            {{ color.name }}
-                          </option>
-                          {% endif %}
+                          {% for v in product.variants %}
+                            {% if v.is_active and v.color %}
+                              <option value="{{ v.color.id }}">{{ v.color.name }}</option>
+                            {% endif %}
                           {% endfor %}
                         </select>
                       </div>
@@ -153,6 +151,156 @@
                       </div>
                     </div>
                   </form>
+                  <script>
+                    (function(){
+                      var variants = [
+                        {% for v in product.variants %}
+                          {% if v.is_active %}
+                          {
+                            id: {{v.id}},
+                            color_id: {{v.color.id if v.color else 'null'}},
+                            color_name: "{{v.color.name if v.color else ''}}",
+                            size_id: {{v.size.id if v.size else 'null'}},
+                            size_name: "{{v.size.display_name if v.size else ''}}",
+                            price: {{v.price}},
+                            stock: {{v.stock}},
+                            sku: "{{v.sku}}"
+                          },
+                          {% endif %}
+                        {% endfor %}
+                      ];
+
+                      function vndFormat(n){
+                        try { return (parseInt(n)||0).toLocaleString('vi-VN'); } catch(e){ return n; }
+                      }
+
+                      var colorSelect = document.getElementById('color_select');
+                      var sizeSelect = document.getElementById('size_select');
+                      var variantInfo = document.getElementById('variant-info');
+                      var priceEl = document.getElementById('variant-price');
+                      var stockEl = document.getElementById('variant-stock');
+                      var skuEl = document.getElementById('variant-sku');
+                      var variantIdInput = document.getElementById('selected_variant_id');
+                      var qtyInput = document.getElementById('quantity');
+                      var maxQtyEl = document.getElementById('max-quantity');
+                      var addBtn = document.getElementById('add-to-cart-btn');
+                      
+                      console.log('Elements found:', {
+                        colorSelect: !!colorSelect,
+                        sizeSelect: !!sizeSelect,
+                        variantInfo: !!variantInfo,
+                        priceEl: !!priceEl,
+                        stockEl: !!stockEl,
+                        skuEl: !!skuEl,
+                        variantIdInput: !!variantIdInput,
+                        qtyInput: !!qtyInput,
+                        maxQtyEl: !!maxQtyEl,
+                        addBtn: !!addBtn
+                      });
+
+                      function populateSizes(){
+                        var colorId = colorSelect.value ? parseInt(colorSelect.value) : null;
+                        sizeSelect.innerHTML = '<option value="">-- Chọn kích thước --</option>';
+                        var sizeMap = {};
+                        variants.forEach(function(v){
+                          if((!colorId || v.color_id === colorId) && v.stock > 0){
+                            var sid = v.size_id || 0;
+                            var sname = v.size_name || 'OS';
+                            if(!sizeMap[sid]){ sizeMap[sid] = sname; }
+                          }
+                        });
+                        Object.keys(sizeMap).forEach(function(sid){
+                          var opt = document.createElement('option');
+                          opt.value = sid === '0' ? '' : sid;
+                          opt.textContent = sizeMap[sid];
+                          sizeSelect.appendChild(opt);
+                        });
+                        updateVariantInfo();
+                      }
+
+                      function populateColors(){
+                        // Remove duplicate colors
+                        var colorMap = {};
+                        console.log('Populating colors from', variants.length, 'variants');
+                        variants.forEach(function(v){
+                          console.log('Processing variant:', v);
+                          if(v.is_active && v.color_id){
+                            colorMap[v.color_id] = v.color_name || 'Màu ' + v.color_id;
+                            console.log('Added color:', v.color_id, v.color_name);
+                          }
+                        });
+                        
+                        colorSelect.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
+                        Object.keys(colorMap).forEach(function(cid){
+                          var opt = document.createElement('option');
+                          opt.value = cid;
+                          opt.textContent = colorMap[cid];
+                          colorSelect.appendChild(opt);
+                        });
+                        console.log('Colors populated:', Object.keys(colorMap).length);
+                        console.log('Color select options:', colorSelect.options.length);
+                        console.log('Color select HTML:', colorSelect.innerHTML);
+                      }
+
+                      function updateVariantInfo(){
+                        var colorId = colorSelect.value ? parseInt(colorSelect.value) : null;
+                        var sizeId = sizeSelect.value ? parseInt(sizeSelect.value) : null;
+                        var match = variants.find(function(v){
+                          var colorOk = colorId ? v.color_id === colorId : true;
+                          var sizeOk = sizeId ? v.size_id === sizeId : (v.size_id === null || v.size_id === undefined);
+                          return colorOk && sizeOk;
+                        });
+                        if(match){
+                          variantInfo.style.display = '';
+                          priceEl.textContent = vndFormat(match.price);
+                          stockEl.textContent = match.stock;
+                          skuEl.textContent = match.sku || '-';
+                          variantIdInput.value = match.id;
+                          qtyInput.max = match.stock;
+                          maxQtyEl.textContent = match.stock;
+                          addBtn.disabled = match.stock <= 0;
+                        } else {
+                          variantInfo.style.display = 'none';
+                          variantIdInput.value = '';
+                          addBtn.disabled = true;
+                        }
+                      }
+
+                      colorSelect.addEventListener('change', function(){
+                        populateSizes();
+                      });
+                      sizeSelect.addEventListener('change', function(){
+                        updateVariantInfo();
+                      });
+
+                      // Simple init - just populate colors directly
+                      console.log('=== DEBUG: Starting variant initialization ===');
+                      console.log('Variants count:', variants.length);
+                      
+                      if (variants.length > 0) {
+                        // Clear and populate color dropdown
+                        colorSelect.innerHTML = '<option value="">-- Chọn màu sắc --</option>';
+                        
+                        // Get unique colors
+                        var colors = {};
+                        variants.forEach(function(v) {
+                          if (v.is_active && v.color_id) {
+                            colors[v.color_id] = v.color_name || 'Màu ' + v.color_id;
+                          }
+                        });
+                        
+                        // Add color options
+                        Object.keys(colors).forEach(function(colorId) {
+                          var option = document.createElement('option');
+                          option.value = colorId;
+                          option.textContent = colors[colorId];
+                          colorSelect.appendChild(option);
+                        });
+                        
+                        console.log('Colors added:', Object.keys(colors).length);
+                      }
+                    })();
+                  </script>
                 {% else %}
                   <!-- Sản phẩm không có biến thể -->
                   <div class="alert alert-warning">
