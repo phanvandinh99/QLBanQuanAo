@@ -6,7 +6,8 @@ from datetime import datetime
 from flask import render_template, session, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import current_user, login_required
 from shop import app, db
-from shop.models import Order, OrderItem, Category, Brand, Product, Customer
+from shop.models import Order, OrderItem, Category, Brand, Product, Customer, ProductVariant
+from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from shop.email_utils import send_order_confirmation_email
 from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 
@@ -55,7 +56,8 @@ def AddCart():
     try:
         product_id = request.form.get('product_id')
         quantity = int(request.form.get('quantity'))
-        color = request.form.get('colors')
+        variant_id = request.form.get('variant_id')
+        color = request.form.get('colors')  # Fallback for old system
         product = Product.query.filter_by(id=product_id).first()
         
         if not product:
@@ -65,34 +67,87 @@ def AddCart():
             flash(error_msg, 'danger')
             return redirect(request.referrer)
         
-        # Check current quantity in cart
-        current_cart_quantity = 0
-        if 'Shoppingcart' in session and product_id in session['Shoppingcart']:
-            current_cart_quantity = session['Shoppingcart'][product_id]['quantity']
-        
-        # Check if total quantity (cart + new) exceeds stock
-        total_requested_quantity = current_cart_quantity + quantity
-        if total_requested_quantity > product.stock:
-            error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.stock})'
-            if is_ajax_request():
-                return error_response(error_msg)
-            flash(error_msg, 'danger')
-            return redirect(request.referrer)
-        
-        brand = Brand.query.filter_by(id=product.brand_id).first().name
-        if request.method == "POST":
-            # if product_id in orders
-            DictItems = {product_id: {'name': product.name, 'price': float(product.price), 'discount': product.discount,
+        # Handle variant-based products
+        if variant_id:
+            variant = ProductVariant.query.filter_by(id=variant_id).first()
+            if not variant:
+                error_msg = 'Biến thể sản phẩm không tồn tại'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            # Check stock for variant
+            if quantity > variant.stock:
+                error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {variant.stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            # Check current quantity in cart for this variant
+            cart_key = f"{product_id}_{variant_id}"
+            current_cart_quantity = 0
+            if 'Shoppingcart' in session and cart_key in session['Shoppingcart']:
+                current_cart_quantity = session['Shoppingcart'][cart_key]['quantity']
+            
+            # Check if total quantity (cart + new) exceeds variant stock
+            total_requested_quantity = current_cart_quantity + quantity
+            if total_requested_quantity > variant.stock:
+                error_msg = f'Số lượng biến thể trong kho không đáp ứng (còn lại: {variant.stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            brand = Brand.query.filter_by(id=product.brand_id).first().name
+            size_name = variant.size.display_name if variant.size else 'N/A'
+            color_name = variant.color.display_name if variant.color else 'N/A'
+            
+            # Create cart item for variant
+            DictItems = {cart_key: {
+                'name': product.name, 
+                'price': float(variant.price), 
+                'discount': product.discount,
+                'color': color_name, 
+                'size': size_name,
+                'quantity': quantity, 
+                'image': product.image_1,
+                'variant_id': variant_id,
+                'sku': variant.sku,
+                'brand': brand
+            }}
+        else:
+            # Fallback to old system for products without variants
+            # Check current quantity in cart
+            current_cart_quantity = 0
+            if 'Shoppingcart' in session and product_id in session['Shoppingcart']:
+                current_cart_quantity = session['Shoppingcart'][product_id]['quantity']
+            
+            # Check if total quantity (cart + new) exceeds stock
+            total_requested_quantity = current_cart_quantity + quantity
+            if total_requested_quantity > product.total_stock:
+                error_msg = f'Số lượng sản phẩm trong kho không đáp ứng (còn lại: {product.total_stock})'
+                if is_ajax_request():
+                    return error_response(error_msg)
+                flash(error_msg, 'danger')
+                return redirect(request.referrer)
+            
+            brand = Brand.query.filter_by(id=product.brand_id).first().name
+            DictItems = {product_id: {'name': product.name, 'price': float(product.current_price), 'discount': product.discount,
                                       'color': color, 'quantity': quantity, 'image': product.image_1,
                                       'colors': product.colors, 'brand': brand}}
+        
+        if request.method == "POST":
             if 'Shoppingcart' in session:
-                # print(session['Shoppingcart'])
-                if product_id in session['Shoppingcart']:
-                    for key, item in session['Shoppingcart'].items():
-                        if int(key) == int(product_id):
-                            session.modified = True
-                            item['quantity'] += quantity;
+                # Check if this item (product or variant) already exists in cart
+                cart_key = list(DictItems.keys())[0]  # Get the key from DictItems
+                if cart_key in session['Shoppingcart']:
+                    # Update existing item quantity
+                    session.modified = True
+                    session['Shoppingcart'][cart_key]['quantity'] += quantity
                 else:
+                    # Add new item to cart
                     session['Shoppingcart'] = MagerDicts(session['Shoppingcart'], DictItems)
             else:
                 session['Shoppingcart'] = DictItems
@@ -158,39 +213,71 @@ def getCart():
                          categories=categories())
 
 
-@app.route('/updatecart/<int:code>', methods=['POST'])
+@app.route('/updatecart/<string:code>', methods=['POST'])
 def updatecart(code):
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return redirect(url_for('getCart'))
     if request.method == "POST":
         quantity = int(request.form.get('quantity'))
-        color = request.form.get('color')
-        
-        # Check stock availability
-        product = Product.query.get(code)
-        if product and quantity > product.stock:
-            flash('Số lượng sản phẩm trong kho không đáp ứng', 'danger')
-            return redirect(url_for('getCart'))
-        
+
         try:
             session.modified = True
-            for key, item in session['Shoppingcart'].items():
-                if int(key) == code:
-                    item['quantity'] = quantity
-                    item['color'] = color
+
+            # Variant-aware key handling
+            if '_' in code:
+                product_id_str, variant_id_str = code.split('_', 1)
+                product_id = int(product_id_str)
+                from shop.models import ProductVariant
+                variant = ProductVariant.query.get(int(variant_id_str))
+                if not variant:
+                    flash('Biến thể không tồn tại', 'danger')
                     return redirect(url_for('getCart'))
+                # Stock check for the specific variant
+                if quantity > variant.stock:
+                    flash(f'Số lượng biến thể trong kho không đáp ứng (còn lại: {variant.stock})', 'danger')
+                    return redirect(url_for('getCart'))
+
+                # Update quantity for this cart line
+                if code in session['Shoppingcart']:
+                    session['Shoppingcart'][code]['quantity'] = quantity
+                    # Update max stock snapshot if we store it
+                    session['Shoppingcart'][code]['stock'] = variant.stock
+                return redirect(url_for('getCart'))
+            else:
+                # Legacy simple-product path
+                product_id = int(code)
+                product = Product.query.get(product_id)
+                if product and quantity > product.total_stock:
+                    flash('Số lượng sản phẩm trong kho không đáp ứng', 'danger')
+                    return redirect(url_for('getCart'))
+
+                # Allow optional color update for legacy items
+                color = request.form.get('color')
+                for key, item in session['Shoppingcart'].items():
+                    if key == str(product_id):
+                        item['quantity'] = quantity
+                        if color is not None:
+                            item['color'] = color
+                        return redirect(url_for('getCart'))
+
+                return redirect(url_for('getCart'))
         except Exception:
             return redirect(url_for('getCart'))
 
 
-@app.route('/deleteitem/<int:id>')
+@app.route('/deleteitem/<string:id>')
 def deleteitem(id):
     if 'Shoppingcart' not in session or len(session['Shoppingcart']) <= 0:
         return redirect(url_for('getCart'))
     try:
         session.modified = True
-        for key, item in session['Shoppingcart'].items():
-            if int(key) == id:
+        # Keys can be either numeric product_id or productId_variantId
+        if id in session['Shoppingcart']:
+            session['Shoppingcart'].pop(id, None)
+            return redirect(url_for('getCart'))
+        # Fallback: try matching numeric id as string
+        for key in list(session['Shoppingcart'].keys()):
+            if key == str(id):
                 session['Shoppingcart'].pop(key, None)
                 return redirect(url_for('getCart'))
     except Exception:
@@ -318,18 +405,34 @@ def vnpay_payment():
             db.session.add(new_order)
             db.session.flush()  # Get order ID
 
-            # Create OrderItem objects for VNPAY order
-            for product_id, item in session['Shoppingcart'].items():
-                product = Product.query.get(int(product_id))
-                if product:
-                    quantity = int(item.get('quantity', 0))
-                    discount = float(item.get('discount', 0))
-
+            # Create OrderItem objects for VNPAY order (support variants)
+            for key, item in session['Shoppingcart'].items():
+                quantity = int(item.get('quantity', 0))
+                discount = float(item.get('discount', 0))
+                if '_' in key:
+                    pid_str, vid_str = key.split('_', 1)
+                    product = Product.query.get(int(pid_str))
+                    variant = ProductVariant.query.get(int(vid_str))
+                    if not product or not variant:
+                        continue
                     order_item = OrderItem(
                         order_id=new_order.id,
-                        product_id=int(product_id),
+                        product_id=product.id,
+                        product_variant_id=variant.id,
                         quantity=quantity,
-                        unit_price=product.price,
+                        unit_price=variant.price,
+                        discount=discount
+                    )
+                    db.session.add(order_item)
+                else:
+                    product = Product.query.get(int(key))
+                    if not product:
+                        continue
+                    order_item = OrderItem(
+                        order_id=new_order.id,
+                        product_id=product.id,
+                        quantity=quantity,
+                        unit_price=product.current_price,
                         discount=discount
                     )
                     db.session.add(order_item)

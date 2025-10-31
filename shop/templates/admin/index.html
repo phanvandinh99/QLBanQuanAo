@@ -67,11 +67,11 @@
                                         <img src="{{url_for('static',filename='images/'+product.image_1)}}" width="50" height="40">
                                     </td>
                                     <td>{{product.name}}</td>
-                                    <td>{{product.price | vnd}}</td>
+                                    <td>{{product.current_price | vnd}}</td>
                                     <td>{{product.discount}} %</td>
                                     <td>
-                                        <span class="badge badge-{% if product.stock > 10 %}success{% elif product.stock > 0 %}warning{% else %}danger{% endif %}">
-                                            {{product.stock}}
+                                        <span class="badge badge-{% if product.total_stock > 10 %}success{% elif product.total_stock > 0 %}warning{% else %}danger{% endif %}">
+                                            {{product.total_stock}}
                                         </span>
                                     </td>
                                     <td>
@@ -138,5 +138,4 @@
     <!-- /.content -->
 </div>
 
-{%include 'admin/footer.html'%}
 {% endblock content %}

@@ -34,14 +34,35 @@
 
                         <form method="post" enctype="multipart/form-data">
                             {{ form.csrf_token }}
+                            
+                            <!-- Hidden data for JavaScript -->
+                            <div style="display: none;">
+                                <div id="sizes_data">
+                                    {% for size in sizes %}
+                                    <span data-id="{{ size.id }}" data-name="{{ size.display_name }}"></span>
+                                    {% endfor %}
+                                </div>
+                                <div id="colors_data">
+                                    {% for color in colors %}
+                                    <span data-id="{{ color.id }}" data-name="{{ color.name|e }}"></span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
                             <div class="card">
                                 <div class="card-body">
                                     {% include '_messages.html'%}
                                     <div>
                                         {{ render_field(form.name, class="form-control") }}
-                                        {{ render_field(form.price, class="form-control") }}
+                                        
+                                        <!-- Bỏ trường giá vì tất cả sản phẩm đều có variants -->
+                                        
                                         {{ render_field(form.discount, class="form-control") }}
-                                        <div class="alert alert-warning">Số lượng sẽ được cập nhật khi nhập hàng. Lúc tạo mới mặc định là 0.</div>
+                                        
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Lưu ý:</strong> Số lượng tồn kho sẽ được cập nhật qua chức năng nhập hàng.
+                                        </div>
                                         <label for="category">Loại sản phẩm</label>
                                         <select name="category" id="category" class="form-control"
                                                 onchange='myFunction()' required>
@@ -59,7 +80,50 @@
                                             {% endfor %}
                                         </select>
 
-                                        {{ render_field(form.colors, class="form-control") }}
+                                        <!-- Tất cả sản phẩm đều có variants - bỏ checkbox -->
+                                        <!-- <div class="form-check mb-3">
+                                            <input type="checkbox" name="has_variants" id="has_variants" class="form-check-input" onchange="toggleVariants()">
+                                            <label class="form-check-label" for="has_variants">
+                                                <strong>Sản phẩm có nhiều biến thể (size, màu sắc, giá khác nhau)</strong>
+                                            </label>
+                                        </div> -->
+
+                                        <!-- Trường màu sắc cho sản phẩm đơn giản -->
+                                        <!-- Bỏ trường màu sắc vì tất cả sản phẩm đều có variants -->
+                                        <!-- <div id="simple_product_fields">
+                                            {{ render_field(form.colors, class="form-control") }}
+                                        </div> -->
+
+                                        <!-- Phần quản lý variants - luôn hiển thị -->
+                                        <div id="variants_section">
+                                            <div class="alert alert-info mb-3">
+                                                <strong>Lưu ý:</strong> Số lượng tồn kho cho các biến thể sẽ được cập nhật thông qua chức năng <strong>Nhập hàng</strong>. 
+                                                Khi tạo sản phẩm, chỉ cần nhập thông tin kích thước, màu sắc, giá và SKU.
+                                            </div>
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h5>Biến thể sản phẩm</h5>
+                                                    <button type="button" class="btn btn-success btn-sm float-right" onclick="addVariant()">
+                                                        <i class="fas fa-plus"></i> Thêm biến thể
+                                                    </button>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        Thêm các biến thể cho sản phẩm với size và màu sắc khác nhau
+                                                    </div>
+                                                    
+                                                    <div id="variants_container">
+                                                        <!-- Variants sẽ được thêm ở đây -->
+                                                    </div>
+                                                    
+                                                    <div id="no_variants_message" class="text-center text-muted">
+                                                        <p>Chưa có biến thể nào. Nhấn "Thêm biến thể" để bắt đầu.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {{ render_field(form.description, class="form-control", rows="10") }}
 
                                         <div class="container">
@@ -217,6 +281,33 @@ document.querySelector('form').addEventListener('submit', function(e) {
         }
     }
 
+    // Tất cả sản phẩm đều có variants - validate variants
+    const variantRows = document.querySelectorAll('.variant-row');
+    if (variantRows.length === 0) {
+        e.preventDefault();
+        alert('Sản phẩm phải có ít nhất một biến thể!');
+        return false;
+    }
+
+    // Validate each variant
+    let hasError = false;
+    variantRows.forEach(function(row) {
+        const price = row.querySelector('input[name*="_price"]').value;
+
+        if (!price || parseFloat(price) <= 0) {
+            hasError = true;
+            row.querySelector('input[name*="_price"]').classList.add('is-invalid');
+        } else {
+            row.querySelector('input[name*="_price"]').classList.remove('is-invalid');
+        }
+    });
+
+    if (hasError) {
+        e.preventDefault();
+        alert('Vui lòng điền đầy đủ giá cho tất cả biến thể!');
+        return false;
+    }
+
     return true;
 });
 
@@ -240,6 +331,38 @@ style.innerHTML = `
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    
+    /* Simple variants styling - tối ưu diện tích */
+    .variant-row {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+    }
+    .variant-row .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .variant-row .form-control {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+    .variant-row .input-group-text {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+    .variant-row .btn-sm {
+        padding: 6px 12px;
+    }
+    
+    /* Responsive - tối ưu cho mobile */
+    @media (max-width: 768px) {
+        .variant-row .col-md-3,
+        .variant-row .col-md-2 {
+            margin-bottom: 10px;
+        }
+    }
 `;
 document.head.appendChild(style);
 </script>
@@ -247,14 +370,217 @@ document.head.appendChild(style);
 {% include 'admin/footer.html' %}
 <script>
 function myFunction() {
-     $("#brand option").remove();
-     var newoptions = "<option value=''>Select a brand</option>";
-     {% for brand in brands %}
-     if(document.getElementById("category").value == {{brand.category_id}}){
-        newoptions+="<option value='{{brand.id}}'>{{brand.name}}</option>";
-     }
-     {% endfor %}
-     $("#brand").html(newoptions);
+    const categoryId = document.getElementById("category").value;
+    const brandSelect = document.getElementById("brand");
+    
+    // Clear current options
+    brandSelect.innerHTML = "<option value=''>Select a brand</option>";
+    
+    // Load brands data from server
+    if (categoryId) {
+        fetch(`/api/brands/${categoryId}`)
+            .then(response => response.json())
+            .then(brands => {
+                brands.forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand.id;
+                    option.textContent = brand.name;
+                    brandSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error loading brands:', error));
+    }
+}
+
+// Variables for variants management
+let variantIndex = 0;
+
+// Load sizes and colors from DOM
+function loadSizesAndColors() {
+    console.log('Loading sizes and colors...');
+    const sizesElements = document.querySelectorAll('#sizes_data span');
+    const colorsElements = document.querySelectorAll('#colors_data span');
+    
+    console.log('Found sizes elements:', sizesElements.length);
+    console.log('Found colors elements:', colorsElements.length);
+    
+    const sizes = [];
+    sizesElements.forEach(el => {
+        const id = el.getAttribute('data-id');
+        const name = el.getAttribute('data-name');
+        if (id && name) {
+            sizes.push({
+                id: parseInt(id),
+                name: name
+            });
+        }
+    });
+    
+    const colors = [];
+    colorsElements.forEach(el => {
+        const id = el.getAttribute('data-id');
+        const name = el.getAttribute('data-name');
+        if (id && name) {
+            colors.push({
+                id: parseInt(id),
+                name: name
+            });
+        }
+    });
+    
+    console.log('Loaded sizes:', sizes);
+    console.log('Loaded colors:', colors);
+    
+    // Fallback: Load colors via AJAX if DOM method fails
+    if (colors.length === 0) {
+        console.log('No colors found in DOM, trying AJAX...');
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/colors', false); // Synchronous for simplicity
+            xhr.send();
+            if (xhr.status === 200) {
+                const colorsData = JSON.parse(xhr.responseText);
+                colorsData.forEach(color => {
+                    colors.push({
+                        id: color.id,
+                        name: color.name
+                    });
+                });
+                console.log('Loaded colors via AJAX:', colors);
+            }
+        } catch (e) {
+            console.error('Failed to load colors via AJAX:', e);
+        }
+    }
+    
+    return { sizes, colors };
+}
+
+// Tất cả sản phẩm đều có variants - không cần toggle
+// function toggleVariants() {
+//     // Đã bỏ vì tất cả sản phẩm đều có variants
+// }
+
+// Tự động thêm variant đầu tiên khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    // Thêm variant đầu tiên tự động
+    if (document.getElementById('variants_container').children.length === 0) {
+        addVariant();
+    }
+});
+
+// Add new variant
+function addVariant() {
+    console.log('Adding new variant...');
+    const container = document.getElementById('variants_container');
+    const { sizes, colors } = loadSizesAndColors();
+    
+    console.log('Container found:', container);
+    console.log('Sizes for variant:', sizes);
+    console.log('Colors for variant:', colors);
+    
+    if (!container) {
+        console.error('Variants container not found!');
+        return;
+    }
+    
+    const variantDiv = document.createElement('div');
+    variantDiv.className = 'variant-row card mb-2';
+    
+    // Build size options
+    let sizeOptions = '<option value="0">Chọn size</option>';
+    if (sizes && sizes.length > 0) {
+        sizes.forEach(size => {
+            sizeOptions += `<option value="${size.id}">${size.name}</option>`;
+        });
+    } else {
+        console.warn('No sizes available');
+    }
+    
+    // Build color options
+    let colorOptions = '<option value="0">Chọn màu</option>';
+    if (colors && colors.length > 0) {
+        colors.forEach(color => {
+            colorOptions += `<option value="${color.id}">${color.name}</option>`;
+        });
+    } else {
+        console.warn('No colors available');
+    }
+    
+    variantDiv.innerHTML = `
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label">Kích thước:</label>
+                    <select name="variant_${variantIndex}_size_id" class="form-control" required>
+                        ${sizeOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Màu sắc:</label>
+                    <select name="variant_${variantIndex}_color_id" class="form-control" required>
+                        ${colorOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Giá:</label>
+                    <div class="input-group">
+                        <input type="number" name="variant_${variantIndex}_price" class="form-control" placeholder="Giá" step="0.01" min="0.01" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text">đ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">SKU:</label>
+                    <input type="text" name="variant_${variantIndex}_sku" class="form-control" placeholder="SKU (tự động nếu trống)">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeVariant(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(variantDiv);
+    variantIndex++;
+    toggleNoVariantsMessage();
+    console.log('Variant added successfully. New variantIndex:', variantIndex);
+}
+
+// Remove variant
+function removeVariant(button) {
+    button.closest('.variant-row').remove();
+    updateVariantIndexes();
+    toggleNoVariantsMessage();
+}
+
+// Update variant indexes after removal
+function updateVariantIndexes() {
+    const variants = document.querySelectorAll('.variant-row');
+    variants.forEach((variant, index) => {
+        const inputs = variant.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) {
+                const newName = name.replace(/variant_\d+_/, `variant_${index}_`);
+                input.setAttribute('name', newName);
+            }
+        });
+    });
+    variantIndex = variants.length;
+}
+
+// Toggle no variants message
+function toggleNoVariantsMessage() {
+    const hasVariants = document.getElementById('variants_container').children.length > 0;
+    const message = document.getElementById('no_variants_message');
+    message.style.display = hasVariants ? 'none' : 'block';
 }
 
 function validateForm() {
@@ -285,5 +611,6 @@ function validateForm() {
     
     return true;
 }
+
 </script>
 {% endblock content %}

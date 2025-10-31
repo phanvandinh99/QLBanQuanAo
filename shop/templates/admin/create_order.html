@@ -1,4 +1,5 @@
-{% extends "admin/layout.html" %} {% block content %}
+{% extends "admin/layout.html" %}
+{% block content %}
 
 <style>
   .admin-order-container {
@@ -315,8 +316,8 @@
                     <option value="">-- Chọn sản phẩm --</option>
                     {% for product in products %}
                     <option value="{{ product.id }}">
-                      {{ product.name }} ({{ product.price | vnd }}) - Còn {{
-                      product.stock }}
+                      {{ product.name }} ({{ product.current_price | vnd }}) - Còn {{
+                      product.total_stock }}
                     </option>
                     {% endfor %}
                   </select>

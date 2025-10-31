@@ -425,15 +425,15 @@
         <tbody>
           {% set order_data = get_order_data(order) %} {% for key, product in
           order_data.items() %} {% set discount =(product.discount/100) *
-          product.price |float %} {% set subtotal = product.quantity|int *
-          product.price|float %}
+          product.current_price |float %} {% set subtotal = product.quantity|int *
+          product.current_price|float %}
           <tr>
             <td>{{ loop.index }}</td>
             <td class="product-name">{{product.name}}</td>
             <td>
               <span class="product-color">{{product.color|capitalize}}</span>
             </td>
-            <td class="price">{{product.price | vnd}}</td>
+            <td class="price">{{product.current_price | vnd}}</td>
             <td>{{product.quantity}}</td>
             <td class="discount">
               {% if product.discount %}-{{product.discount}}%{% else %}-{% endif

@@ -3,7 +3,7 @@ Utility functions for the application
 """
 
 from shop import db
-from shop.models import Brand, Category, Rating, Customer, Product
+from shop.models import Brand, Category, Rating, Customer, Product, ProductVariant
 from sqlalchemy import func
 
 def get_brands():
@@ -77,28 +77,34 @@ def format_currency(amount):
 
 def get_popular_products(limit=8):
     """Get popular products based on ratings and stock"""
-    return Product.query.filter(
-        Product.stock > 0
-    ).order_by(
+    return Product.query.join(ProductVariant).filter(
+        ProductVariant.product_id == Product.id,
+        ProductVariant.is_active == True,
+        ProductVariant.stock > 0
+    ).distinct().order_by(
         Product.discount.desc(),
-        Product.price.desc()
+        Product.min_price.desc()
     ).limit(limit).all()
 
 def get_new_products(limit=8):
     """Get newest products"""
-    return Product.query.filter(
-        Product.stock > 0
-    ).order_by(
+    return Product.query.join(ProductVariant).filter(
+        ProductVariant.product_id == Product.id,
+        ProductVariant.is_active == True,
+        ProductVariant.stock > 0
+    ).distinct().order_by(
         Product.pub_date.desc()
     ).limit(limit).all()
 
 def search_products(query, limit=20):
     """Search products by name"""
     search_term = f"%{query.lower()}%"
-    return Product.query.filter(
+    return Product.query.join(ProductVariant).filter(
         Product.name.ilike(search_term),
-        Product.stock > 0
-    ).limit(limit).all()
+        ProductVariant.product_id == Product.id,
+        ProductVariant.is_active == True,
+        ProductVariant.stock > 0
+    ).distinct().limit(limit).all()
 
 def get_products_by_category(category_id, page=1, per_page=12):
     """Get paginated products by category"""
@@ -118,7 +124,7 @@ def update_product_stock(product_id, quantity_change):
     """Update product stock safely"""
     product = Product.query.get(product_id)
     if product:
-        product.stock = max(0, product.stock + quantity_change)
+        product.total_stock = max(0, product.total_stock + quantity_change)
         db.session.commit()
         return True
     return False
@@ -130,7 +136,7 @@ def restore_order_stock(order):
             product = order_item.product
             if product:
                 # Restore stock
-                product.stock += order_item.quantity
+                product.total_stock += order_item.quantity
                 # Reduce sold quantity
                 product.sold_quantity -= order_item.quantity
                 # Ensure sold_quantity doesn't go negative
@@ -148,11 +154,11 @@ def process_order_stock(order_items):
             product = order_item.product
             if product:
                 # Check stock availability
-                if order_item.quantity > product.stock:
-                    raise ValueError(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.stock} sản phẩm.')
+                if order_item.quantity > product.total_stock:
+                    raise ValueError(f'Số lượng sản phẩm "{product.name}" trong kho không đáp ứng. Chỉ còn {product.total_stock} sản phẩm.')
                 
                 # Update stock and sold quantity
-                product.stock -= order_item.quantity
+                product.total_stock -= order_item.quantity
                 product.sold_quantity += order_item.quantity
         return True
     except Exception as e:

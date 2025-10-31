@@ -1,0 +1,291 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-warning">
+                <div class="card-header">
+                    <h3 class="card-title">Chỉnh sửa biến thể: {{ variant.display_name }}</h3>
+                    <div class="card-tools">
+                        <a href="{{ url_for('manage_product_variants', product_id=product.id) }}" class="btn btn-tool">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+                <form method="POST">
+                    <div class="card-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.size_id.label(class="form-label") }}
+                                    {{ form.size_id(class="form-control select2") }}
+                                    {% if form.size_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.size_id.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.color_id.label(class="form-label") }}
+                                    {{ form.color_id(class="form-control select2") }}
+                                    {% if form.color_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.color_id.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.price.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.price(class="form-control", placeholder="0") }}
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">₫</span>
+                                        </div>
+                                    </div>
+                                    {% if form.price.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.price.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.stock.label(class="form-label") }}
+                                    {{ form.stock(class="form-control", placeholder="0") }}
+                                    {% if form.stock.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.stock.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.sku.label(class="form-label") }}
+                                    {{ form.sku(class="form-control", placeholder="Tự động tạo nếu để trống") }}
+                                    {% if form.sku.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.sku.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Trạng thái</label>
+                                    <div class="form-check">
+                                        {{ form.is_active(class="form-check-input") }}
+                                        {{ form.is_active.label(class="form-check-label") }}
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.is_active.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thông tin sản phẩm -->
+                        <div class="alert alert-info">
+                            <h5><i class="icon fas fa-info"></i> Thông tin sản phẩm</h5>
+                            <p><strong>Tên sản phẩm:</strong> {{ product.name }}</p>
+                            <p><strong>Danh mục:</strong> {{ product.category.name if product.category else 'Chưa phân loại' }}</p>
+                            <p><strong>Thương hiệu:</strong> {{ product.brand.name if product.brand else 'Chưa có thương hiệu' }}</p>
+                        </div>
+
+                        <!-- Lịch sử thay đổi -->
+                        {% if variant.stock_movements %}
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Lịch sử thay đổi tồn kho</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Ngày</th>
+                                                <th>Loại</th>
+                                                <th>Số lượng</th>
+                                                <th>Ghi chú</th>
+                                                <th>Người thực hiện</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for movement in variant.stock_movements[-5:] %}
+                                            <tr>
+                                                <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                                <td>
+                                                    {% if movement.movement_type == 'in' %}
+                                                        <span class="badge badge-success">Nhập</span>
+                                                    {% elif movement.movement_type == 'out' %}
+                                                        <span class="badge badge-danger">Xuất</span>
+                                                    {% else %}
+                                                        <span class="badge badge-warning">Điều chỉnh</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ movement.quantity }}</td>
+                                                <td>{{ movement.notes or '-' }}</td>
+                                                <td>{{ movement.admin.name if movement.admin else 'Hệ thống' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> Cập nhật biến thể
+                                </button>
+                                <a href="{{ url_for('manage_product_variants', product_id=product.id) }}" class="btn btn-secondary ml-2">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+                            </div>
+                            <div class="col-md-6 text-right">
+                                <a href="{{ url_for('delete_product_variant', id=variant.id) }}" 
+                                   class="btn btn-danger"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa biến thể này?')">
+                                    <i class="fas fa-trash"></i> Xóa biến thể
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Thông tin biến thể</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8">{{ variant.id }}</dd>
+                        
+                        <dt class="col-sm-4">Tên hiển thị:</dt>
+                        <dd class="col-sm-8">{{ variant.display_name }}</dd>
+                        
+                        <dt class="col-sm-4">Giá hiện tại:</dt>
+                        <dd class="col-sm-8">{{ variant.price | vnd }}</dd>
+                        
+                        <dt class="col-sm-4">Tồn kho hiện tại:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge badge-{% if variant.stock > 0 %}success{% else %}danger{% endif %}">
+                                {{ variant.stock }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">SKU:</dt>
+                        <dd class="col-sm-8">{{ variant.sku or 'Chưa có' }}</dd>
+                        
+                        <dt class="col-sm-4">Trạng thái:</dt>
+                        <dd class="col-sm-8">
+                            {% if variant.is_active %}
+                                <span class="badge badge-success">Hoạt động</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Tạm dừng</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-4">Ngày tạo:</dt>
+                        <dd class="col-sm-8">{{ variant.created_at.strftime('%d/%m/%Y %H:%M') if variant.created_at else 'Chưa có' }}</dd>
+                    </dl>
+                </div>
+            </div>
+            
+            <div class="card card-success">
+                <div class="card-header">
+                    <h3 class="card-title">Hành động nhanh</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('manage_product_variants', product_id=product.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> Xem tất cả biến thể
+                        </a>
+                        <a href="{{ url_for('add_product_variant', product_id=product.id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Thêm biến thể mới
+                        </a>
+                        <a href="{{ url_for('updateproduct', id=product.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-edit"></i> Chỉnh sửa sản phẩm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        width: '100%'
+    });
+    
+    // Auto-generate SKU if empty
+    $('#sku').on('blur', function() {
+        if (!$(this).val()) {
+            var sizeId = $('#size_id').val();
+            var colorId = $('#color_id').val();
+            var productId = {{ product.id }};
+            
+            if (sizeId && colorId && productId) {
+                var sku = 'SKU-' + productId + '-' + sizeId + '-' + colorId;
+                $(this).val(sku);
+            }
+        }
+    });
+    
+    // Update display name when size or color changes
+    function updateDisplayName() {
+        var sizeText = $('#size_id option:selected').text();
+        var colorText = $('#color_id option:selected').text();
+        
+        if (sizeText && colorText && sizeText !== 'Chọn kích thước' && colorText !== 'Chọn màu sắc') {
+            var displayName = sizeText + ' - ' + colorText;
+            // You can add a display name field if needed
+        }
+    }
+    
+    $('#size_id, #color_id').on('change', updateDisplayName);
+});
+</script>
+{% endblock %}

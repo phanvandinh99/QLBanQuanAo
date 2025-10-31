@@ -47,7 +47,7 @@ class QueryOptimizer:
     @staticmethod
     def get_products_with_ratings(page=1, per_page=12):
         """Optimized query to get products with their ratings"""
-        from shop.models import Product, Rating
+        from shop.models import Product, Rating, ProductVariant
         from sqlalchemy import func
 
         # Use subquery for better performance
@@ -63,9 +63,11 @@ class QueryOptimizer:
             rating_subquery.c.rating_count
         ).outerjoin(
             rating_subquery, Product.id == rating_subquery.c.product_id
-        ).filter(
-            Product.stock > 0
-        ).order_by(
+        ).join(ProductVariant).filter(
+            ProductVariant.product_id == Product.id,
+            ProductVariant.is_active == True,
+            ProductVariant.stock > 0
+        ).distinct().order_by(
             Product.pub_date.desc()
         ).paginate(page=page, per_page=per_page, error_out=False)
 

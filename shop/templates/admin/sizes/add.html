@@ -1,0 +1,111 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+{% include 'admin/header.html' %}
+
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">{{ title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin') }}">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('sizes_list') }}">Quản lý kích thước</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Thêm kích thước mới</h3>
+                        </div>
+                <form method="POST">
+                    <div class="card-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control", placeholder="VD: S, M, L, XL") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.display_name.label(class="form-label") }}
+                            {{ form.display_name(class="form-control", placeholder="VD: Small, Medium, Large") }}
+                            {% if form.display_name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.display_name.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.sort_order.label(class="form-label") }}
+                            {{ form.sort_order(class="form-control", placeholder="Thứ tự sắp xếp (số nhỏ hơn sẽ hiển thị trước)") }}
+                            {% if form.sort_order.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.sort_order.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu
+                        </button>
+                        <a href="{{ url_for('manage_sizes') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Hướng dẫn</h3>
+                </div>
+                <div class="card-body">
+                    <h5>Tên kích thước:</h5>
+                    <p>Tên ngắn gọn của kích thước (VD: S, M, L, XL, XXL)</p>
+                    
+                    <h5>Tên hiển thị:</h5>
+                    <p>Tên đầy đủ hiển thị cho khách hàng (VD: Small, Medium, Large)</p>
+                    
+                    <h5>Thứ tự sắp xếp:</h5>
+                    <p>Số thứ tự để sắp xếp kích thước. Số nhỏ hơn sẽ hiển thị trước.</p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Lưu ý:</strong> Tên kích thước phải là duy nhất.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+</div>
+
+{% include 'admin/footer.html' %}
+{% endblock %}

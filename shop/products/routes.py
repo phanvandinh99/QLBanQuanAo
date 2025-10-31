@@ -1,12 +1,22 @@
 import urllib
 import os
 import secrets
-from flask import render_template, request, redirect, url_for, flash, session, current_app, jsonify
+from flask import render_template, request, redirect, url_for, flash, session, current_app, jsonify, Blueprint
 from flask_login import current_user
 from shop import app, db, photos
-from shop.models import Brand, Category, Product, Rating, Customer, Admin, Article
+from shop.models import Brand, Category, Product, Rating, Customer, Admin, Article, ProductVariant, Size, Color, StockMovement
 from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
-from .forms import Rates, Addproducts
+from .forms import Rates, Addproducts, AddProductsForm, ProductVariantRowForm
+
+# Tạo Blueprint
+products = Blueprint('products', __name__)
+
+def get_products_with_stock():
+    """Helper function to get products that have variants with stock > 0"""
+    return Product.query.join(ProductVariant).filter(
+        ProductVariant.is_active == True,
+        ProductVariant.stock > 0
+    ).distinct()
 
 @app.route('/toast-debug')
 def toast_debug():
@@ -16,7 +26,7 @@ def toast_debug():
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
-    products = Product.query.filter(Product.stock > 0).paginate(page=page, per_page=8)
+    products = get_products_with_stock().paginate(page=page, per_page=8)
 
     # Get published articles for the articles section
     articles = Article.query.filter_by(status='published').order_by(Article.created_at.desc()).limit(3).all()
@@ -26,21 +36,24 @@ def home():
 
 @app.route('/category')
 def get_all_category():
-    page = request.args.get('page', 1, type=int)
-    products_all = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).paginate(page=page,
-                                                                                                         per_page=9)
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).limit(2).all()
-    products = {'all': products_all, 'new': products_new, 'average': medium()}
-    return render_template('products/category.html', products=products, brands=brands(), categories=categories())
+    try:
+        page = request.args.get('page', 1, type=int)
+        # Get all products for now
+        products_all = Product.query.order_by(Product.id.desc()).paginate(page=page, per_page=9)
+        products_new = Product.query.order_by(Product.id.desc()).limit(2).all()
+        products = {'all': products_all, 'new': products_new, 'average': {}}
+        return render_template('products/category.html', products=products, brands=brands(), categories=categories())
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 @app.route('/category/brand/<string:name>')
 def get_brand(name):
     page = request.args.get('page', 1, type=int)
     get_brand = Brand.query.filter_by(name=name).first_or_404()
-    brand = Product.query.filter_by(brand=get_brand).paginate(page=page, per_page=9)
+    brand = get_products_with_stock().filter(Product.brand_id == get_brand.id).paginate(page=page, per_page=9)
 
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).limit(2).all()
+    products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': brand, 'new': products_new, 'average': medium()}
     return render_template('products/category.html', products=products, brand=name, brands=brands(),
                            categories=categories(),
@@ -51,8 +64,8 @@ def get_brand(name):
 def get_category(name):
     page = request.args.get('page', 1, type=int)
     get_cat = Category.query.filter_by(name=name).first_or_404()
-    get_cat_prod = Product.query.filter_by(category=get_cat).paginate(page=page, per_page=9)
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).limit(2).all()
+    get_cat_prod = get_products_with_stock().filter(Product.category_id == get_cat.id).paginate(page=page, per_page=9)
+    products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': get_cat_prod, 'new': products_new, 'average': medium()}
     get_cat_prod = {'name': name, 'id': get_cat.id}
     return render_template('products/category.html', products=products, get_cat_prod=get_cat_prod, brands=brands(),
@@ -252,6 +265,8 @@ def addproduct():
     form = Addproducts()
     brands = Brand.query.all()
     categories = Category.query.all()
+    sizes = Size.query.order_by(Size.sort_order).all()
+    colors = Color.query.order_by(Color.name).all()
 
 
     if request.method == "POST":
@@ -289,36 +304,28 @@ def addproduct():
 
                 user = Admin.query.filter_by(email=session['email']).all()
                 return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
+                                       categories=categories, sizes=sizes, colors=colors, user=user[0])
             
             name = form.name.data
-            price = form.price.data
             discount = form.discount.data or 0
-            stock = 0  # Force initial stock = 0. Stock will be updated via purchases.
-            colors = form.colors.data
             desc = form.description.data
             brand = request.form.get('brand')
             category = request.form.get('category')
-
+            
+            # Tất cả sản phẩm đều có variants
+            has_variants = True  # Luôn True
+            
+            # Bỏ price và stock vì lấy từ variants
+            # price = 0  # Không còn cần
+            # stock = 0  # Không còn cần
+            colors = ''  # Không còn cần vì có variants
 
             # Additional server-side validation
-            if price <= 0:
-                flash('Giá sản phẩm phải lớn hơn 0', 'danger')
-                user = Admin.query.filter_by(email=session['email']).all()
-                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
-
             if discount < 0 or discount > 100:
                 flash('Giảm giá phải nằm trong khoảng 0-100%', 'danger')
                 user = Admin.query.filter_by(email=session['email']).all()
                 return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
-
-            if stock < 0:
-                flash('Số lượng tồn kho phải lớn hơn hoặc bằng 0', 'danger')
-                user = Admin.query.filter_by(email=session['email']).all()
-                return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
+                                       categories=categories, sizes=sizes, colors=colors, user=user[0])
 
             image_1 = request.files.get('image_1')
             image_2 = request.files.get('image_2')
@@ -328,7 +335,7 @@ def addproduct():
                 flash('Vui lòng chọn đầy đủ 3 ảnh cho sản phẩm', 'danger')
                 user = Admin.query.filter_by(email=session['email']).all()
                 return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
+                                       categories=categories, sizes=sizes, colors=colors, user=user[0])
 
             name_random_1 = secrets.token_hex(10) + "."
             name_random_2 = secrets.token_hex(10) + "."
@@ -347,15 +354,101 @@ def addproduct():
                 flash(f'Lỗi khi lưu ảnh: {str(img_error)}', 'danger')
                 user = Admin.query.filter_by(email=session['email']).all()
                 return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                       categories=categories, user=user[0])
+                                       categories=categories, sizes=sizes, colors=colors, user=user[0])
 
             try:
-                product = Product(name=name, price=price, discount=discount, stock=stock, sold_quantity=0, colors=colors, description=desc,
-                                     category_id=category, brand_id=brand, image_1=image_1, image_2=image_2, image_3=image_3)
+                # Create product - tất cả sản phẩm đều có variants
+                product = Product(
+                    name=name, 
+                    # Bỏ price và stock vì lấy từ variants
+                    # price=price,
+                    # stock=stock,
+                    sold_quantity=0, 
+                    colors=colors,  # Không còn cần thiết
+                    description=desc,
+                    category_id=category, 
+                    brand_id=brand, 
+                    image_1=image_1, 
+                    image_2=image_2, 
+                    image_3=image_3,
+                    has_variants=True  # Luôn True
+                )
                 db.session.add(product)
+                db.session.flush()  # Get product.id
+
+                # Tất cả sản phẩm đều có variants
+                user = Admin.query.filter_by(email=session['email']).first()
+                variants_data = []
+                
+                # Get variants from form data
+                variant_count = 0
+                while f'variant_{variant_count}_price' in request.form:
+                    size_id = request.form.get(f'variant_{variant_count}_size_id')
+                    color_id = request.form.get(f'variant_{variant_count}_color_id')
+                    variant_price = request.form.get(f'variant_{variant_count}_price')
+                    variant_stock = request.form.get(f'variant_{variant_count}_stock')
+                    sku = request.form.get(f'variant_{variant_count}_sku')
+
+                    if variant_price:  # Only create if price is provided (stock will be 0 initially)
+                        variants_data.append({
+                            'size_id': int(size_id) if size_id and size_id != '0' else None,
+                            'color_id': int(color_id) if color_id and color_id != '0' else None,
+                            'price': float(variant_price),
+                            'stock': 0,  # Always 0, will be updated via purchase orders
+                            'sku': sku if sku else None
+                        })
+                    variant_count += 1
+
+                if not variants_data:
+                    raise Exception('Sản phẩm phải có ít nhất một biến thể!')
+
+                # Create variants
+                total_stock = 0
+                for variant_data in variants_data:
+                    # Check for duplicate combinations
+                    existing = ProductVariant.query.filter_by(
+                        product_id=product.id,
+                        size_id=variant_data['size_id'],
+                        color_id=variant_data['color_id']
+                    ).first()
+
+                    if existing:
+                        continue  # Skip duplicates
+
+                    variant = ProductVariant(
+                        product_id=product.id,
+                        size_id=variant_data['size_id'],
+                        color_id=variant_data['color_id'],
+                        price=variant_data['price'],
+                        stock=variant_data['stock'],
+                        sku=variant_data['sku'],
+                        is_active=True
+                    )
+
+                    db.session.add(variant)
+                    db.session.flush()  # Ensure variant has ID before creating stock movement
+
+                    # Generate SKU if not provided
+                    if not variant.sku:
+                        variant.sku = variant.generate_sku()
+
+                    total_stock += variant_data['stock']
+
+                    # Note: Stock movements will be created via purchase orders, not during product creation
+
+                # Update product min/max price from variants
+                if variants_data:
+                    prices = [v['price'] for v in variants_data]
+                    product.min_price = min(prices)
+                    product.max_price = max(prices)
+                else:
+                    product.min_price = 0
+                    product.max_price = 0
+
                 db.session.commit()
 
-                flash(f'Sản phẩm {product.name} đã được thêm thành công vào cơ sở dữ liệu', 'success')
+                # Tất cả sản phẩm đều có variants
+                flash(f'Sản phẩm {product.name} với {len(variants_data)} biến thể đã được thêm thành công!', 'success')
                 return redirect(url_for('addproduct'))
 
             except Exception as db_error:
@@ -367,11 +460,63 @@ def addproduct():
             flash(f'Lỗi khi thêm sản phẩm: {str(e)}', 'danger')
             user = Admin.query.filter_by(email=session['email']).all()
             return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                                   categories=categories, user=user[0])
+                                   categories=categories, sizes=sizes, colors=colors, user=user[0])
     
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('products/addproduct.html', form=form, title='Add a Product', brands=brands,
-                           categories=categories, user=user[0])
+                           categories=categories, sizes=sizes, colors=colors, user=user[0])
+
+
+
+
+@app.route('/api/brands/<int:category_id>')
+def get_brands_by_category(category_id):
+    """API endpoint to get brands by category"""
+    brands = Brand.query.filter_by(category_id=category_id).order_by(Brand.name).all()
+    return jsonify([{
+        'id': brand.id,
+        'name': brand.name
+    } for brand in brands])
+
+
+@app.route('/api/products/<int:product_id>')
+def get_product_info(product_id):
+    """API endpoint to get product information"""
+    product = Product.query.get_or_404(product_id)
+    return jsonify({
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'category': product.category.name if product.category else None,
+        'brand': product.brand.name if product.brand else None,
+        'stock': product.total_stock,
+        'price': float(product.current_price) if not product.has_variants else None,
+        'display_price': product.display_price,
+        'has_variants': product.has_variants,
+        'discount': product.discount,
+        'colors': product.colors
+    })
+
+@app.route('/api/colors')
+def get_colors():
+    """API endpoint to get all colors"""
+    colors = Color.query.order_by(Color.name).all()
+    return jsonify([{
+        'id': color.id,
+        'name': color.name,
+        'hex_code': color.hex_code
+    } for color in colors])
+
+@app.route('/api/sizes')
+def get_sizes():
+    """API endpoint to get all sizes"""
+    sizes = Size.query.order_by(Size.sort_order).all()
+    return jsonify([{
+        'id': size.id,
+        'name': size.name,
+        'display_name': size.display_name,
+        'sort_order': size.sort_order
+    } for size in sizes])
 
 
 
@@ -395,7 +540,7 @@ def updateproduct(id):
     if request.method == "POST":
         try:
             product.name = form.name.data
-            product.price = form.price.data
+            # product.current_price = form.price.data  # Đã bỏ vì sử dụng variants
             product.discount = form.discount.data
             # Do not allow direct stock editing here; stock is managed via purchases
             product.colors = form.colors.data
@@ -466,10 +611,10 @@ def updateproduct(id):
                                    categories=categories, user=user[0])
 
     form.name.data = product.name
-    form.price.data = product.price
+    # form.price.data = product.current_price  # Đã bỏ vì sử dụng variants
     form.discount.data = product.discount
-    form.stock.data = product.stock
-    form.colors.data = product.colors
+    # form.stock.data = product.total_stock  # Đã bỏ vì sử dụng variants
+    # form.colors.data = product.colors  # Đã bỏ vì sử dụng variants
     form.description.data = product.description
     user = Admin.query.filter_by(email=session['email']).all()
     return render_template('products/updateproduct.html', form=form, product=product, title='Update Product', brands=brands,
@@ -478,16 +623,6 @@ def updateproduct(id):
 
 
 
-@app.route('/simple-test')
-def simple_test():
-    """Simple test page cho toast system"""
-    return render_template('simple_test.html')
-
-
-@app.route('/test-real-forms')
-def test_real_forms():
-    """Test real forms với toast system"""
-    return render_template('test_real_forms.html')
 
 
 @app.route('/deleteproduct/<int:id>', methods=['POST'])
@@ -526,9 +661,9 @@ def deleteproduct(id):
 @app.route('/addrate', methods=['GET', 'POST'])
 def addrate():
     form = Rates(request.form)
-    products_hot = Product.query.filter(Product.stock > 0).order_by(Product.price.desc()).limit(3).all()
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).all()
-    products_sell = Product.query.filter(Product.stock > 0).order_by(Product.discount.desc()).limit(10).all()
+    products_hot = get_products_with_stock().order_by(Product.min_price.desc()).limit(3).all()
+    products_new = get_products_with_stock().order_by(Product.id.desc()).all()
+    products_sell = get_products_with_stock().order_by(Product.discount.desc()).limit(10).all()
     products = {'hot': products_hot, 'new': products_new, 'sell': products_sell, 'average': medium()}
     product_id = -1
     if request.method == "POST":
@@ -560,9 +695,9 @@ def detail(id):
                 kt = True
     form = Rates(request.form)
     rates = Rating.query.filter(Rating.product_id == id).order_by(Rating.id.desc()).all()
-    products_hot = Product.query.filter(Product.stock > 0).order_by(Product.price.desc()).limit(3).all()
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).limit(2).all()
-    products_sell = Product.query.filter(Product.stock > 0).order_by(Product.discount.desc()).limit(10).all()
+    products_hot = get_products_with_stock().order_by(Product.min_price.desc()).limit(3).all()
+    products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
+    products_sell = get_products_with_stock().order_by(Product.discount.desc()).limit(10).all()
     products = {'hot': products_hot, 'new': products_new, 'sell': products_sell, 'average': medium()}
     product = Product.query.get_or_404(id)
     # products = Product.query.filter_by(id='id')
@@ -573,9 +708,9 @@ def detail(id):
 @app.route('/category/discount/<int:start>-<int:end>')
 def get_discount(start, end):
     page = request.args.get('page', 1, type=int)
-    product_discount = Product.query.filter(Product.discount >= start, Product.discount < end) \
+    product_discount = get_products_with_stock().filter(Product.discount >= start, Product.discount < end) \
         .order_by(Product.id.desc()).paginate(page=page, per_page=9)
-    products_new = Product.query.filter(Product.stock > 0).order_by(Product.id.desc()).limit(2).all()
+    products_new = get_products_with_stock().order_by(Product.id.desc()).limit(2).all()
     products = {'all': product_discount, 'new': products_new, 'average': medium()}
     return render_template('products/category.html', products=products, brands=brands(), categories=categories())
 
@@ -585,7 +720,7 @@ def search():
     value = request.form['search']
     search = "%{}%".format(value.lower())
     page = request.args.get('page', 1, type=int)
-    product = Product.query.filter(Product.name.ilike(search)).paginate(page=page, per_page=9)
+    product = get_products_with_stock().filter(Product.name.ilike(search)).paginate(page=page, per_page=9)
     products = {'all': product, 'average': medium()}
     return render_template('products/category.html', get_search=value, products=products, brands=brands(),
                            categories=categories())
@@ -649,3 +784,33 @@ def medium():
 def registers():
     # Get all registered users
     return Customer.query.all()
+
+@products.route('/api/product/<int:product_id>/variants')
+def get_product_variants(product_id):
+    """API endpoint to get variants for a product"""
+    try:
+        product = Product.query.get_or_404(product_id)
+        variants = []
+        
+        for variant in product.variants:
+            if variant.is_active:
+                variants.append({
+                    'id': variant.id,
+                    'size_id': variant.size.id if variant.size else None,
+                    'color_id': variant.color.id if variant.color else None,
+                    'size_name': variant.size.display_name if variant.size else '',
+                    'color_name': variant.color.name if variant.color else '',
+                    'price': float(variant.price),
+                    'stock': variant.stock,
+                    'sku': variant.sku
+                })
+        
+        return jsonify({
+            'success': True,
+            'variants': variants
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

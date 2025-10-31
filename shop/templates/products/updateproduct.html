@@ -10,24 +10,30 @@
             {% from "_formhelpers.html" import render_field %}
             <form method="POST" enctype="multipart/form-data" class="ajax-form">
                 {{ render_field(form.name, class="form-control") }}
-                {{ render_field(form.price, class="form-control") }}
                 {{ render_field(form.discount, class="form-control") }}
                 
-                <!-- Stock and Sold Quantity - Read Only -->
+                <!-- Product Info Display -->
                 <div class="row">
-                    <div class="col-md-6">
-                        <label for="stock">Tồn Kho</label>
-                        <input type="number" class="form-control" id="stock" name="stock" 
-                               value="{{ product.stock }}" readonly 
+                    <div class="col-md-4">
+                        <label for="current_price">Giá hiện tại</label>
+                        <input type="text" class="form-control" id="current_price" 
+                               value="{{ product.current_price | vnd if product.current_price else 'Chưa có' }}" readonly 
                                style="background-color: #f8f9fa;">
-                        <small class="text-muted">Chỉ thay đổi qua phiếu nhập hàng</small>
+                        <small class="text-muted">Từ biến thể sản phẩm</small>
                     </div>
-                    <div class="col-md-6">
-                        <label for="sold_quantity">Đã Bán</label>
-                        <input type="number" class="form-control" id="sold_quantity" name="sold_quantity" 
+                    <div class="col-md-4">
+                        <label for="total_stock">Tổng tồn kho</label>
+                        <input type="number" class="form-control" id="total_stock" 
+                               value="{{ product.total_stock or 0 }}" readonly 
+                               style="background-color: #f8f9fa;">
+                        <small class="text-muted">Tổng từ tất cả biến thể</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sold_quantity">Đã bán</label>
+                        <input type="number" class="form-control" id="sold_quantity" 
                                value="{{ product.sold_quantity or 0 }}" readonly 
                                style="background-color: #f8f9fa;">
-                        <small class="text-muted">Tự động cập nhật khi có đơn hàng</small>
+                        <small class="text-muted">Tự động cập nhật</small>
                     </div>
                 </div>
                 <br>
@@ -47,8 +53,56 @@
                 </select>
 
 
-                {{ render_field(form.colors, class="form-control") }}
+                <!-- Colors field removed - now managed through variants -->
                 {{ render_field(form.description, class="form-control", rows="10") }}
+                
+                <!-- Product Variants Display -->
+                <div class="mt-4">
+                    <h5>Biến thể sản phẩm</h5>
+                    {% if product.variants %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Kích thước</th>
+                                        <th>Màu sắc</th>
+                                        <th>Giá</th>
+                                        <th>Tồn kho</th>
+                                        <th>SKU</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for variant in product.variants %}
+                                    <tr>
+                                        <td>{{ variant.size.display_name if variant.size else 'Không có' }}</td>
+                                        <td>{{ variant.color.name if variant.color else 'Không có' }}</td>
+                                        <td>{{ variant.price | vnd }}</td>
+                                        <td>{{ variant.stock }}</td>
+                                        <td>{{ variant.sku or 'Chưa có' }}</td>
+                                        <td>
+                                            {% if variant.is_active %}
+                                                <span class="badge badge-success">Hoạt động</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">Tạm dừng</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Để thay đổi giá và tồn kho, sử dụng chức năng <strong>Quản lý biến thể</strong> hoặc <strong>Nhập hàng</strong>.
+                        </p>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Sản phẩm này chưa có biến thể. Vui lòng thêm biến thể trước khi bán.
+                        </div>
+                    {% endif %}
+                </div>
                 <div class="container">
                     <div class="row">
                         <div class="col-md-4"><input type="file" name="image_1" id="image_1">
@@ -64,9 +118,25 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-outline-info mt-4">
-                    <i class="fa fa-save"></i> Cập nhật sản phẩm
-                </button>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-outline-info">
+                        <i class="fa fa-save"></i> Cập nhật sản phẩm
+                    </button>
+                    
+                    {% if product.variants %}
+                    <a href="{{ url_for('manage_product_variants', product_id=product.id) }}" class="btn btn-outline-warning ml-2">
+                        <i class="fas fa-cogs"></i> Quản lý biến thể
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('add_product_variant', product_id=product.id) }}" class="btn btn-outline-success ml-2">
+                        <i class="fas fa-plus"></i> Thêm biến thể
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('product') }}" class="btn btn-outline-secondary ml-2">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
             </form>
         </div>
         <div class="col-md-2"></div>

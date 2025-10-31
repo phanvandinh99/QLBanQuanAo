@@ -198,9 +198,9 @@
                         </ul>
                     </li>
                     {% endif %}
-                    <li class="nav-item has-treeview {% if request.endpoint == 'product' or request.endpoint == 'addproduct' %} menu-open {% endif %}">
+                    <li class="nav-item has-treeview {% if request.endpoint == 'product' or request.endpoint == 'addproduct' or request.endpoint == 'sizes_list' or request.endpoint == 'colors_list' %} menu-open {% endif %}">
                         <a href="{{url_for('product')}}"
-                           class="nav-link {% if request.endpoint == 'product' or request.endpoint == 'addproduct' %} active {% endif %}">
+                           class="nav-link {% if request.endpoint == 'product' or request.endpoint == 'addproduct' or request.endpoint == 'sizes_list' or request.endpoint == 'colors_list' %} active {% endif %}">
                             <i class="nav-icon fas fa-barcode"></i>
                             <p>
                                 Sản Phẩm
@@ -219,7 +219,21 @@
                                 <a href="{{url_for('addproduct')}}"
                                    class="nav-link {% if request.endpoint == 'addproduct' %} active {% endif %}">
                                     <i class="far fa-circle nav-icon"></i>
-                                    <p>Thêm mới</p>
+                                    <p>Thêm sản phẩm</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{url_for('sizes_list')}}"
+                                   class="nav-link {% if request.endpoint == 'sizes_list' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Quản lý kích thước</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{url_for('colors_list')}}"
+                                   class="nav-link {% if request.endpoint == 'colors_list' %} active {% endif %}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Quản lý màu sắc</p>
                                 </a>
                             </li>
                         </ul>

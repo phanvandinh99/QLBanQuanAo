@@ -1,0 +1,252 @@
+{% extends "admin/layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Thêm sản phẩm mới</h3>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="card-body">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Product Info -->
+                        <div class="form-group">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="4") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Product Type Selection -->
+                        <div class="card card-info">
+                            <div class="card-header">
+                                <h5>Loại sản phẩm</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check">
+                                    {{ form.has_variants(class="form-check-input", id="has_variants_check") }}
+                                    {{ form.has_variants.label(class="form-check-label", for="has_variants_check") }}
+                                </div>
+                                <small class="form-text text-muted">
+                                    Chọn nếu sản phẩm có nhiều biến thể như size S/M/L hoặc màu Đỏ/Xanh/Vàng với giá khác nhau
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- For Non-Variant Products -->
+                        <div id="non_variant_fields">
+                            <h5>Thông tin cho sản phẩm không có biến thể</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- <div class="form-group">
+                                        {{ form.price.label(class="form-label") }}
+                                        <div class="input-group">
+                                            {{ form.price(class="form-control") }}
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">đ</span>
+                                            </div>
+                                        </div>
+                                        {% if form.price.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.price.errors %}
+                                                    <small>{{ error }}</small><br>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div> --> <!-- Đã bỏ vì sử dụng variants -->
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- <div class="form-group">
+                                        {{ form.stock.label(class="form-label") }}
+                                        {{ form.stock(class="form-control") }}
+                                        {% if form.stock.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.stock.errors %}
+                                                    <small>{{ error }}</small><br>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div> --> <!-- Đã bỏ vì sử dụng variants -->
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                {{ form.colors.label(class="form-label") }}
+                                {{ form.colors(class="form-control", placeholder="VD: Đỏ, Xanh, Vàng") }}
+                                {% if form.colors.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.colors.errors %}
+                                            <small>{{ error }}</small><br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Nhập các màu có sẵn, cách nhau bằng dấu phẩy</small>
+                            </div>
+                        </div>
+
+                        <!-- For Variant Products -->
+                        <div id="variant_fields" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Sản phẩm có biến thể:</strong> Sau khi tạo sản phẩm, bạn sẽ thêm các biến thể với giá và số lượng riêng biệt.
+                            </div>
+                        </div>
+
+                        <!-- Common Fields -->
+                        <div class="form-group">
+                            {{ form.discount.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.discount(class="form-control") }}
+                                <div class="input-group-append">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            {% if form.discount.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.discount.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Images -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.image_1.label(class="form-label") }}
+                                    {{ form.image_1(class="form-control-file") }}
+                                    {% if form.image_1.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.image_1.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.image_2.label(class="form-label") }}
+                                    {{ form.image_2(class="form-control-file") }}
+                                    {% if form.image_2.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.image_2.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.image_3.label(class="form-label") }}
+                                    {{ form.image_3(class="form-control-file") }}
+                                    {% if form.image_3.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.image_3.errors %}
+                                                <small>{{ error }}</small><br>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu sản phẩm
+                        </button>
+                        <a href="{{ url_for('product') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card card-info">
+                <div class="card-header">
+                    <h3 class="card-title">Hướng dẫn</h3>
+                </div>
+                <div class="card-body">
+                    <h5>Sản phẩm không có biến thể:</h5>
+                    <p>Dành cho sản phẩm có giá cố định, không phụ thuộc vào size hay màu sắc. Ví dụ: Tai nghe, Cáp sạc...</p>
+                    
+                    <h5>Sản phẩm có biến thể:</h5>
+                    <p>Dành cho sản phẩm có nhiều lựa chọn size/màu với giá khác nhau. Ví dụ:</p>
+                    <ul>
+                        <li>Áo phông Size M: 100.000đ</li>
+                        <li>Áo phông Size L: 110.000đ</li>
+                        <li>Áo phông Size XL: 120.000đ</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Lưu ý:</strong> Sau khi tạo sản phẩm có biến thể, bạn cần thêm các biến thể cụ thể trong phần "Quản lý biến thể".
+                    </div>
+
+                    <div class="alert alert-success">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Tip:</strong> Bắt đầu với giá cơ bản thấp nhất, sau đó tạo biến thể với giá cao hơn.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    function toggleProductType() {
+        var hasVariants = $('#has_variants_check').is(':checked');
+        
+        if (hasVariants) {
+            $('#non_variant_fields').hide();
+            $('#variant_fields').show();
+            
+            // Make non-variant fields optional
+            $('#id_price').removeAttr('required');
+            $('#id_colors').removeAttr('required');
+        } else {
+            $('#non_variant_fields').show();
+            $('#variant_fields').hide();
+            
+            // Make non-variant fields required
+            $('#id_price').attr('required', 'required');
+            $('#id_colors').attr('required', 'required');
+        }
+    }
+    
+    // Initialize
+    toggleProductType();
+    
+    // Bind change event
+    $('#has_variants_check').on('change', toggleProductType);
+});
+</script>
+{% endblock %}

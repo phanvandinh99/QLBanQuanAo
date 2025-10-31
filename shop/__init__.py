@@ -83,6 +83,10 @@ from shop.products import routes
 from shop.carts import routes
 from shop.customers import routes
 
+# Đăng ký Blueprint
+from shop.products.routes import products
+app.register_blueprint(products)
+
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
