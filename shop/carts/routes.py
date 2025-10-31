@@ -9,6 +9,29 @@ from shop import app, db
 from shop.models import Order, OrderItem, Category, Brand, Product, Customer, ProductVariant
 from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
 from shop.email_utils import send_order_confirmation_email
+from shop.utils.response_utils import ajax_response, is_ajax_request, success_response, error_response
+
+
+def send_vnpay_confirmation_email(order, source="unknown"):
+    """
+    Gửi email xác nhận thanh toán VNPay thành công
+    
+    Args:
+        order: Order object
+        source: Nguồn gọi hàm (vnpay_return, vnpay_ipn, etc.)
+    """
+    try:
+        customer = Customer.query.get(order.customer_id)
+        if customer and customer.email:
+            send_order_confirmation_email(customer, order)
+            current_app.logger.info(f"VNPAY {source}: Email confirmation sent to {customer.email} for order {order.invoice}")
+            return True
+        else:
+            current_app.logger.warning(f"VNPAY {source}: Could not send email for order {order.invoice} - customer not found or no email")
+            return False
+    except Exception as e:
+        current_app.logger.error(f"VNPAY {source}: Failed to send confirmation email for order {order.invoice}: {str(e)}")
+        return False
 
 
 def brands():
@@ -550,6 +573,9 @@ def vnpay_return():
             if cart_existed and not cart_cleared:
                 current_app.logger.error(f"VNPAY payment successful but failed to clear cart for order {order_id}")
 
+            # Gửi email xác nhận thanh toán thành công
+            send_vnpay_confirmation_email(order, "return")
+
             flash('Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.', 'success')
         else:
             # Update order status to "Thanh toán thất bại"
@@ -626,6 +652,10 @@ def vnpay_ipn():
         if response_code == '00':
             # Payment was already marked as successful when order was created
             current_app.logger.info(f"VNPAY IPN: Payment confirmed successful for order {order_id}")
+            
+            # Gửi email xác nhận thanh toán thành công (nếu chưa gửi)
+            send_vnpay_confirmation_email(order, "ipn")
+            
             return jsonify({'RspCode': '00', 'Message': 'Confirm Success'})
         else:
             # Payment failed - update payment status
